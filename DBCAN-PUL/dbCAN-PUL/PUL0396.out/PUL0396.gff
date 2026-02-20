@@ -1,0 +1,36 @@
+##gff-version 3
+##sequence-region AM260479 1 10332
+# conversion-by bp_genbank2gff3.pl
+# organism Cupriavidus necator H16
+# Note Ralstonia eutropha H16 chromosome 1.
+# date 07-MAR-2015
+AM260479	GenBank	chromosome	1	10332	.	+	1	ID=AM260479;Alias=1;Dbxref=BioProject:PRJNA13603,taxon:381666;Name=AM260479;Note=Ralstonia eutropha H16 chromosome 1.,URL -- http://www.g2l.bio.uni-goettingen.de Contacts: Heiko Liesegang (hlieseg@gwdg.de). ;chromosome=1;comment1=URL -- http://www.g2l.bio.uni-goettingen.de Contacts: Heiko Liesegang (hlieseg@gwdg.de). ;date=07-MAR-2015;mol_type=genomic DNA;organism=Cupriavidus necator H16;strain=H16
+AM260479	GenBank	gene	1	723	.	-	1	ID=H16_A0310;Name=h16_A0310;locus_tag=H16_A0310
+AM260479	GenBank	mRNA	1	723	.	-	1	ID=H16_A0310;Parent=H16_A0310
+AM260479	GenBank	CDS	1	723	.	-	1	ID=H16_A0310;Parent=H16_A0310;Dbxref=EnsemblGenomes-Gn:H16_A0310,EnsemblGenomes-Tr:CAJ91461,GOA:Q0KEW0,InterPro:IPR000524,InterPro:IPR011663,InterPro:IPR011991,InterPro:IPR028978,UniProtKB/TrEMBL:Q0KEW0;Name=h16_A0310;codon_start=1;function=Transcription;inference=protein motif:COGS:COG2188,protein motif:PFAM:PF00392,protein motif:SMART:smart00345;locus_tag=H16_A0310;product=transcriptional regulator%2C GntR-family;protein_id=CAJ91461.1;transl_table=11;translation=length.240
+AM260479	GenBank	exon	1	723	.	-	1	Parent=H16_A0310
+AM260479	GenBank	gene	1116	3668	.	+	1	ID=H16_A0311;Name=nagF;locus_tag=H16_A0311
+AM260479	GenBank	mRNA	1116	3668	.	+	1	ID=H16_A0311;Parent=H16_A0311
+AM260479	GenBank	CDS	1116	3668	.	+	1	ID=H16_A0311;Parent=H16_A0311;Dbxref=EnsemblGenomes-Gn:H16_A0311,EnsemblGenomes-Tr:CAJ91462,GOA:Q0KEV9,InterPro:IPR000032,InterPro:IPR000121,InterPro:IPR001020,InterPro:IPR001127,InterPro:IPR006318,InterPro:IPR008279,InterPro:IPR008731,InterPro:IPR011055,InterPro:IPR015813,InterPro:IPR018274,InterPro:IPR023151,UniProtKB/TrEMBL:Q0KEV9;eC_number=2.7.1.69;Name=nagF;codon_start=1;function=Carbohydrate transport and metabolism / Signal transduction mechanisms;inference=protein motif:CDD:cd00210,protein motif:COGS:COG1080,protein motif:COGS:COG1925,protein motif:PFAM:PF02896,protein motif:TCDB:8.A.7;locus_tag=H16_A0311;product=Protein-N(pi)-phosphohistidine-sugar phosphotransferase II ABC;protein_id=CAJ91462.1;transl_table=11;translation=length.850
+AM260479	GenBank	exon	1116	3668	.	+	1	Parent=H16_A0311
+AM260479	GenBank	gene	3726	5435	.	+	1	ID=H16_A0312;Name=nagE;locus_tag=H16_A0312
+AM260479	GenBank	mRNA	3726	5435	.	+	1	ID=H16_A0312;Parent=H16_A0312
+AM260479	GenBank	CDS	3726	5435	.	+	1	ID=H16_A0312;Parent=H16_A0312;Dbxref=EnsemblGenomes-Gn:H16_A0312,EnsemblGenomes-Tr:CAJ91463,GOA:Q0KEV8,InterPro:IPR001996,InterPro:IPR003352,InterPro:IPR010974,InterPro:IPR013013,InterPro:IPR018113,UniProtKB/TrEMBL:Q0KEV8;eC_number=2.7.1.69;Name=nagE;Note=14 TMHs;codon_start=1;function=Carbohydrate transport and metabolism / Signal transduction mechanisms;inference=protein motif:CDD:cd00212,protein motif:COGS:COG1263,protein motif:PFAM:PF02378,protein motif:TCDB:4.A.1;locus_tag=H16_A0312;product=Protein-N(pi)-phosphohistidine-sugar phosphotransferase II ABC%2C N-acetylglucosamine-specific;protein_id=CAJ91463.1;transl_table=11;translation=length.569
+AM260479	GenBank	exon	3726	5435	.	+	1	Parent=H16_A0312
+AM260479	GenBank	signal_peptide	5552	5611	.	+	1	ID=GenBank:signal_peptide:AM260479:5552:5611;inference=protein motif:SignalP:2.0
+AM260479	GenBank	gene	5552	6616	.	+	1	ID=H16_A0313;Name=nagC;locus_tag=H16_A0313
+AM260479	GenBank	mRNA	5552	6616	.	+	1	ID=H16_A0313;Parent=H16_A0313
+AM260479	GenBank	CDS	5552	6616	.	+	1	ID=H16_A0313;Parent=H16_A0313;Dbxref=EnsemblGenomes-Gn:H16_A0313,EnsemblGenomes-Tr:CAJ91464,GOA:Q0KEV7,InterPro:IPR001702,InterPro:IPR002299,InterPro:IPR023614,UniProtKB/TrEMBL:Q0KEV7;Name=nagC;codon_start=1;function=Carbohydrate transport and metabolism;inference=protein motif:CDD:cd00342,protein motif:COGS:COG3203,protein motif:TCDB:1.B.1;locus_tag=H16_A0313;product=outer membrane protein (porin);protein_id=CAJ91464.1;transl_table=11;translation=length.354
+AM260479	GenBank	exon	5552	6616	.	+	1	Parent=H16_A0313
+AM260479	GenBank	gene	6659	7762	.	+	1	ID=H16_A0314;Name=nagA;locus_tag=H16_A0314
+AM260479	GenBank	mRNA	6659	7762	.	+	1	ID=H16_A0314;Parent=H16_A0314
+AM260479	GenBank	CDS	6659	7762	.	+	1	ID=H16_A0314;Parent=H16_A0314;Dbxref=EnsemblGenomes-Gn:H16_A0314,EnsemblGenomes-Tr:CAJ91465,GOA:Q0KEV6,InterPro:IPR003764,InterPro:IPR011059,UniProtKB/TrEMBL:Q0KEV6;eC_number=3.5.1.25;Name=nagA;codon_start=1;function=Carbohydrate transport and metabolism;inference=protein motif:COGS:COG1820;locus_tag=H16_A0314;product=N-Acetylglucosamine-6-phosphate deacetylase;protein_id=CAJ91465.1;transl_table=11;translation=length.367
+AM260479	GenBank	exon	6659	7762	.	+	1	Parent=H16_A0314
+AM260479	GenBank	gene	7755	8786	.	+	1	ID=H16_A0315;Name=nagB;locus_tag=H16_A0315
+AM260479	GenBank	mRNA	7755	8786	.	+	1	ID=H16_A0315;Parent=H16_A0315
+AM260479	GenBank	CDS	7755	8786	.	+	1	ID=H16_A0315;Parent=H16_A0315;Dbxref=EnsemblGenomes-Gn:H16_A0315,EnsemblGenomes-Tr:CAJ91466,GOA:Q0KEV5,InterPro:IPR001347,UniProtKB/TrEMBL:Q0KEV5;eC_number=3.5.99.6;Name=nagB;codon_start=1;function=Carbohydrate transport and metabolism;inference=protein motif:COGS:COG2222,protein motif:PFAM:PF01380;locus_tag=H16_A0315;product=Glucosamine-6-phosphate deaminase;protein_id=CAJ91466.1;transl_table=11;translation=length.343
+AM260479	GenBank	exon	7755	8786	.	+	1	Parent=H16_A0315
+AM260479	GenBank	gene	8845	10332	.	+	1	ID=H16_A0316;Name=zwf1;locus_tag=H16_A0316
+AM260479	GenBank	mRNA	8845	10332	.	+	1	ID=H16_A0316;Parent=H16_A0316
+AM260479	GenBank	CDS	8845	10332	.	+	1	ID=H16_A0316;Parent=H16_A0316;Dbxref=EnsemblGenomes-Gn:H16_A0316,EnsemblGenomes-Tr:CAJ91467,GOA:Q0KEV4,InterPro:IPR001282,InterPro:IPR016040,InterPro:IPR019796,InterPro:IPR022674,InterPro:IPR022675,UniProtKB/TrEMBL:Q0KEV4;eC_number=1.1.1.49;Name=zwf1;codon_start=1;function=Carbohydrate transport and metabolism;inference=protein motif:PFAM:PF00479,protein motif:PFAM:PF02781;locus_tag=H16_A0316;product=Glucose-6-phosphate 1-dehydrogenase;protein_id=CAJ91467.1;transl_table=11;translation=length.495
+AM260479	GenBank	exon	8845	10332	.	+	1	Parent=H16_A0316

@@ -1,0 +1,107 @@
+##gff-version 3
+##sequence-region JAATOH010000049 1 35200
+# conversion-by bp_genbank2gff3.pl
+# organism Lactobacillus crispatus
+# Note Lactobacillus crispatus strain DSM 29598 363, whole genome shotgun sequence.
+# date 27-JUL-2020
+JAATOH010000049	GenBank	region	1	35200	.	+	1	ID=JAATOH010000049;Dbxref=BioProject:PRJNA615208,taxon:47770;Name=JAATOH010000049;Note=Lactobacillus crispatus strain DSM 29598 363%2C whole genome shotgun sequence.,The annotation was added by the NCBI Prokaryotic Genome Annotation Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/  Bacteria and source DNA available from Michael Gaenzle.    \n##Genome-Assembly-Data-START##\nAssembly Method :: SPAdes v. Aug-2014\nGenome Representation :: Full\nExpected Final Version :: Yes\nGenome Coverage :: 30.0x\nSequencing Technology :: Illumina\n##Genome-Assembly-Data-END##;collection_date=2014;comment1=The annotation was added by the NCBI Prokaryotic Genome Annotation Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/  Bacteria and source DNA available from Michael Gaenzle.    \n##Genome-Assembly-Data-START##\nAssembly Method :: SPAdes v. Aug-2014\nGenome Representation :: Full\nExpected Final Version :: Yes\nGenome Coverage :: 30.0x\nSequencing Technology :: Illumina\n##Genome-Assembly-Data-END##;country=Finland: Helsinki;culture_collection=DSM:29598;date=27-JUL-2020;isolation_source=rye sourdough;mol_type=genomic DNA;organism=Lactobacillus crispatus;strain=DSM 29598
+JAATOH010000049	GenBank	gene	1	8	.	-	1	ID=HCN73_09275;Name=HCN73_09275
+JAATOH010000049	GenBank	mRNA	1	8	.	-	1	ID=HCN73_09275.t01;Parent=HCN73_09275
+JAATOH010000049	GenBank	CDS	1	8	.	-	1	ID=HCN73_09275;Parent=HCN73_09275.t01;Name=HCN73_09275;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_013086626.1;product=hypothetical protein;protein_id=MBA2916503.1;transl_table=11;translation=length.122
+JAATOH010000049	GenBank	exon	1	8	.	-	1	Parent=HCN73_09275.t01
+JAATOH010000049	GenBank	gene	1	1320	.	-	1	ID=HCN73_09280;Name=HCN73_09280
+JAATOH010000049	GenBank	mRNA	1	1320	.	-	1	ID=HCN73_09280.t01;Parent=HCN73_09280
+JAATOH010000049	GenBank	CDS	1	1320	.	-	1	ID=HCN73_09280;Parent=HCN73_09280.t01;Name=HCN73_09280;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_013854653.1;product=nucleotidyltransferase;protein_id=MBA2916504.1;transl_table=11;translation=length.439
+JAATOH010000049	GenBank	exon	1	1320	.	-	1	Parent=HCN73_09280.t01
+JAATOH010000049	GenBank	pseudogenic_exon	1613	2966	.	-	1	ID=HCN73_09285;Name=HCN73_09285;Note=frameshifted%3B internal stop%3B incomplete%3B missing C-terminus%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005728711.1;product=transposase;pseudo=_no_value;transl_table=11
+JAATOH010000049	GenBank	pseudogene	1613	2966	.	-	1	ID=HCN73_09285.pseudogene;Alias=HCN73_09285;Name=HCN73_09285;pseudo=_no_value
+JAATOH010000049	GenBank	pseudogenic_exon	3135	3806	.	+	1	ID=HCN73_09290;Name=HCN73_09290;Note=incomplete%3B partial in the middle of a contig%3B missing N-terminus%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005727562.1;product=group II intron reverse transcriptase/maturase;pseudo=_no_value;transl_table=11
+JAATOH010000049	GenBank	pseudogene	3135	3806	.	+	1	ID=HCN73_09290.pseudogene;Alias=HCN73_09290;Name=HCN73_09290;pseudo=_no_value
+JAATOH010000049	GenBank	gene	4387	6855	.	-	1	ID=HCN73_09295;Name=HCN73_09295
+JAATOH010000049	GenBank	mRNA	4387	6855	.	-	1	ID=HCN73_09295.t01;Parent=HCN73_09295
+JAATOH010000049	GenBank	CDS	4387	6855	.	-	1	ID=HCN73_09295;Parent=HCN73_09295.t01;Name=HCN73_09295;Note=The YSIRK form of extended signal peptide directs nascent proteins to the cross-wall site%2C while signal peptides lacking YSIRK direct proteins instead to the cell pole. A large fraction of YSIRK proteins are surface proteins anchored by sortase-mediated processing of a C-terminal LPXTG motif%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF015193.1%2CHMM:NF027687.1%2CHMM:TIGR01168.1;product=YSIRK-type signal peptide-containing protein;protein_id=MBA2916505.1;transl_table=11;translation=length.822
+JAATOH010000049	GenBank	exon	4387	6855	.	-	1	Parent=HCN73_09295.t01
+JAATOH010000049	GenBank	gene	7142	8740	.	+	1	ID=HCN73_09300;Name=HCN73_09300
+JAATOH010000049	GenBank	mRNA	7142	8740	.	+	1	ID=HCN73_09300.t01;Parent=HCN73_09300
+JAATOH010000049	GenBank	CDS	7142	8740	.	+	1	ID=HCN73_09300;Parent=HCN73_09300.t01;Name=HCN73_09300;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_011102218.1;product=FGGY-family carbohydrate kinase;protein_id=MBA2916506.1;transl_table=11;translation=length.532
+JAATOH010000049	GenBank	exon	7142	8740	.	+	1	Parent=HCN73_09300.t01
+JAATOH010000049	GenBank	gene	8759	9487	.	+	1	ID=HCN73_09305;Name=HCN73_09305
+JAATOH010000049	GenBank	mRNA	8759	9487	.	+	1	ID=HCN73_09305.t01;Parent=HCN73_09305
+JAATOH010000049	GenBank	CDS	8759	9487	.	+	1	ID=HCN73_09305;Parent=HCN73_09305.t01;Name=HCN73_09305;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003676120.1;product=L-ribulose-5-phosphate 4-epimerase;protein_id=MBA2916507.1;transl_table=11;translation=length.242
+JAATOH010000049	GenBank	exon	8759	9487	.	+	1	Parent=HCN73_09305.t01
+JAATOH010000049	GenBank	gene	9628	10722	.	+	1	ID=HCN73_09310;Name=HCN73_09310
+JAATOH010000049	GenBank	mRNA	9628	10722	.	+	1	ID=HCN73_09310.t01;Parent=HCN73_09310
+JAATOH010000049	GenBank	CDS	9628	10722	.	+	1	ID=HCN73_09310;Parent=HCN73_09310.t01;Name=HCN73_09310;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_012391621.1;product=GntR family transcriptional regulator;protein_id=MBA2916508.1;transl_table=11;translation=length.364
+JAATOH010000049	GenBank	exon	9628	10722	.	+	1	Parent=HCN73_09310.t01
+JAATOH010000049	GenBank	gene	10861	11820	.	-	1	ID=HCN73_09315;Name=HCN73_09315
+JAATOH010000049	GenBank	mRNA	10861	11820	.	-	1	ID=HCN73_09315.t01;Parent=HCN73_09315
+JAATOH010000049	GenBank	CDS	10861	11820	.	-	1	ID=HCN73_09315;Parent=HCN73_09315.t01;Name=HCN73_09315;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003675957.1;product=beta-galactosidase small subunit;protein_id=MBA2916509.1;transl_table=11;translation=length.319
+JAATOH010000049	GenBank	exon	10861	11820	.	-	1	Parent=HCN73_09315.t01
+JAATOH010000049	GenBank	gene	11804	13675	.	-	1	ID=HCN73_09320;Name=HCN73_09320
+JAATOH010000049	GenBank	mRNA	11804	13675	.	-	1	ID=HCN73_09320.t01;Parent=HCN73_09320
+JAATOH010000049	GenBank	CDS	11804	13675	.	-	1	ID=HCN73_09320;Parent=HCN73_09320.t01;Name=HCN73_09320;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_013086596.1;product=beta-galactosidase;protein_id=MBA2916510.1;transl_table=11;translation=length.623
+JAATOH010000049	GenBank	exon	11804	13675	.	-	1	Parent=HCN73_09320.t01
+JAATOH010000049	GenBank	gene	13847	15274	.	+	1	ID=HCN73_09325;Name=araA;locus_tag=HCN73_09325
+JAATOH010000049	GenBank	mRNA	13847	15274	.	+	1	ID=HCN73_09325.t01;Parent=HCN73_09325
+JAATOH010000049	GenBank	CDS	13847	15274	.	+	1	ID=HCN73_09325;Parent=HCN73_09325.t01;eC_number=5.3.1.4;Name=araA;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_007123496.1;locus_tag=HCN73_09325;product=L-arabinose isomerase;protein_id=MBA2916511.1;transl_table=11;translation=length.475
+JAATOH010000049	GenBank	exon	13847	15274	.	+	1	Parent=HCN73_09325.t01
+JAATOH010000049	GenBank	gene	15456	17120	.	-	1	ID=HCN73_09330;Name=HCN73_09330
+JAATOH010000049	GenBank	mRNA	15456	17120	.	-	1	ID=HCN73_09330.t01;Parent=HCN73_09330
+JAATOH010000049	GenBank	CDS	15456	17120	.	-	1	ID=HCN73_09330;Parent=HCN73_09330.t01;Name=HCN73_09330;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF016497.1%2CHMM:NF027687.1;product=glycoside hydrolase family 43 protein;protein_id=MBA2916512.1;transl_table=11;translation=length.554
+JAATOH010000049	GenBank	exon	15456	17120	.	-	1	Parent=HCN73_09330.t01
+JAATOH010000049	GenBank	gene	17297	19243	.	+	1	ID=HCN73_09335;Name=HCN73_09335
+JAATOH010000049	GenBank	mRNA	17297	19243	.	+	1	ID=HCN73_09335.t01;Parent=HCN73_09335
+JAATOH010000049	GenBank	CDS	17297	19243	.	+	1	ID=HCN73_09335;Parent=HCN73_09335.t01;Name=HCN73_09335;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_008215518.1;product=glycoside hydrolase family 127 protein;protein_id=MBA2916513.1;transl_table=11;translation=length.648
+JAATOH010000049	GenBank	exon	17297	19243	.	+	1	Parent=HCN73_09335.t01
+JAATOH010000049	GenBank	gene	19246	20694	.	+	1	ID=HCN73_09340;Name=HCN73_09340
+JAATOH010000049	GenBank	mRNA	19246	20694	.	+	1	ID=HCN73_09340.t01;Parent=HCN73_09340
+JAATOH010000049	GenBank	CDS	19246	20694	.	+	1	ID=HCN73_09340;Parent=HCN73_09340.t01;Name=HCN73_09340;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003552984.1;product=alpha-N-arabinofuranosidase;protein_id=MBA2916514.1;transl_table=11;translation=length.482
+JAATOH010000049	GenBank	exon	19246	20694	.	+	1	Parent=HCN73_09340.t01
+JAATOH010000049	GenBank	gene	20787	21416	.	-	1	ID=HCN73_09345;Name=HCN73_09345
+JAATOH010000049	GenBank	mRNA	20787	21416	.	-	1	ID=HCN73_09345.t01;Parent=HCN73_09345
+JAATOH010000049	GenBank	CDS	20787	21416	.	-	1	ID=HCN73_09345;Parent=HCN73_09345.t01;Name=HCN73_09345;Note=Derived by automated computational analysis using gene prediction method: GeneMarkS-2+.;codon_start=1;inference=COORDINATES: ab initio prediction:GeneMarkS-2+;product=hypothetical protein;protein_id=MBA2916515.1;transl_table=11;translation=length.209
+JAATOH010000049	GenBank	exon	20787	21416	.	-	1	Parent=HCN73_09345.t01
+JAATOH010000049	GenBank	gene	21661	23019	.	+	1	ID=HCN73_09350;Name=HCN73_09350
+JAATOH010000049	GenBank	mRNA	21661	23019	.	+	1	ID=HCN73_09350.t01;Parent=HCN73_09350
+JAATOH010000049	GenBank	CDS	21661	23019	.	+	1	ID=HCN73_09350;Parent=HCN73_09350.t01;Name=HCN73_09350;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF013697.1;product=extracellular solute-binding protein;protein_id=MBA2916516.1;transl_table=11;translation=length.452
+JAATOH010000049	GenBank	exon	21661	23019	.	+	1	Parent=HCN73_09350.t01
+JAATOH010000049	GenBank	gene	23093	24010	.	+	1	ID=HCN73_09355;Name=HCN73_09355
+JAATOH010000049	GenBank	mRNA	23093	24010	.	+	1	ID=HCN73_09355.t01;Parent=HCN73_09355
+JAATOH010000049	GenBank	CDS	23093	24010	.	+	1	ID=HCN73_09355;Parent=HCN73_09355.t01;Name=HCN73_09355;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_020279026.1;product=sugar ABC transporter permease;protein_id=MBA2916517.1;transl_table=11;translation=length.305
+JAATOH010000049	GenBank	exon	23093	24010	.	+	1	Parent=HCN73_09355.t01
+JAATOH010000049	GenBank	gene	24027	24875	.	+	1	ID=HCN73_09360;Name=HCN73_09360
+JAATOH010000049	GenBank	mRNA	24027	24875	.	+	1	ID=HCN73_09360.t01;Parent=HCN73_09360
+JAATOH010000049	GenBank	CDS	24027	24875	.	+	1	ID=HCN73_09360;Parent=HCN73_09360.t01;Name=HCN73_09360;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004621899.1;product=carbohydrate ABC transporter permease;protein_id=MBA2916518.1;transl_table=11;translation=length.282
+JAATOH010000049	GenBank	exon	24027	24875	.	+	1	Parent=HCN73_09360.t01
+JAATOH010000049	GenBank	gene	24883	25554	.	+	1	ID=HCN73_09365;Name=HCN73_09365
+JAATOH010000049	GenBank	mRNA	24883	25554	.	+	1	ID=HCN73_09365.t01;Parent=HCN73_09365
+JAATOH010000049	GenBank	CDS	24883	25554	.	+	1	ID=HCN73_09365;Parent=HCN73_09365.t01;Name=HCN73_09365;Note=Derived by automated computational analysis using gene prediction method: GeneMarkS-2+.;codon_start=1;inference=COORDINATES: ab initio prediction:GeneMarkS-2+;product=hypothetical protein;protein_id=MBA2916519.1;transl_table=11;translation=length.223
+JAATOH010000049	GenBank	exon	24883	25554	.	+	1	Parent=HCN73_09365.t01
+JAATOH010000049	GenBank	gene	25634	26578	.	+	1	ID=HCN73_09370;Name=HCN73_09370
+JAATOH010000049	GenBank	mRNA	25634	26578	.	+	1	ID=HCN73_09370.t01;Parent=HCN73_09370
+JAATOH010000049	GenBank	CDS	25634	26578	.	+	1	ID=HCN73_09370;Parent=HCN73_09370.t01;Name=HCN73_09370;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_010748728.1;product=family 43 glycosylhydrolase;protein_id=MBA2916520.1;transl_table=11;translation=length.314
+JAATOH010000049	GenBank	exon	25634	26578	.	+	1	Parent=HCN73_09370.t01
+JAATOH010000049	GenBank	gene	26598	28091	.	+	1	ID=HCN73_09375;Name=HCN73_09375
+JAATOH010000049	GenBank	mRNA	26598	28091	.	+	1	ID=HCN73_09375.t01;Parent=HCN73_09375
+JAATOH010000049	GenBank	CDS	26598	28091	.	+	1	ID=HCN73_09375;Parent=HCN73_09375.t01;Name=HCN73_09375;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003711626.1;product=alpha-N-arabinofuranosidase;protein_id=MBA2916521.1;transl_table=11;translation=length.497
+JAATOH010000049	GenBank	exon	26598	28091	.	+	1	Parent=HCN73_09375.t01
+JAATOH010000049	GenBank	gene	28102	29124	.	+	1	ID=HCN73_09380;Name=HCN73_09380
+JAATOH010000049	GenBank	mRNA	28102	29124	.	+	1	ID=HCN73_09380.t01;Parent=HCN73_09380
+JAATOH010000049	GenBank	CDS	28102	29124	.	+	1	ID=HCN73_09380;Parent=HCN73_09380.t01;Name=HCN73_09380;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003629442.1;product=galactose mutarotase;protein_id=MBA2916522.1;transl_table=11;translation=length.340
+JAATOH010000049	GenBank	exon	28102	29124	.	+	1	Parent=HCN73_09380.t01
+JAATOH010000049	GenBank	gene	29190	30458	.	+	1	ID=HCN73_09385;Name=HCN73_09385
+JAATOH010000049	GenBank	mRNA	29190	30458	.	+	1	ID=HCN73_09385.t01;Parent=HCN73_09385
+JAATOH010000049	GenBank	CDS	29190	30458	.	+	1	ID=HCN73_09385;Parent=HCN73_09385.t01;Name=HCN73_09385;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_008210491.1;product=glycoside hydrolase family 27 protein;protein_id=MBA2916523.1;transl_table=11;translation=length.422
+JAATOH010000049	GenBank	exon	29190	30458	.	+	1	Parent=HCN73_09385.t01
+JAATOH010000049	GenBank	gene	30517	31626	.	-	1	ID=HCN73_09390;Name=HCN73_09390
+JAATOH010000049	GenBank	mRNA	30517	31626	.	-	1	ID=HCN73_09390.t01;Parent=HCN73_09390
+JAATOH010000049	GenBank	CDS	30517	31626	.	-	1	ID=HCN73_09390;Parent=HCN73_09390.t01;Name=HCN73_09390;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_013642254.1;product=ABC transporter ATP-binding protein;protein_id=MBA2916524.1;transl_table=11;translation=length.369
+JAATOH010000049	GenBank	exon	30517	31626	.	-	1	Parent=HCN73_09390.t01
+JAATOH010000049	GenBank	gene	31751	32599	.	-	1	ID=HCN73_09395;Name=HCN73_09395
+JAATOH010000049	GenBank	mRNA	31751	32599	.	-	1	ID=HCN73_09395.t01;Parent=HCN73_09395
+JAATOH010000049	GenBank	CDS	31751	32599	.	-	1	ID=HCN73_09395;Parent=HCN73_09395.t01;Name=HCN73_09395;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF024945.1;product=hypothetical protein;protein_id=MBA2916525.1;transl_table=11;translation=length.282
+JAATOH010000049	GenBank	exon	31751	32599	.	-	1	Parent=HCN73_09395.t01
+JAATOH010000049	GenBank	gene	32801	35200	.	+	1	ID=HCN73_09400;Name=HCN73_09400
+JAATOH010000049	GenBank	mRNA	32801	35200	.	+	1	ID=HCN73_09400.t01;Parent=HCN73_09400
+JAATOH010000049	GenBank	CDS	32801	35200	.	+	1	ID=HCN73_09400;Parent=HCN73_09400.t01;Name=HCN73_09400;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005726898.1;product=phosphoketolase family protein;protein_id=MBA2916526.1;transl_table=11;translation=length.799
+JAATOH010000049	GenBank	exon	32801	35200	.	+	1	Parent=HCN73_09400.t01

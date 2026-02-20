@@ -1,0 +1,71 @@
+##gff-version 3
+##sequence-region NZ_CP079235 1 23561
+# conversion-by bp_genbank2gff3.pl
+# organism Bifidobacterium pseudocatenulatum
+# Note Bifidobacterium pseudocatenulatum strain YIT11952 chromosome, complete genome.
+# date 20-NOV-2024
+NZ_CP079235	GenBank	region	1	23561	.	+	1	ID=NZ_CP079235;Dbxref=BioProject:PRJNA224116,taxon:28026;Name=NZ_CP079235;Note=Bifidobacterium pseudocatenulatum strain YIT11952 chromosome%2C complete genome.,REFSEQ INFORMATION: The reference sequence is identical to CP079235.1.  The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/    \n##Genome-Assembly-Data-START##\nAssembly Method :: Unicycler v. 0.4.7\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 411.5194597331471x\nSequencing Technology :: Illumina MiSeq + PacBio RSII\n##Genome-Assembly-Data-END##;comment1=REFSEQ INFORMATION: The reference sequence is identical to CP079235.1.  The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/    \n##Genome-Assembly-Data-START##\nAssembly Method :: Unicycler v. 0.4.7\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 411.5194597331471x\nSequencing Technology :: Illumina MiSeq + PacBio RSII\n##Genome-Assembly-Data-END##;date=20-NOV-2024;geo_loc_name=Japan;host=Homo sapiens;isolation_source=fecal material [ENVO:00002003];mol_type=genomic DNA;organism=Bifidobacterium pseudocatenulatum;strain=YIT11952
+NZ_CP079235	GenBank	gene	1	426	.	-	1	ID=KYE73_RS02290;Name=KYE73_RS02290;old_locus_tag=KYE73_02280
+NZ_CP079235	GenBank	mRNA	1	426	.	-	1	ID=KYE73_RS02290;Parent=KYE73_RS02290
+NZ_CP079235	GenBank	CDS	1	426	.	-	1	ID=KYE73_RS02290;Parent=KYE73_RS02290;eC_number=3.5.1.88;Name=KYE73_RS02290;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003830078.1;old_locus_tag=KYE73_02280;product=peptide deformylase;protein_id=WP_226555405.1;transl_table=11;translation=length.141
+NZ_CP079235	GenBank	exon	1	426	.	-	1	Parent=KYE73_RS02290
+NZ_CP079235	GenBank	gene	518	1084	.	+	1	ID=KYE73_RS02295;Name=KYE73_RS02295;old_locus_tag=KYE73_02285
+NZ_CP079235	GenBank	mRNA	518	1084	.	+	1	ID=KYE73_RS02295;Parent=KYE73_RS02295
+NZ_CP079235	GenBank	CDS	518	1084	.	+	1	ID=KYE73_RS02295;Parent=KYE73_RS02295;eC_number=1.1.1.193,3.5.4.26;Name=KYE73_RS02295;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF025793.5;old_locus_tag=KYE73_02285;product=bifunctional diaminohydroxyphosphoribosylaminopyrimidine deaminase/5-amino-6-(5-phosphoribosylamino)uracil reductase RibD;protein_id=WP_226849175.1;transl_table=11;translation=length.188
+NZ_CP079235	GenBank	exon	518	1084	.	+	1	Parent=KYE73_RS02295
+NZ_CP079235	GenBank	gene	1320	2627	.	+	1	ID=KYE73_RS02300;Name=KYE73_RS02300;old_locus_tag=KYE73_02290
+NZ_CP079235	GenBank	mRNA	1320	2627	.	+	1	ID=KYE73_RS02300;Parent=KYE73_RS02300
+NZ_CP079235	GenBank	CDS	1320	2627	.	+	1	ID=KYE73_RS02300;Parent=KYE73_RS02300;gO_component=GO:0055052 - ATP-binding cassette (ABC) transporter complex%2C substrate-binding subunit-containing [Evidence IEA];gO_function=GO:0140359 - ABC-type transporter activity [Evidence IEA]%3B GO:0042626 - ATPase-coupled transmembrane transporter activity [Evidence IEA];Name=KYE73_RS02300;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF024808.5;old_locus_tag=KYE73_02290;product=ABC transporter substrate-binding protein;protein_id=WP_004219837.1;transl_table=11;translation=length.435
+NZ_CP079235	GenBank	exon	1320	2627	.	+	1	Parent=KYE73_RS02300
+NZ_CP079235	GenBank	gene	2647	3600	.	+	1	ID=KYE73_RS02305;Name=KYE73_RS02305;old_locus_tag=KYE73_02295
+NZ_CP079235	GenBank	mRNA	2647	3600	.	+	1	ID=KYE73_RS02305;Parent=KYE73_RS02305
+NZ_CP079235	GenBank	CDS	2647	3600	.	+	1	ID=KYE73_RS02305;Parent=KYE73_RS02305;gO_function=GO:0140359 - ABC-type transporter activity [Evidence IEA]%3B GO:0042626 - ATPase-coupled transmembrane transporter activity [Evidence IEA];gO_process=GO:0008643 - carbohydrate transport [Evidence IEA]%3B GO:0055085 - transmembrane transport [Evidence IEA];Name=KYE73_RS02305;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219835.1;old_locus_tag=KYE73_02295;product=carbohydrate ABC transporter permease;protein_id=WP_221608518.1;transl_table=11;translation=length.317
+NZ_CP079235	GenBank	exon	2647	3600	.	+	1	Parent=KYE73_RS02305
+NZ_CP079235	GenBank	gene	3600	4466	.	+	1	ID=KYE73_RS02310;Name=KYE73_RS02310;old_locus_tag=KYE73_02300
+NZ_CP079235	GenBank	mRNA	3600	4466	.	+	1	ID=KYE73_RS02310;Parent=KYE73_RS02310
+NZ_CP079235	GenBank	CDS	3600	4466	.	+	1	ID=KYE73_RS02310;Parent=KYE73_RS02310;gO_process=GO:0008643 - carbohydrate transport [Evidence IEA]%3B GO:0055085 - transmembrane transport [Evidence IEA];Name=KYE73_RS02310;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219834.1;old_locus_tag=KYE73_02300;product=carbohydrate ABC transporter permease;protein_id=WP_004219834.1;transl_table=11;translation=length.288
+NZ_CP079235	GenBank	exon	3600	4466	.	+	1	Parent=KYE73_RS02310
+NZ_CP079235	GenBank	gene	4580	6574	.	+	1	ID=KYE73_RS02315;Name=KYE73_RS02315;old_locus_tag=KYE73_02305
+NZ_CP079235	GenBank	mRNA	4580	6574	.	+	1	ID=KYE73_RS02315;Parent=KYE73_RS02315
+NZ_CP079235	GenBank	CDS	4580	6574	.	+	1	ID=KYE73_RS02315;Parent=KYE73_RS02315;Name=KYE73_RS02315;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219832.1;old_locus_tag=KYE73_02305;product=right-handed parallel beta-helix repeat-containing protein;protein_id=WP_226849177.1;transl_table=11;translation=length.664
+NZ_CP079235	GenBank	exon	4580	6574	.	+	1	Parent=KYE73_RS02315
+NZ_CP079235	GenBank	gene	6579	8207	.	+	1	ID=KYE73_RS02320;Name=KYE73_RS02320;old_locus_tag=KYE73_02310
+NZ_CP079235	GenBank	mRNA	6579	8207	.	+	1	ID=KYE73_RS02320;Parent=KYE73_RS02320
+NZ_CP079235	GenBank	CDS	6579	8207	.	+	1	ID=KYE73_RS02320;Parent=KYE73_RS02320;Name=KYE73_RS02320;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219830.1;old_locus_tag=KYE73_02310;product=glycoside hydrolase family 43 protein;protein_id=WP_226849180.1;transl_table=11;translation=length.542
+NZ_CP079235	GenBank	exon	6579	8207	.	+	1	Parent=KYE73_RS02320
+NZ_CP079235	GenBank	gene	8341	10188	.	+	1	ID=KYE73_RS02325;Name=KYE73_RS02325;old_locus_tag=KYE73_02315
+NZ_CP079235	GenBank	mRNA	8341	10188	.	+	1	ID=KYE73_RS02325;Parent=KYE73_RS02325
+NZ_CP079235	GenBank	CDS	8341	10188	.	+	1	ID=KYE73_RS02325;Parent=KYE73_RS02325;Name=KYE73_RS02325;Note=Derived by automated computational analysis using gene prediction method: GeneMarkS-2+.;codon_start=1;inference=COORDINATES: ab initio prediction:GeneMarkS-2+;old_locus_tag=KYE73_02315;product=hypothetical protein;protein_id=WP_226849182.1;transl_table=11;translation=length.615
+NZ_CP079235	GenBank	exon	8341	10188	.	+	1	Parent=KYE73_RS02325
+NZ_CP079235	GenBank	gene	10434	11567	.	+	1	ID=KYE73_RS02330;Name=KYE73_RS02330;old_locus_tag=KYE73_02320
+NZ_CP079235	GenBank	mRNA	10434	11567	.	+	1	ID=KYE73_RS02330;Parent=KYE73_RS02330
+NZ_CP079235	GenBank	CDS	10434	11567	.	+	1	ID=KYE73_RS02330;Parent=KYE73_RS02330;gO_function=GO:0004553 - hydrolase activity%2C hydrolyzing O-glycosyl compounds [Evidence IEA];gO_process=GO:0005975 - carbohydrate metabolic process [Evidence IEA];Name=KYE73_RS02330;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219825.1;old_locus_tag=KYE73_02320;product=glycosyl hydrolase family 8;protein_id=WP_226849184.1;transl_table=11;translation=length.377
+NZ_CP079235	GenBank	exon	10434	11567	.	+	1	Parent=KYE73_RS02330
+NZ_CP079235	GenBank	gene	11780	14254	.	+	1	ID=KYE73_RS02335;Name=KYE73_RS02335;old_locus_tag=KYE73_02325
+NZ_CP079235	GenBank	mRNA	11780	14254	.	+	1	ID=KYE73_RS02335;Parent=KYE73_RS02335
+NZ_CP079235	GenBank	CDS	11780	14254	.	+	1	ID=KYE73_RS02335;Parent=KYE73_RS02335;gO_function=GO:0004553 - hydrolase activity%2C hydrolyzing O-glycosyl compounds [Evidence IEA];gO_process=GO:0005975 - carbohydrate metabolic process [Evidence IEA];Name=KYE73_RS02335;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF012551.5;old_locus_tag=KYE73_02325;product=endo-1%2C4-beta-xylanase;protein_id=WP_226555413.1;transl_table=11;translation=length.824
+NZ_CP079235	GenBank	exon	11780	14254	.	+	1	Parent=KYE73_RS02335
+NZ_CP079235	GenBank	gene	14568	15842	.	+	1	ID=KYE73_RS02340;Name=KYE73_RS02340;old_locus_tag=KYE73_02330
+NZ_CP079235	GenBank	mRNA	14568	15842	.	+	1	ID=KYE73_RS02340;Parent=KYE73_RS02340
+NZ_CP079235	GenBank	CDS	14568	15842	.	+	1	ID=KYE73_RS02340;Parent=KYE73_RS02340;eC_number=3.1.26.-;gO_function=GO:0005524 - ATP binding [Evidence IEA]%3B GO:0003677 - DNA binding [Evidence IEA]%3B GO:0046872 - metal ion binding [Evidence IEA];gO_process=GO:0015074 - DNA integration [Evidence IEA];Name=KYE73_RS02340;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_015512243.1;old_locus_tag=KYE73_02330;product=integrase catalytic domain-containing protein;protein_id=WP_226555415.1;transl_table=11;translation=length.424
+NZ_CP079235	GenBank	exon	14568	15842	.	+	1	Parent=KYE73_RS02340
+NZ_CP079235	GenBank	gene	16462	17838	.	+	1	ID=KYE73_RS02345;Name=KYE73_RS02345;old_locus_tag=KYE73_02335
+NZ_CP079235	GenBank	mRNA	16462	17838	.	+	1	ID=KYE73_RS02345;Parent=KYE73_RS02345
+NZ_CP079235	GenBank	CDS	16462	17838	.	+	1	ID=KYE73_RS02345;Parent=KYE73_RS02345;Name=KYE73_RS02345;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF015585.5;old_locus_tag=KYE73_02335;product=sialate O-acetylesterase;protein_id=WP_226849186.1;transl_table=11;translation=length.458
+NZ_CP079235	GenBank	exon	16462	17838	.	+	1	Parent=KYE73_RS02345
+NZ_CP079235	GenBank	pseudogenic_exon	17867	18709	.	+	1	ID=KYE73_RS02350;gO_function=GO:0030554 - adenyl nucleotide binding [Evidence IEA]%3B GO:0018455 - alcohol dehydrogenase [NAD(P)+] activity [Evidence IEA]%3B GO:0046872 - metal ion binding [Evidence IEA];Name=KYE73_RS02350;Note=incomplete%3B partial in the middle of a contig%3B missing C-terminus%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF012678.5;old_locus_tag=KYE73_02340;product=iron-containing alcohol dehydrogenase;pseudo=_no_value;transl_table=11
+NZ_CP079235	GenBank	pseudogene	17867	18709	.	+	1	ID=KYE73_RS02350.pseudogene;Alias=KYE73_RS02350;Name=KYE73_RS02350;old_locus_tag=KYE73_02340;pseudo=_no_value
+NZ_CP079235	GenBank	gene	18828	19067	.	+	1	ID=KYE73_RS09455;Name=KYE73_RS09455
+NZ_CP079235	GenBank	mRNA	18828	19067	.	+	1	ID=KYE73_RS09455;Parent=KYE73_RS09455
+NZ_CP079235	GenBank	CDS	18828	19067	.	+	1	ID=KYE73_RS09455;Parent=KYE73_RS09455;Name=KYE73_RS09455;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF012678.5;product=hypothetical protein;protein_id=WP_261980546.1;transl_table=11;translation=length.79
+NZ_CP079235	GenBank	exon	18828	19067	.	+	1	Parent=KYE73_RS09455
+NZ_CP079235	GenBank	gene	19647	20543	.	-	1	ID=KYE73_RS02355;Name=KYE73_RS02355;old_locus_tag=KYE73_02345
+NZ_CP079235	GenBank	mRNA	19647	20543	.	-	1	ID=KYE73_RS02355;Parent=KYE73_RS02355
+NZ_CP079235	GenBank	CDS	19647	20543	.	-	1	ID=KYE73_RS02355;Parent=KYE73_RS02355;gO_function=GO:0016799 - hydrolase activity%2C hydrolyzing N-glycosyl compounds [Evidence IEA];Name=KYE73_RS02355;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_004219814.1;old_locus_tag=KYE73_02345;product=nucleoside hydrolase;protein_id=WP_226555418.1;transl_table=11;translation=length.298
+NZ_CP079235	GenBank	exon	19647	20543	.	-	1	Parent=KYE73_RS02355
+NZ_CP079235	GenBank	pseudogenic_exon	20622	22152	.	-	1	ID=KYE73_RS02360;gO_function=GO:0016301 - kinase activity [Evidence IEA];gO_process=GO:0005975 - carbohydrate metabolic process [Evidence IEA];Name=KYE73_RS02360;Note=frameshifted%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_015713824.1;old_locus_tag=KYE73_02350;product=FGGY family carbohydrate kinase;pseudo=_no_value;transl_table=11
+NZ_CP079235	GenBank	pseudogene	20622	22152	.	-	1	ID=KYE73_RS02360.pseudogene;Alias=KYE73_RS02360;Name=KYE73_RS02360;old_locus_tag=KYE73_02350;pseudo=_no_value
+NZ_CP079235	GenBank	gene	22335	23561	.	+	1	ID=KYE73_RS02365;Name=KYE73_RS02365;old_locus_tag=KYE73_02355
+NZ_CP079235	GenBank	mRNA	22335	23561	.	+	1	ID=KYE73_RS02365;Parent=KYE73_RS02365
+NZ_CP079235	GenBank	CDS	22335	23561	.	+	1	ID=KYE73_RS02365;Parent=KYE73_RS02365;Name=KYE73_RS02365;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003837133.1;old_locus_tag=KYE73_02355;product=ROK family transcriptional regulator;protein_id=WP_226555419.1;transl_table=11;translation=length.408
+NZ_CP079235	GenBank	exon	22335	23561	.	+	1	Parent=KYE73_RS02365

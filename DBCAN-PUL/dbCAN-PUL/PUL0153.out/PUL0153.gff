@@ -1,0 +1,21 @@
+##gff-version 3
+##sequence-region MSTC01000081 1 4566
+# conversion-by bp_genbank2gff3.pl
+# organism Lactobacillus rhamnosus
+# Note Lactobacillus rhamnosus strain AMC010 contig_58, whole genome shotgun sequence.
+# date 01-FEB-2017
+MSTC01000081	GenBank	region	1	4566	.	+	1	ID=MSTC01000081;Dbxref=BioProject:PRJNA357881,taxon:47715;Name=MSTC01000081;Note=Lactobacillus rhamnosus strain AMC010 contig_58%2C whole genome shotgun sequence.,\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7,SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454,IonTorrent\n##Genome-Assembly-Data-END##;collection_date=2011;comment1=\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7%3B SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454%3B IonTorrent\n##Genome-Assembly-Data-END##;country=USA;date=01-FEB-2017;host=Homo sapiens;isolation_source=infant stools;mol_type=genomic DNA;organism=Lactobacillus rhamnosus;strain=AMC010;submitter_seqid=contig_58
+MSTC01000081	GenBank	gene	1	879	.	+	1	ID=BVG98_13950;Name=BVG98_13950
+MSTC01000081	GenBank	mRNA	1	879	.	+	1	ID=BVG98_13950;Parent=BVG98_13950
+MSTC01000081	GenBank	CDS	1	879	.	+	1	ID=BVG98_13950;Parent=BVG98_13950;Name=BVG98_13950;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003660216.1;product=transcription antiterminator lact;protein_id=ONF98579.1;transl_table=11;translation=length.292
+MSTC01000081	GenBank	exon	1	879	.	+	1	Parent=BVG98_13950
+MSTC01000081	GenBank	pseudogenic_exon	1000	2731	.	+	1	ID=BVG98_13955;Name=BVG98_13955;Note=frameshifted%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005691812.1;product=PTS lactose transporter subunit IIB;protein_id=WP_005691812.1;pseudo="";transl_table=11
+MSTC01000081	GenBank	pseudogene	1000	2731	.	+	1	ID=BVG98_13955.pseudogene;Alias=BVG98_13955;Name=BVG98_13955;pseudo=""
+MSTC01000081	GenBank	gene	2758	4182	.	+	1	ID=BVG98_13960;Name=BVG98_13960
+MSTC01000081	GenBank	mRNA	2758	4182	.	+	1	ID=BVG98_13960;Parent=BVG98_13960
+MSTC01000081	GenBank	CDS	2758	4182	.	+	1	ID=BVG98_13960;Parent=BVG98_13960;Name=BVG98_13960;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003589794.1;product=GH1;protein_id=ONF98580.1;transl_table=11;translation=length.474
+MSTC01000081	GenBank	exon	2758	4182	.	+	1	Parent=BVG98_13960
+MSTC01000081	GenBank	gene	4231	4566	.	+	1	ID=BVG98_13965;Name=BVG98_13965
+MSTC01000081	GenBank	mRNA	4231	4566	.	+	1	ID=BVG98_13965;Parent=BVG98_13965
+MSTC01000081	GenBank	CDS	4231	4566	.	+	1	ID=BVG98_13965;Parent=BVG98_13965;Name=BVG98_13965;Note=catalyzes the phosphorylation of incoming sugar substrates concomitant with their translocation across the cell membrane%3B protein IIA transfers a phosphoryl group to IIB which then transfers the phosphoryl group to the sugar%3B IIC forms the translocation channel for the sugar uptake%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003589792.1;product=gnl|TC-DB|Q045H4|4.A.3.1.3;protein_id=ONF98581.1;transl_table=11;translation=length.111
+MSTC01000081	GenBank	exon	4231	4566	.	+	1	Parent=BVG98_13965

@@ -1,0 +1,16 @@
+##gff-version 3
+##sequence-region AY870655 1 3050
+# conversion-by bp_genbank2gff3.pl
+# organism Pectobacterium carotovorum subsp. carotovorum
+# Note Pectobacterium carotovorum subsp. carotovorum BglY (bglY) and BglK (bglK) genes, complete cds.
+# date 01-JAN-2006
+AY870655	GenBank	region	1	3050	.	+	1	ID=AY870655;Dbxref=taxon:555;Name=AY870655;Note=Pectobacterium carotovorum subsp. carotovorum BglY (bglY) and BglK (bglK) genes%2C complete cds.;date=01-JAN-2006;mol_type=genomic DNA;organism=Pectobacterium carotovorum subsp. carotovorum;strain=LY34;sub_species=carotovorum
+AY870655	GenBank	repeat_region	220	265	.	+	1	ID=GenBank:repeat_region:AY870655:220:265;rpt_type=inverted
+AY870655	GenBank	gene	356	1780	.	+	1	ID=bglY;Name=bglY
+AY870655	GenBank	mRNA	356	1780	.	+	1	ID=bglY;Parent=bglY
+AY870655	GenBank	CDS	356	1780	.	+	1	ID=bglY;Parent=bglY;Name=bglY;Note=beta-glucosidase;codon_start=1;product=BglY;protein_id=AAX76617.1;transl_table=11;translation=length.474
+AY870655	GenBank	exon	356	1780	.	+	1	Parent=bglY
+AY870655	GenBank	gene	1874	2710	.	+	1	ID=bglK;Name=bglK
+AY870655	GenBank	mRNA	1874	2710	.	+	1	ID=bglK;Parent=bglK
+AY870655	GenBank	CDS	1874	2710	.	+	1	ID=bglK;Parent=bglK;Name=bglK;Note=antiterminator;codon_start=1;product=BglK;protein_id=AAX76618.1;transl_table=11;translation=length.278
+AY870655	GenBank	exon	1874	2710	.	+	1	Parent=bglK

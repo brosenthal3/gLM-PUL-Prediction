@@ -1,0 +1,23 @@
+##gff-version 3
+##sequence-region AY230005 1 6200
+# conversion-by bp_genbank2gff3.pl
+# organism Spiroplasma citri
+# Note Spiroplasma citri strain GII-3 trehalose operon, complete sequence.
+# date 02-SEP-2003
+AY230005	GenBank	region	1	6200	.	+	1	ID=AY230005;Dbxref=taxon:2133;Name=AY230005;Note=Spiroplasma citri strain GII-3 trehalose operon%2C complete sequence.;date=02-SEP-2003;mol_type=genomic DNA;organism=Spiroplasma citri;strain=GII-3
+AY230005	GenBank	CDS	53	841	.	+	1	ID=AAP55640.1;Name="";codon_start=1;product=rRNA methylase;protein_id=AAP55640.1;transl_table=4;translation=length.262
+AY230005	GenBank	CDS	841	1440	.	+	1	ID=AAP55641.1;Name="";Note=GTPase;codon_start=1;product=GTP binding protein;protein_id=AAP55641.1;transl_table=4;translation=length.199
+AY230005	GenBank	CDS	1533	1796	.	+	1	ID=unknown;Name=unknown;codon_start=1;product=unknown;protein_id=AAP55642.1;transl_table=4;translation=length.87
+AY230005	GenBank	gene	53	6090	.	+	1	ID=trehalose operon;Name=trehalose operon
+AY230005	GenBank	gene	1786	2775	.	+	1	ID=treR;Name=treR
+AY230005	GenBank	mRNA	1786	2775	.	+	1	ID=treR;Parent=treR
+AY230005	GenBank	CDS	1786	2775	.	+	1	ID=treR;Parent=treR;Name=treR;codon_start=1;product=transcriptional regulator;protein_id=AAP55643.1;transl_table=4;translation=length.329
+AY230005	GenBank	exon	1786	2775	.	+	1	Parent=treR
+AY230005	GenBank	gene	2844	4412	.	+	1	ID=treP;Name=treP
+AY230005	GenBank	mRNA	2844	4412	.	+	1	ID=treP;Parent=treP
+AY230005	GenBank	CDS	2844	4412	.	+	1	ID=treP;Parent=treP;Name=treP;Note=trehalose-PTS permease;codon_start=1;product=PTS enzyme II trehalose-specific IIBC component;protein_id=AAP55644.1;transl_table=4;translation=length.522
+AY230005	GenBank	exon	2844	4412	.	+	1	Parent=treP
+AY230005	GenBank	gene	4441	6090	.	+	1	ID=treA;Name=treA
+AY230005	GenBank	mRNA	4441	6090	.	+	1	ID=treA;Parent=treA
+AY230005	GenBank	CDS	4441	6090	.	+	1	ID=treA;Parent=treA;Name=treA;codon_start=1;product=alpha-amylase;protein_id=AAP55645.1;transl_table=4;translation=length.549
+AY230005	GenBank	exon	4441	6090	.	+	1	Parent=treA

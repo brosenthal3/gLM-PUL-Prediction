@@ -1,0 +1,32 @@
+##gff-version 3
+##sequence-region U07818 1 5026
+# conversion-by bp_genbank2gff3.pl
+# organism Geobacillus stearothermophilus
+# Note Bacillus stearothermophilus XL-65-6 PTS regulatory protein (celR') gene, partial cds, and cellobiose phosphotransferase system operon (celA, celB, celC, and celD) genes, complete cds.
+# date 31-MAR-1994
+BSU07818	GenBank	region	1	5026	.	+	1	ID=U07818;Dbxref=taxon:1422;Name=U07818;Note=Bacillus stearothermophilus XL-65-6 PTS regulatory protein (celR') gene%2C partial cds%2C and cellobiose phosphotransferase system operon (celA%2C celB%2C celC%2C and celD) genes%2C complete cds.,On Mar 30,1994 this sequence version replaced gi:433021.,isolated from rotting wood;clone_lib=genomic;comment1=On Mar 30%2C 1994 this sequence version replaced gi:433021.;date=31-MAR-1994;mol_type=unassigned DNA;organism=Geobacillus stearothermophilus;strain=XL-65-6
+BSU07818	GenBank	regulatory	1482	1513	.	+	1	ID=GenBank:regulatory:BSU07818:1482:1513;Note=putative;regulatory_class=promoter
+BSU07818	GenBank	gene	1	1393	.	+	1	ID=celR';Name=celR'
+BSU07818	GenBank	mRNA	1	1393	.	+	1	ID=celR';Parent=celR'
+BSU07818	GenBank	CDS	1	1393	.	+	1	ID=celR';Parent=celR';Name=celR';codon_start=2;product=regulatory protein;protein_id=AAA17388.1;transl_table=11;translation=length.463
+BSU07818	GenBank	exon	1	1393	.	+	1	Parent=celR'
+BSU07818	GenBank	gene	1524	1843	.	+	1	ID=celA;Name=celA
+BSU07818	GenBank	mRNA	1541	1843	.	+	1	ID=celA;Parent=celA
+BSU07818	GenBank	regulatory	1524	1531	.	+	1	Parent=celA;Name=celA;Note=putative;regulatory_class=ribosome_binding_site
+BSU07818	GenBank	CDS	1541	1843	.	+	1	ID=celA;Parent=celA;Name=celA;Note=cellobiose PTS enzyme II';codon_start=1;product=cellobiose phosphotransferase enzyme II';protein_id=AAA17389.1;transl_table=11;translation=length.100
+BSU07818	GenBank	exon	1541	1843	.	+	1	Parent=celA
+BSU07818	GenBank	gene	1842	3216	.	+	1	ID=celB;Name=celB
+BSU07818	GenBank	mRNA	1861	3216	.	+	1	ID=celB;Parent=celB
+BSU07818	GenBank	regulatory	1842	1851	.	+	1	Parent=celB;Name=celB;Note=putative;regulatory_class=ribosome_binding_site
+BSU07818	GenBank	CDS	1861	3216	.	+	1	ID=celB;Parent=celB;Name=celB;Note=cellobiose PTS enzyme II'';codon_start=1;product=cellobiose phosphotransferase enzyme II'';protein_id=AAA17390.1;transl_table=11;translation=length.451
+BSU07818	GenBank	exon	1861	3216	.	+	1	Parent=celB
+BSU07818	GenBank	gene	3215	3968	.	+	1	ID=celC;Name=celC
+BSU07818	GenBank	mRNA	3231	3968	.	+	1	ID=celC;Parent=celC
+BSU07818	GenBank	regulatory	3215	3221	.	+	1	Parent=celC;Name=celC;Note=putative;regulatory_class=ribosome_binding_site
+BSU07818	GenBank	CDS	3231	3968	.	+	1	ID=celC;Parent=celC;Name=celC;Note=putative phospho-beta-glucosidase;codon_start=1;protein_id=AAA17391.1;transl_table=11;translation=length.245
+BSU07818	GenBank	exon	3231	3968	.	+	1	Parent=celC
+BSU07818	GenBank	gene	3967	4306	.	+	1	ID=celD;Name=celD
+BSU07818	GenBank	mRNA	3980	4306	.	+	1	ID=celD;Parent=celD
+BSU07818	GenBank	regulatory	3967	3975	.	+	1	Parent=celD;Name=celD;Note=putative;regulatory_class=ribosome_binding_site
+BSU07818	GenBank	CDS	3980	4306	.	+	1	ID=celD;Parent=celD;Name=celD;Note=cellobiose PTS enzyme III;codon_start=1;product=cellobiose phosphotransferase enzyme III;protein_id=AAA17392.1;transl_table=11;translation=length.108
+BSU07818	GenBank	exon	3980	4306	.	+	1	Parent=celD

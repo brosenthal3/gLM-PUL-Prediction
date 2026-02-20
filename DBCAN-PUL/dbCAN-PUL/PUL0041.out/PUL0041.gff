@@ -1,0 +1,19 @@
+##gff-version 3
+##sequence-region U61727 1 3850
+# conversion-by bp_genbank2gff3.pl
+# organism Klebsiella oxytoca
+# Note Klebsiella oxytoca PTS antiterminator (casR) gene, partial cds, cellobiose-specific PTS permease (casA) and phospho-cellobiase (casB) genes, complete cds.
+# date 22-JUL-2016
+KOU61727	GenBank	region	1	3850	.	+	1	ID=U61727;Dbxref=taxon:571;Name=U61727;Note=Klebsiella oxytoca PTS antiterminator (casR) gene%2C partial cds%2C cellobiose-specific PTS permease (casA) and phospho-cellobiase (casB) genes%2C complete cds.;date=22-JUL-2016;mol_type=genomic DNA;organism=Klebsiella oxytoca;strain=P2
+KOU61727	GenBank	gene	1	291	.	+	1	ID=casR;Name=casR
+KOU61727	GenBank	mRNA	1	291	.	+	1	ID=casR;Parent=casR
+KOU61727	GenBank	CDS	1	291	.	+	1	ID=casR;Parent=casR;Name=casR;Note=regulatory protein;codon_start=1;product=PTS antiterminator;protein_id=AAB51562.1;transl_table=11;translation=length.96
+KOU61727	GenBank	exon	1	291	.	+	1	Parent=casR
+KOU61727	GenBank	gene	456	2321	.	+	1	ID=casA;Name=casA
+KOU61727	GenBank	mRNA	456	2321	.	+	1	ID=casA;Parent=casA
+KOU61727	GenBank	CDS	456	2321	.	+	1	ID=casA;Parent=casA;Name=casA;Note=PTS enzyme II homolog;codon_start=1;product=gnl|TC-DB|P08722|4.A.1.2.2;protein_id=AAB51563.1;transl_table=11;translation=length.621
+KOU61727	GenBank	exon	456	2321	.	+	1	Parent=casA
+KOU61727	GenBank	gene	2339	3733	.	+	1	ID=casB;Name=casB
+KOU61727	GenBank	mRNA	2339	3733	.	+	1	ID=casB;Parent=casB
+KOU61727	GenBank	CDS	2339	3733	.	+	1	ID=casB;Parent=casB;Name=casB;Note=glycohydrolase homolog;codon_start=1;product=GH1;protein_id=AAB51564.1;transl_table=11;translation=length.464
+KOU61727	GenBank	exon	2339	3733	.	+	1	Parent=casB

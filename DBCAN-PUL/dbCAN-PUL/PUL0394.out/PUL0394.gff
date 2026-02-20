@@ -1,0 +1,17 @@
+##gff-version 3
+##sequence-region GU591787 1 7858
+# conversion-by bp_genbank2gff3.pl
+# organism Roseburia inulinivorans DSM 16841
+# Note Roseburia inulinivorans DSM 16841 beta-fructosidase operon, complete sequence.
+# date 21-MAR-2011
+GU591787	GenBank	region	1	7858	.	+	1	ID=GU591787;Dbxref=taxon:622312;Name=GU591787;Note=Roseburia inulinivorans DSM 16841 beta-fructosidase operon%2C complete sequence.,strain coidentity: DSM 16841 %3D A2-194;clone=I1;collected_by=Jenny Martin;collection_date=Dec-1997;country=United Kingdom;culture_collection=DSM:16841;date=21-MAR-2011;host=Homo sapiens;identified_by=Jenny Martin;isolation_source=fecal sample;mol_type=genomic DNA;organism=Roseburia inulinivorans DSM 16841;strain=A2-194;type_material=type strain of Roseburia inulinivorans
+GU591787	GenBank	operon	21	7392	.	+	1	ID=operon:beta-fructosidase;operon=beta-fructosidase
+GU591787	GenBank	CDS	21	1046	.	-	1	ID=ADF57363.1;Name="";codon_start=1;product=repressor protein;protein_id=ADF57363.1;transl_table=11;translation=length.341
+GU591787	GenBank	CDS	1303	2241	.	+	1	ID=ADF57364.1;Name="";codon_start=1;operon=beta-fructosidase;product=ABC transport system;protein_id=ADF57364.1;transl_table=11;translation=length.312
+GU591787	GenBank	CDS	2254	3150	.	+	1	ID=ADF57365.1;Name="";codon_start=1;operon=beta-fructosidase;product=ABC transport system;protein_id=ADF57365.1;transl_table=11;translation=length.298
+GU591787	GenBank	CDS	3170	4840	.	+	1	ID=ADF57366.1;Name="";codon_start=1;operon=beta-fructosidase;product=extracellular solute binding protein;protein_id=ADF57366.1;transl_table=11;translation=length.556
+GU591787	GenBank	CDS	4857	6374	.	+	1	ID=beta-fructosidase;Name=beta-fructosidase;codon_start=1;operon=beta-fructosidase;product=beta-fructosidase;protein_id=ADF57367.1;transl_table=11;translation=length.505
+GU591787	GenBank	gene	6436	7392	.	+	1	ID=6-pfk;Name=6-pfk;operon=beta-fructosidase
+GU591787	GenBank	mRNA	6436	7392	.	+	1	ID=6-pfk;Parent=6-pfk
+GU591787	GenBank	CDS	6436	7392	.	+	1	ID=6-pfk;Parent=6-pfk;Name=6-pfk;codon_start=1;operon=beta-fructosidase;product=6-phosphofructokinase;protein_id=ADF57368.1;transl_table=11;translation=length.318
+GU591787	GenBank	exon	6436	7392	.	+	1	Parent=6-pfk

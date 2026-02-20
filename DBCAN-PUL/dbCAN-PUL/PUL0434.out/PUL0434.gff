@@ -1,0 +1,39 @@
+##gff-version 3
+##sequence-region AF132735 1 14184
+# conversion-by bp_genbank2gff3.pl
+# organism Clostridium cellulovorans 743B
+# Note Clostridium cellulovorans endoglucanase K (engK), hydrophobic protein A (hbpA), endoglucanase L (engL), mannanase A (manA), endoglucanase M (engM), endoglucanase N (engN), and transposase (trp) genes, complete cds; and malate permease (mln) gene, partial cds.
+# date 26-JUL-2016
+AF132735	GenBank	region	1	14184	.	+	1	ID=AF132735;Dbxref=ATCC:35296,taxon:573061;Name=AF132735;Note=Clostridium cellulovorans endoglucanase K (engK)%2C hydrophobic protein A (hbpA)%2C endoglucanase L (engL)%2C mannanase A (manA)%2C endoglucanase M (engM)%2C endoglucanase N (engN)%2C and transposase (trp) genes%2C complete cds%3B and malate permease (mln) gene%2C partial cds.,On Mar 31,2000 this sequence version replaced AF132735.1.;comment1=On Mar 31%2C 2000 this sequence version replaced AF132735.1.;date=26-JUL-2016;mol_type=genomic DNA;organism=Clostridium cellulovorans 743B;strain=ATCC 35296;type_material=type strain of Clostridium cellulovorans
+AF132735	GenBank	gene	92	2770	.	+	1	ID=engK;Name=engK
+AF132735	GenBank	mRNA	92	2770	.	+	1	ID=engK;Parent=engK
+AF132735	GenBank	CDS	92	2770	.	+	1	ID=engK;Parent=engK;eC_number=3.2.1.4;Name=engK;Note=cellulase%3B family 9 glycosyl hydrolase%3B family IV CBD%3B contains a dockerin domain;codon_start=1;product=endoglucanase K;protein_id=AAF06107.1;transl_table=11;translation=length.892
+AF132735	GenBank	exon	92	2770	.	+	1	Parent=engK
+AF132735	GenBank	gene	2918	3640	.	+	1	ID=hbpA;Name=hbpA
+AF132735	GenBank	mRNA	2918	3640	.	+	1	ID=hbpA;Parent=hbpA
+AF132735	GenBank	CDS	2918	3640	.	+	1	ID=hbpA;Parent=hbpA;Name=hbpA;Note=cohesin;codon_start=1;product=hydrophobic protein A;protein_id=AAF06108.1;transl_table=11;translation=length.240
+AF132735	GenBank	exon	2918	3640	.	+	1	Parent=hbpA
+AF132735	GenBank	gene	3874	5442	.	+	1	ID=engL;Name=engL
+AF132735	GenBank	mRNA	3874	5442	.	+	1	ID=engL;Parent=engL
+AF132735	GenBank	CDS	3874	5442	.	+	1	ID=engL;Parent=engL;eC_number=3.2.1.4;Name=engL;Note=cellulase%3B family 9 glycosyl hydrolase%3B contains a dockerin domain;codon_start=1;product=endoglucanase L;protein_id=AAF06109.1;transl_table=11;translation=length.522
+AF132735	GenBank	exon	3874	5442	.	+	1	Parent=engL
+AF132735	GenBank	gene	6013	7290	.	+	1	ID=manA;Name=manA
+AF132735	GenBank	mRNA	6013	7290	.	+	1	ID=manA;Parent=manA
+AF132735	GenBank	CDS	6013	7290	.	+	1	ID=manA;Parent=manA;eC_number=3.2.1.78;Name=manA;Note=family 5 glycosyl hydrolase%3B contains a dockerin domain;codon_start=1;product=mannanase A;protein_id=AAF06110.2;transl_table=11;translation=length.425
+AF132735	GenBank	exon	6013	7290	.	+	1	Parent=manA
+AF132735	GenBank	gene	8125	10755	.	+	1	ID=engM;Name=engM
+AF132735	GenBank	mRNA	8125	10755	.	+	1	ID=engM;Parent=engM
+AF132735	GenBank	CDS	8125	10755	.	+	1	ID=engM;Parent=engM;Name=engM;Note=cellulase%3B family 9 glycosyl hydrolase%3B family IV CBD%3B contains a dockerin domain;codon_start=1;product=endoglucanase M;protein_id=AAF06111.2;transl_table=11;translation=length.876
+AF132735	GenBank	exon	8125	10755	.	+	1	Parent=engM
+AF132735	GenBank	gene	11112	11717	.	+	1	ID=engN;Name=engN
+AF132735	GenBank	mRNA	11112	11717	.	+	1	ID=engN;Parent=engN
+AF132735	GenBank	CDS	11112	11717	.	+	1	ID=engN;Parent=engN;Name=engN;Note=family IV CBD;codon_start=1;product=endoglucanase N;protein_id=AAF61310.1;transl_table=11;translation=length.201
+AF132735	GenBank	exon	11112	11717	.	+	1	Parent=engN
+AF132735	GenBank	gene	12101	13042	.	-	1	ID=trp;Name=trp
+AF132735	GenBank	mRNA	12101	13042	.	-	1	ID=trp;Parent=trp
+AF132735	GenBank	CDS	12101	13042	.	-	1	ID=trp;Parent=trp;Name=trp;codon_start=1;product=transposase;protein_id=AAF61311.1;transl_table=11;translation=length.313
+AF132735	GenBank	exon	12101	13042	.	-	1	Parent=trp
+AF132735	GenBank	gene	13314	14184	.	+	1	ID=mln;Name=mln
+AF132735	GenBank	mRNA	13314	14184	.	+	1	ID=mln;Parent=mln
+AF132735	GenBank	CDS	13314	14184	.	+	1	ID=mln;Parent=mln;Name=mln;codon_start=1;product=malate permease;protein_id=AAF61312.1;transl_table=11;translation=length.290
+AF132735	GenBank	exon	13314	14184	.	+	1	Parent=mln

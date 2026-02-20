@@ -1,0 +1,57 @@
+##gff-version 3
+##sequence-region M57692 1 12854
+# conversion-by bp_genbank2gff3.pl
+# organism Thermoanaerobacterium thermosulfurigenes
+# Note Thermoanaerobacterium thermosulfurigenes pullulanase (amyB) maltose-binding protein (amyE), membrane proteins for maltose transport (amyD and amyC), and alpha-cyclodextrin glycosyltransferase (amyA) genes, complete cds.
+# date 16-APR-2002
+TTPULSA	GenBank	region	1	12854	.	+	1	ID=M57692;Dbxref=taxon:33950;Name=M57692;Note=Thermoanaerobacterium thermosulfurigenes pullulanase (amyB) maltose-binding protein (amyE)%2C membrane proteins for maltose transport (amyD and amyC)%2C and alpha-cyclodextrin glycosyltransferase (amyA) genes%2C complete cds.,On or before Apr 5,2002 this sequence version replaced M57580.1,gi:1234894,gi:48767,gi:1004351. ;clone=pCT3%2C pCT4%2C pCT5%2C pCT14%2C pCT25%2C pCT26;clone_lib=DSM 3896;comment1=On or before Apr 5%2C 2002 this sequence version replaced M57580.1%2C gi:1234894%2C gi:48767%2C gi:1004351. ;date=16-APR-2002;mol_type=genomic DNA;organism=Thermoanaerobacterium thermosulfurigenes;strain=EM1
+TTPULSA	GenBank	regulatory	123	128	.	+	1	ID=GenBank:regulatory:TTPULSA:123:128;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	CDS	138	1109	.	+	1	ID=AAB00840.1;Note=ORF1;codon_start=1;protein_id=AAB00840.1;transl_table=11;translation=length.323
+TTPULSA	GenBank	regulatory	1094	1130	.	+	1	ID=GenBank:regulatory:TTPULSA:1094:1130;Note=ORF1;regulatory_class=terminator
+TTPULSA	GenBank	gene	1230	7084	.	+	1	ID=amyB;Name=amyB
+TTPULSA	GenBank	mRNA	1266	7084	.	+	1	ID=amyB;Parent=amyB;Name=amyB;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	mRNA	1266	10612	.	+	1	ID=amyB.t02;Parent=amyB;Note=polycistronic%3B amyB%2C amyE%2C amyD%2C amyC;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	regulatory	1230	1235	.	+	1	Parent=amyB;Name=amyB;regulatory_class=minus_35_signal
+TTPULSA	GenBank	regulatory	1253	1258	.	+	1	Parent=amyB;Name=amyB;regulatory_class=minus_10_signal
+TTPULSA	GenBank	regulatory	1421	1426	.	+	1	Parent=amyB;Name=amyB;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	signal_peptide	1434	1538	.	+	1	Parent=amyB;Name=amyB;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	mature_protein_region	1539	7016	.	+	1	ID=amyB;Parent=amyB;Name=amyB;experiment=experimental evidence%2C no additional details recorded;product=unnamed
+TTPULSA	GenBank	regulatory	7041	7084	.	+	1	Parent=amyB;Name=amyB;regulatory_class=terminator
+TTPULSA	GenBank	CDS	1434	7019	.	+	1	ID=amyB;Parent=amyB;Alias=amyB;eC_number=3.2.1.41;Name=amyB;Note=extracellular enzyme;codon_start=1;experiment=experimental evidence%2C no additional details recorded;function=hydrolysis of alpha-1%2C6 and alpha-1%2C4 glycosidic linkages;product=pullulanase;protein_id=AAB00841.1;transl_table=11;translation=length.1861
+TTPULSA	GenBank	exon	1266	7084	.	+	1	Parent=amyB;Name=amyB
+TTPULSA	GenBank	exon	1266	10612	.	+	1	Parent=amyB.t02
+TTPULSA	GenBank	gene	1266	4111	.	+	1	ID=amyB truncated;Name=amyB truncated
+TTPULSA	GenBank	mRNA	1266	4111	.	+	1	ID=amyB truncated;Parent=amyB truncated;Name=amyB truncated;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	exon	1266	4111	.	+	1	Parent=amyB truncated;Name=amyB truncated
+TTPULSA	GenBank	gene	7138	8785	.	+	1	ID=amyE;Name=amyE
+TTPULSA	GenBank	mRNA	7173	8785	.	+	1	ID=amyE;Parent=amyE;Name=amyE;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	mRNA	7173	10612	.	+	1	ID=amyE.t02;Parent=amyE;Note=polycistronic%3B amyE%2C amyD%2C amyC;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	mRNA	7173	9697	.	+	1	ID=amyE.t03;Parent=amyE;Note=polycistronic%3B amyE%2C amyD;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	regulatory	7138	7143	.	+	1	Parent=amyE;Name=amyE;regulatory_class=minus_35_signal
+TTPULSA	GenBank	regulatory	7161	7166	.	+	1	Parent=amyE;Name=amyE;regulatory_class=minus_10_signal
+TTPULSA	GenBank	regulatory	7389	7394	.	+	1	Parent=amyE;Name=amyE;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	signal_peptide	7404	7475	.	+	1	Parent=amyE;Name=amyE
+TTPULSA	GenBank	mature_protein_region	7476	8741	.	+	1	ID=amyE;Parent=amyE;Name=amyE;product=unnamed
+TTPULSA	GenBank	regulatory	8756	8785	.	+	1	Parent=amyE;Name=amyE;regulatory_class=terminator
+TTPULSA	GenBank	CDS	7404	8744	.	+	1	ID=amyE;Parent=amyE;Alias=amyE;Name=amyE;Note=extracellular component of an ABC transporter%3B lipoprotein (putative);codon_start=1;product=maltose-binding protein;protein_id=AAB00842.1;transl_table=11;translation=length.446
+TTPULSA	GenBank	exon	7173	8785	.	+	1	Parent=amyE;Name=amyE
+TTPULSA	GenBank	exon	7173	10612	.	+	1	Parent=amyE.t02
+TTPULSA	GenBank	exon	7173	9697	.	+	1	Parent=amyE.t03
+TTPULSA	GenBank	mature_protein_region	8819	9694	.	+	1	ID=amyD;Name=amyD;product=unnamed
+TTPULSA	GenBank	CDS	8819	9697	.	+	1	ID=amyD;Alias=amyD;Name=amyD;Note=membrane component of an ABC transporter;codon_start=1;product=membrane protein for maltose transport;protein_id=AAB00843.1;transl_table=11;translation=length.292
+TTPULSA	GenBank	gene	8805	9697	.	+	1	ID=amyD.gene;Alias=amyD;Name=amyD
+TTPULSA	GenBank	regulatory	8805	8810	.	+	1	Parent=amyD;Name=amyD;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	mature_protein_region	9697	10518	.	+	1	ID=amyC;Name=amyC;product=unnamed
+TTPULSA	GenBank	CDS	9697	10521	.	+	1	ID=amyC;Alias=amyC;Name=amyC;Note=membrane component of an ABC transporter;codon_start=1;product=membrane protein for maltose transport;protein_id=AAB00844.1;transl_table=11;translation=length.274
+TTPULSA	GenBank	regulatory	10569	10612	.	+	1	ID=GenBank:regulatory:TTPULSA:10569:10612;Note=amyE%2C amyD%2C amyC;regulatory_class=terminator
+TTPULSA	GenBank	gene	9681	10521	.	+	1	ID=amyC.gene;Alias=amyC;Name=amyC
+TTPULSA	GenBank	regulatory	9681	9686	.	+	1	Parent=amyC;Name=amyC;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	gene	10575	12828	.	+	1	ID=amyA;Name=amyA
+TTPULSA	GenBank	mRNA	10611	12828	.	+	1	ID=amyA;Parent=amyA;Name=amyA;experiment=experimental evidence%2C no additional details recorded
+TTPULSA	GenBank	regulatory	10575	10580	.	+	1	Parent=amyA;Name=amyA;regulatory_class=minus_35_signal
+TTPULSA	GenBank	regulatory	10598	10603	.	+	1	Parent=amyA;Name=amyA;regulatory_class=minus_10_signal
+TTPULSA	GenBank	regulatory	10683	10688	.	+	1	Parent=amyA;Name=amyA;regulatory_class=ribosome_binding_site
+TTPULSA	GenBank	signal_peptide	10696	10776	.	+	1	Parent=amyA;Name=amyA
+TTPULSA	GenBank	mature_protein_region	10777	12825	.	+	1	ID=amyA;Parent=amyA;Name=amyA;experiment=experimental evidence%2C no additional details recorded;product=unnamed
+TTPULSA	GenBank	CDS	10696	12828	.	+	1	ID=amyA;Parent=amyA;Alias=amyA;eC_number=2.4.1.19;Name=amyA;Note=extracellular enzyme;codon_start=1;experiment=experimental evidence%2C no additional details recorded;function=hydrolysis of alpha-1%2C4 glycosidic linkages;product=alpha-cyclodextrin glycosyltransferase;protein_id=AAB00845.1;transl_table=11;translation=length.710
+TTPULSA	GenBank	exon	10611	12828	.	+	1	Parent=amyA;Name=amyA

@@ -1,0 +1,395 @@
+LOCUS       AE006468                6952 bp    DNA     linear   BCT 24-JUL-2018
+DEFINITION  Salmonella enterica subsp. enterica serovar Typhimurium str. LT2,
+            complete genome.
+ACCESSION   AE006468
+VERSION     AE006468.2
+DBLINK      BioProject: PRJNA241
+            BioSample: SAMN02604315
+KEYWORDS    .
+SOURCE      Salmonella enterica subsp. enterica serovar Typhimurium str. LT2
+  ORGANISM  Salmonella enterica subsp. enterica serovar Typhimurium str. LT2
+            Bacteria; Proteobacteria; Gammaproteobacteria; Enterobacterales;
+            Enterobacteriaceae; Salmonella.
+REFERENCE   1  (bases 1 to 6952)
+  AUTHORS   McClelland,M., Sanderson,K.E., Spieth,J., Clifton,S.W.,
+            Latreille,P., Courtney,L., Porwollik,S., Ali,J., Dante,M., Du,F.,
+            Hou,S., Layman,D., Leonard,S., Nguyen,C., Scott,K., Holmes,A.,
+            Grewal,N., Mulvaney,E., Ryan,E., Sun,H., Florea,L., Miller,W.,
+            Stoneking,T., Nhan,M., Waterston,R. and Wilson,R.K.
+  TITLE     Complete genome sequence of Salmonella enterica serovar Typhimurium
+            LT2
+  JOURNAL   Nature 413 (6858), 852-856 (2001)
+   PUBMED   11677609
+REFERENCE   2  (bases 1 to 6952)
+  CONSRTM   The Salmonella typhimurium Genome Sequencing Project
+  TITLE     Direct Submission
+  JOURNAL   Submitted (29-MAR-2001) Genome Sequencing Center, Department of
+            Genetics, Washington University School of Medicine, 4444 Forest Park
+            Boulevard, St. Louis, MO 63108, USA
+REFERENCE   3  (bases 1 to 6952)
+  AUTHORS   McClelland,M., Jain,A., Saraogi,P., Mendelson,R., Westerman,R.,
+            SanMiguel,P. and Csonka,L.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (13-JAN-2016) Department of Microbiology and Molecular
+            Genetics, University of California, Irvine, CA 92697, USA
+  REMARK    Sequence update by submitter
+COMMENT     On Jan 13, 2016 this sequence version replaced AE006468.1.
+            Supported by NIH grant 5U 01 AI43283
+            Coding sequences below are predicted from manually evaluated
+            computer analysis, using similarity information and the programs;
+            GLIMMER; http://www.tigr.org/softlab/glimmer/glimmer.html and
+            GeneMark; http://opal.biology.gatech.edu/GeneMark/
+            EC numbers were kindly provided by Junko Yabuzaki and the Kyoto
+            Encyclopedia of Genes and Genomes; http://www.genome.ad.jp/kegg/,
+            and Pedro Romero and Peter Karp at EcoCyc;
+            http://ecocyc.PangeaSystems.com/ecocyc/
+            The analyses of ribosome binding sites and promoter binding sites
+            were kindly provided by Heladia Salgado, Julio Collado-Vides and
+            ReguonDB;
+            http://kinich.cifn.unam.mx:8850/db/regulondb_intro.frameset
+            This sequence was finished as follows unless otherwise noted: all
+            regions were double stranded, sequenced with an alternate
+            chemistries or covered by high quality data (i.e., phred quality >=
+            30); an attempt was made to resolve all sequencing problems, such
+            as compressions and repeats; all regions were covered by sequence
+            from more than one m13 subclone.
+FEATURES             Location/Qualifiers
+     source          1..6952
+                     /organism="Salmonella enterica subsp. enterica serovar
+                     Typhimurium str. LT2"
+                     /mol_type="genomic DNA"
+                     /strain="LT2"
+                     /serovar="Typhimurium"
+                     /sub_species="enterica"
+                     /culture_collection="ATCC:700720"
+                     /culture_collection="SGSC:1412"
+                     /type_material="type strain of Salmonella enterica"
+                     /db_xref="taxon:99287"
+                     /focus=""
+     gene            complement(1..839)
+                     /gene="nadE"
+                     /locus_tag="STM1310"
+     CDS             complement(1..828)
+                     /gene="nadE"
+                     /locus_tag="STM1310"
+                     /EC_number="6.3.5.1"
+                     /note="prefers NH3 over glutamine; similar to E. coli NAD
+                     synthetase, prefers NH3 over glutamine (AAC74810.1); Blastp
+                     hit to AAC74810.1 (275 aa), 89% identity in aa 1 - 275"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="NAD synthetase"
+                     /protein_id="AAL20235.1"
+                     /translation="MTLQQEIIQALGAKPHINPEEEIRRSVDFLKAYLKTYPFLKSLVL
+                     GISGGQDSTLAGKLSQMAIAELREETGDNALQFIAVRLPYGVQADEQDCQDAIAFIQPD
+                     RVLTVNIKGAVLASEQALREAGIELSDFVRGNEKARERMKAQYSIAGMTHGVVVGTDHA
+                     AEAITGFFTKYGDGGTDINPLHRLNKRQGKQLLAALGCPEHLYKKVPTADLEDDRPSLP
+                     DEAALGVTYDNIDDYLEGKTLDPAIAKTIEGWYVKTEHKRRLPITVFDDFWKR"
+     regulatory      complement(834..839)
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="nadE"
+                     /locus_tag="STM1310"
+                     /note="putative RBS for nadE; RegulonDB:STMS1H001558"
+     gene            919..1388
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+     regulatory      919..927
+                     /regulatory_class="minus_35_signal"
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+                     /note="putative -35_signal for osmE;
+                     RegulonDB:STMLTH004482"
+     regulatory      943..951
+                     /regulatory_class="minus_10_signal"
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+                     /note="putative -10_signal for osmE;
+                     RegulonDB:STMLTH004482"
+     protein_bind    1026..1040
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+                     /note="putative binding site for IHF, RegulonDB:
+                     STMS1H000219"
+                     /bound_moiety="IHF"
+     regulatory      1036..1041
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+                     /note="putative RBS for osmE; RegulonDB:STMS1H001559"
+     CDS             1047..1388
+                     /gene="osmE"
+                     /locus_tag="STM1311"
+                     /note="similar to E. coli activator of ntrL gene
+                     (AAC74809.1); Blastp hit to AAC74809.1 (112 aa), 96%
+                     identity in aa 1 - 112"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="transcriptional activator of ntrL gene"
+                     /protein_id="AAL20236.1"
+                     /translation="MNKNVAGILSAAAVMTMLAGCTAYDRTKDQFVEPVVKDVKKGMSR
+                     AQVAQIAGKPSSEVSMIHARGTCQTYILGQRDGKAETYFVALDDTGHVINSGYQTCAEY
+                     DTDPQAPKQ"
+     gene            1676..2009
+                     /gene="celA"
+                     /locus_tag="STM1312"
+     regulatory      1676..1681
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celA"
+                     /locus_tag="STM1312"
+                     /note="putative RBS for celA; RegulonDB:STMS1H001560"
+     CDS             1689..2009
+                     /gene="celA"
+                     /locus_tag="STM1312"
+                     /note="similar to E. coli PEP-dependent phosphotransferase
+                     enzyme IV for cellobiose, arbutin, and salicin
+                     (AAC74808.1); Blastp hit to AAC74808.1 (106 aa), 96%
+                     identity in aa 1 - 106"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="gnl|TC-DB|C4X744|4.A.3.2.7"
+                     /protein_id="AAL20237.1"
+                     /translation="MEKKHIYLFCSAGMSTSLLVSKMRAQAEKYEVPVIIEAFPETLAG
+                     EKGPAADVVLLGPQIAYMLPEIQRLLPGKPVEVIDSMLYGKVDGLGVLKAAVAAIKKAA
+                     AN"
+     gene            2078..3450
+                     /gene="celB"
+                     /locus_tag="STM1313"
+     regulatory      2078..2083
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celB"
+                     /locus_tag="STM1313"
+                     /note="putative RBS for celB; RegulonDB:STMS1H001561"
+     CDS             2092..3450
+                     /gene="celB"
+                     /locus_tag="STM1313"
+                     /note="similar to E. coli PEP-dependent phosphotransferase
+                     enzyme II for cellobiose, arbutin, and salicin
+                     (AAC74807.1); Blastp hit to AAC74807.1 (452 aa), 94%
+                     identity in aa 1 - 452"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="gnl|TC-DB|P17334|4.A.3.2.1"
+                     /protein_id="AAL20238.1"
+                     /translation="MSNVIASLEKVLLPFAVKIGKQPHVNAIKNGFIRLMPLTLAGAMF
+                     VLINNVFLSFGEGSFFYSMGIRLDASTIETLNGLKGIGGNVYNGTLGIMSLMAPFFIGM
+                     ALAEERKVDALAAGLLSVAAFMTVTPYSVGEAYAVGANWLGGANIISGIIIGLVVAEMF
+                     TFIVRRNWVIKLPDSVPASVSRSFSALIPGFIILSIMGIISWALSNYGSNFHQIIMDTI
+                     STPLASLGSVVGWAYVIFVPLLWFFGIHGSLALTALDSGIMTPWALENISIYQQYGSVD
+                     AALEAGKTFHIWAKPMLDSYIFLGGSGATLGLIIAIFLASRRADYRQVAKLALPSGIFQ
+                     INEPILFGLPIIMNPVMFIPFILVQPILAAITLVAYYLGIIPPITNIAPWTMPTGLGAF
+                     FNTNGSVAALLVALFNLAVATLIYLPFVVVANKAQNAIEQEESEEDIANALKF"
+     gene            3490..3848
+                     /gene="celC"
+                     /locus_tag="STM1314"
+     regulatory      3490..3495
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celC"
+                     /locus_tag="STM1314"
+                     /note="putative RBS for celC; RegulonDB:STMS1H001562"
+     CDS             3501..3848
+                     /gene="celC"
+                     /locus_tag="STM1314"
+                     /note="similar to E. coli PEP-dependent phosphotransferase
+                     enzyme III for cellobiose, arbutin, and salicin
+                     (AAC74806.1); Blastp hit to AAC74806.1 (116 aa), 87%
+                     identity in aa 1 - 115"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="gnl|TC-DB|P69791|4.A.3.2.1"
+                     /protein_id="AAL20239.1"
+                     /translation="MFDLENVVDNQTAAEELEEVVMGLIINSGQARSLAYGALRKAKEG
+                     DFEAAKAMMDQSRIALNEAHLVQTKLIEGDQGEGKMKVSLVLVHAQDHLMTSMLARELI
+                     AELIELHEKLK"
+     gene            3849..4701
+                     /gene="celD"
+                     /locus_tag="STM1315"
+     regulatory      3849..3854
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celD"
+                     /locus_tag="STM1315"
+                     /note="putative RBS for celD; RegulonDB:STMS1H001563"
+     CDS             3859..4701
+                     /gene="celD"
+                     /locus_tag="STM1315"
+                     /note="AraC/XylS family; similar to E. coli negative
+                     transcriptional regulator of cel operon (AAC74805.1);
+                     Blastp hit to AAC74805.1 (280 aa), 85% identity in aa 1 -
+                     280"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="DBD-Pfam|HTH_AraC,DBD-Pfam|HTH_AraC,DBD-SUPERFAMI
+                     LY|0035607"
+                     /protein_id="AAL20240.1"
+                     /translation="MMQLQVNATEIKTVYEQQLFNGKNFHVFIYNKTESVTGLHQHDYY
+                     EFTLVLTGRYYQEINGKRVLLERGDFVFIPVGSNHQSFYEFGATRILNVGISKRFFEQH
+                     YLPLLPFCFVASQVYRANSTFLTYIETVIASLNFRGNGLDEFIEVVTFYIINRLRHYRE
+                     EQVYDDIPQWLKATVEIMHDKTQFGEHALENMVRLSAKSQEYLTRATRRYYSKTPMQII
+                     NEIRINFAKKQLEMTNYSVTDIAYEAGYSSPSLFIKTFKKMTSFTPNSYRKRLTEINE"
+     gene            4814..6181
+                     /gene="celF"
+                     /locus_tag="STM1316"
+     regulatory      4814..4819
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celF"
+                     /locus_tag="STM1316"
+                     /note="putative RBS for celF; RegulonDB:STMS1H001564"
+     CDS             4826..6181
+                     /gene="celF"
+                     /locus_tag="STM1316"
+                     /EC_number="3.2.1.86"
+                     /note="similar to E. coli phospho-beta-glucosidase; cryptic
+                     (AAC74804.1); Blastp hit to AAC74804.1 (450 aa), 90%
+                     identity in aa 1 - 450; cellobiose-6-phosphate hydrolase"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="GH4"
+                     /protein_id="AAL20241.1"
+                     /translation="MSQKLKVVTIGGGSSYTPELLEGFIKRYHELPVTELWLVDVEDGK
+                     EKLGIIYDLCQRMIDKAGVPLKLYKTLDRREALKGANFVTTQLRVGQLKARELDERIPL
+                     SHGYLGQETNGAGGLFKGLRTIPVIFDIIKDVEELCPNAWVINFTNPAGMVTEAVYRHT
+                     NFKKFIGVCNIPVGMKMFIHDVLALNENDDLSIDLFGLNHMVFIKDVLVNGTSRFAELL
+                     DGVASGQLKASTVKNIFDLPFSEGLIRSLNMLPCSYLLYYFKQKEMLAIEMGEYYKGGA
+                     RAQVVQKVEKQLFDLYKNPELNVKPKELEQRGGAYYSDAACEVINAIYNDKQTEHYVNI
+                     PHHGHVENIPADWAVEMTCILGRNGATPHPRITRFDEKVLGLIHTIKGFEVAASNAALS
+                     GNFNDVLLALNLSPLVHSDRDAEVLARELILAHEKWLPNFAACIEALKGKHH"
+     gene            6184..6952
+                     /gene="celG"
+                     /locus_tag="STM1317"
+     regulatory      6184..6189
+                     /regulatory_class="ribosome_binding_site"
+                     /gene="celG"
+                     /locus_tag="STM1317"
+                     /note="putative RBS for celG; RegulonDB:STMS1H001565"
+     CDS             6194..6952
+                     /gene="celG"
+                     /locus_tag="STM1317"
+                     /note="similar to E. coli orf, hypothetical protein
+                     (AAC74803.1); Blastp hit to AAC74803.1 (249 aa), 76%
+                     identity in aa 1 - 249"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="putative glucosidase"
+                     /protein_id="AAL20242.1"
+                     /translation="MERVLIVNADDFGLSKGQNYGIVEAYRNGVVTSTTALVNGEAIDH
+                     AAQLSRELPALGVGMHFVLTLGKPVSEMPGLTRDGLLGKWIWQMAEEDTLPLDEIAHEL
+                     ACQYQRFIDVFGSEPTHLDSHHHVHMFPQIFPIVARFAAQRGIALRIDRQTVLNADDLP
+                     SDLRSTQGFSSEFYGEEITEACFLRILDASAHRGEASLEVMCHPAFVDNIIRQSAYCYP
+                     RLTELEVLTSASLKAAIAERGYRPGSFLDI"
+ORIGIN
+        1 ttaccttttc caaaagtcgt cgaataccgt aatcggtaaa cggcgcttat gttcagtttt
+       61 tacataccag ccttcgatag ttttagcgat ggcggggtcc agcgttttgc cttccaggta
+      121 atcgtcaata ttgtcatacg ttacgcccag cgcggcttca tcaggcagtg aagggcggtc
+      181 gtcttccaaa tcggcggtgg ggactttttt atacagatgc tcaggacagc ccagcgctgc
+      241 gagaagctgt ttgccctggc gtttgttaag gcgatgaagc gggttaatat cggtaccgcc
+      301 gtcgccatat ttggtgaaga acccggttat cgcttccgcc gcatggtcgg tgcccaccac
+      361 gacgccgtga gtcataccgg cgatgctata ttgcgctttc attcgctcac gcgctttttc
+      421 attgccgcga acaaaatcgc tcagctcaat tcccgcttcg cgcagcgcct gttcgctggc
+      481 gaggacggcg cctttaatat tgacggtgag tactctgtcc ggctgaataa aagcaatggc
+      541 gtcctggcaa tcctgttcat cagcctgtac gccataaggc agacgaacgg cgataaactg
+      601 cagcgcatta tcaccggtct cttctcgcaa ttcggcgata gccatctggc tgagtttccc
+      661 ggccagcgtc gaatcctgcc cgccgctgat gcctaacacc agcgatttca aaaagggata
+      721 ggttttcagg tacgctttaa gaaaatccac gctgcggcga atttcttctt cagggttgat
+      781 atgcggtttc gcgccaagcg cctggattat ctcttgctgc agagtcattt aacccccttc
+      841 gacattaaaa aaatgaatct ttaccctgtt aaagctaacc cttcgccgct gaaacaacaa
+      901 ggtttggcgg gctaagcggt gtttaaaaca acatgtcgct gcgttagaga attttccgaa
+      961 agactttttg tggcgaggcg cggcttgaaa aatgttctga tgtattccag gcttacataa
+     1021 cacgctgata aacaagagga cggaaaatga acaagaacgt agcaggaatt ttaagcgcag
+     1081 cggcggtaat gactatgctg gcaggttgta cggcgtatga tcgtacaaaa gaccaatttg
+     1141 ttgagcctgt cgttaaagat gttaaaaaag gaatgagcag ggcgcaagtt gcgcagattg
+     1201 cgggcaaacc gtcatctgaa gtgagtatga ttcatgcgcg cggtacctgt cagacctaca
+     1261 tcctgggtca acgtgatggt aaagcggaaa cctactttgt tgcgctggat gataccgggc
+     1321 acgtgattaa ctccggctac cagacctgtg cggagtacga cactgaccca caggcgccga
+     1381 agcagtaaca actgtacatt gcctgaacat tcaaggaaac cggcctgcga gccggttttt
+     1441 ttgtgcctgc cataacctta tttattatcg cgaattattt gcccgaaatg tgaggggggt
+     1501 cataacgcca ggtcaatgag agacaattta gtgggtcaag gaaataccat ccggtggtcc
+     1561 gatcccgtat actcatttca gccacctaaa aaagtaaatc cggttacgca agtcgcccag
+     1621 agtatggatg caggttgagg cttgcggcgt atctggttga cagataatcg cacatgagga
+     1681 aggtttttat ggaaaagaaa cacatttatc tgttttgttc tgcgggcatg tcaacatcgt
+     1741 tactggtatc aaaaatgcgc gctcaggctg aaaaatatga agtgccggtg attattgaag
+     1801 cattccctga aaccctggcc ggtgaaaaag gcccggcagc ggacgtcgtg ttattaggcc
+     1861 cgcaaattgc ttatatgctc cccgaaattc agcgtttatt acctggtaaa ccggtagaag
+     1921 tcattgattc aatgttgtac ggcaaggtag atggcttagg cgtgcttaaa gctgcggtag
+     1981 cggcaattaa aaaagccgcc gcgaattaat tattttttaa tttttcccgt caaagagtta
+     2041 tttcatacac taaccgcaat attttattgc ggtatttaag ggtatttttc tatgagtaac
+     2101 gttattgctt cacttgaaaa ggtactcctt ccttttgctg taaaaatagg aaagcagcca
+     2161 cacgttaatg caatcaagaa cggctttatt cgtttaatgc cattaaccct tgcgggggcg
+     2221 atgtttgtat taattaataa cgttttcctg agctttgggg aggggtcgtt tttttattcc
+     2281 atgggcattc ggcttgatgc ctcaaccatt gaaacactta atggattgaa aggcatcggc
+     2341 gggaacgtct ataacggcac attgggcatt atgtcgctca tggcgccatt ttttatcggc
+     2401 atggcgctgg cggaagagcg caaggttgat gcgctggccg ccggattgct ttccgtggcg
+     2461 gcatttatga ccgtaacgcc gtatagtgtc ggcgaggcct atgccgtagg cgctaactgg
+     2521 ctgggtggtg caaatattat ctccggtatt attattggcc tggtggtcgc ggagatgttt
+     2581 acatttattg tccggcgcaa ctgggtgatt aagctaccgg acagcgtacc ggcttcggtg
+     2641 tctcgttcat tctcagcatt aattcccggc tttattattc tctctattat ggggattatt
+     2701 tcctgggcgc tgtctaatta cggttctaac ttccatcaga ttattatgga cactatctct
+     2761 acgccgctgg catcgctggg tagcgtggta gggtgggcat atgtcatttt tgtaccgctg
+     2821 ctgtggttct ttggtattca tggttcgctg gcgctgaccg cgctggacag cggcatcatg
+     2881 acgccctggg cgctggaaaa catctctatt taccagcagt atggctccgt cgatgcggcg
+     2941 ctggaagccg gtaaaacgtt ccatatctgg gcgaaaccga tgctggattc ttatatcttc
+     3001 ctcggtggta gcggcgcaac gctgggtctg atcatcgcta tcttcctggc atcccgtcgc
+     3061 gcggactatc gccaggtggc aaaactggcg ctgccgtcag gtatcttcca gattaacgaa
+     3121 cccatcctgt ttggcctgcc gattattatg aacccggtga tgtttatccc cttcattctg
+     3181 gttcagccga ttctggcggc gattacgctg gtggcttact atttgggtat tattccgccg
+     3241 attaccaata ttgcgccgtg gaccatgcca accgggttgg gggcgttctt taacaccaac
+     3301 ggcagtgtcg ccgcgttgct ggttgcgcta tttaacctgg cggtcgctac cctgatttat
+     3361 ctccccttcg tggtggtggc taacaaagcg cagaacgcca tcgagcagga agaaagcgaa
+     3421 gaagatatcg ctaacgcact gaaattctaa actccgcgcc ggcatgggat gccatgccgg
+     3481 gctgaatcag aggaaagact atgtttgatc ttgaaaatgt tgtagataac cagaccgcgg
+     3541 ctgaggaact cgaagaagtc gttatggggc ttatcatcaa ttctggtcag gcgcgcagcc
+     3601 tggcatatgg cgcgctcaga aaagcgaaag aaggcgattt tgaggcggcg aaagcgatga
+     3661 tggaccagtc gcgcatagcg ctcaatgaag cgcatcttgt gcagacaaaa ctcatcgaag
+     3721 gcgatcaggg cgaaggcaaa atgaaagtca gtctggtcct ggttcacgct caggatcatt
+     3781 tgatgacatc aatgctggct cgtgaactga tcgccgagtt gattgagctc catgagaaac
+     3841 tgaaataaca gggggcggat gatgcagcta caggttaacg caacggaaat caaaacggtt
+     3901 tatgagcagc agctcttcaa tggcaaaaat ttccatgtgt ttatctataa caagacggaa
+     3961 agcgtcaccg ggctgcatca gcacgactac tatgaattta ccctggtatt aaccggacgt
+     4021 tattaccagg agattaacgg gaagcgtgtg ctgctggaac gtggagattt tgtttttatc
+     4081 ccggtggggt cgaatcacca aagtttctat gagtttggcg caacgcgtat tctgaacgta
+     4141 ggaattagta aacgtttttt tgaacagcat tatcttccgt tactgccgtt ttgttttgtg
+     4201 gcatcgcagg tatacagggc gaatagcact ttccttacct atattgaaac ggtgattgcg
+     4261 tcgttgaatt ttcgcggcaa tgggctcgac gaatttatcg aagtggtgac attttatatt
+     4321 ataaaccgct tacgtcatta ccgcgaagag caggtttatg atgatattcc acaatggctg
+     4381 aaagcaaccg tggagataat gcatgataaa acgcagtttg gcgaacatgc gctggaaaat
+     4441 atggtgcgcc tgtcggcaaa atcccaggag tatctgacgc gcgccacccg acgttattac
+     4501 agcaaaacgc cgatgcaaat cattaatgag attcgcatta attttgccaa gaaacagttg
+     4561 gaaatgacca actattcggt tacggatatt gcttatgaag ccgggtatag cagtccaagt
+     4621 ctgtttatta aaacgtttaa gaagatgacc tcatttacgc cgaatagtta tcggaagcga
+     4681 ttgacggaaa ttaatgagta acggtttgca ttgctcgatt aattacattt cacgcttgcc
+     4741 ccaatagcgc ggggaacgtc acgctatttc ttacgagcgg gcatagcgta atacatatca
+     4801 gtgttataca ctgaagggag atattatgag ccagaaatta aaagtcgtca ctattggtgg
+     4861 cgggagcagc tacacccctg aattacttga aggctttatt aagcgctacc atgaattacc
+     4921 tgtcaccgaa ttatggctgg ttgacgttga agacgggaaa gagaagctgg gcattattta
+     4981 tgatctctgc cagcgaatga ttgataaagc aggcgttccg ctaaaattgt ataaaacgct
+     5041 ggatcgccgg gaagcgctga aaggcgctaa ttttgtcact acccagctac gcgttggtca
+     5101 actcaaagcc cgtgagctgg acgagcgtat cccgcttagc cacggctatc tggggcaaga
+     5161 aaccaacggc gctggcggtt tatttaaagg gttgcgtacc attccggtta tttttgacat
+     5221 cattaaggat gttgaagaat tatgtccgaa tgcgtgggtc attaacttta ctaacccggc
+     5281 ggggatggtg acggaagcgg tttatcgtca taccaacttt aaaaaattca tcggcgtatg
+     5341 taatattcct gtcggcatga aaatgtttat tcatgacgtg ctggcgctga atgagaatga
+     5401 cgatctttcc attgacctgt ttggtctaaa ccatatggtc tttattaaag atgtgctggt
+     5461 gaatggcacc tcacggttcg cagaattact ggatggcgtg gcgtccggtc agttgaaagc
+     5521 gtcaaccgta aaaaatatct ttgatctgcc gtttagtgaa ggattgattc gctcgctgaa
+     5581 catgctgccg tgctcttatt tgttgtatta cttcaagcaa aaagagatgt tggcgattga
+     5641 aatgggcgaa tattacaaag gcggcgcgcg cgctcaggtc gtacagaaag tggagaaaca
+     5701 actcttcgac ttgtacaaaa atcctgagct aaacgtgaag ccgaaagagc ttgagcaacg
+     5761 cggcggcgct tattattccg atgccgcttg tgaagtcatt aacgctattt ataatgacaa
+     5821 gcagactgag cattacgtta atattccaca tcatgggcat gtcgagaata tcccggcgga
+     5881 ctgggcggtg gaaatgacct gcattctggg acgcaatggc gcgacgccgc acccgcgtat
+     5941 cacccgtttt gacgaaaaag tgctggggct tatccacact attaaaggat ttgaggtcgc
+     6001 ggccagcaat gcggcgctga gcggaaactt taatgatgtt ctgctggcgc ttaacctgag
+     6061 tccgctggtg cattccgacc gcgacgcaga agtcctggcg cgtgaactca ttctggcgca
+     6121 tgaaaaatgg ctgcctaatt ttgccgcttg catcgaagcg cttaaaggta agcaccactg
+     6181 acagaggtag gctatggaac gcgtgttgat tgtgaatgcc gatgattttg gcctgagtaa
+     6241 agggcaaaat tacggcattg ttgaagcata tcgcaacggc gttgtgacct ccacgacggc
+     6301 gctggtcaat ggcgaggcta ttgaccatgc ggcgcagctt agccgcgagc tgcctgcgct
+     6361 tggggtggga atgcattttg ttttgacgtt aggcaaaccg gtgtcagaga tgccgggcct
+     6421 gacgcgagac ggcctgttgg ggaaatggat ctggcaaatg gcggaggagg atacgcttcc
+     6481 gctggatgaa attgcgcatg aactggcgtg tcagtatcag cgtttcatcg acgtatttgg
+     6541 cagcgagcca acgcatctcg acagtcacca tcatgtgcat atgttcccgc aaattttccc
+     6601 catcgtcgcc cgctttgcgg cgcagcgcgg gattgcgtta cgtattgacc gccagacggt
+     6661 gttgaacgcc gacgatctgc cgtcggattt gcgcagcact caaggattta gtagtgaatt
+     6721 ttacggcgag gagatcaccg aagcgtgctt tttacgcatt ctggatgcct cggcgcatcg
+     6781 aggagaggcc tcgctggagg tgatgtgtca tccggcgttt gtggacaaca ttattcgcca
+     6841 gagcgcctat tgttaccccc gcttaactga actggaggtg ttgacgtctg cgtcactcaa
+     6901 ggcagcgatt gcggaacgtg gatatcgtcc tggcagtttt cttgatattt ag
+//

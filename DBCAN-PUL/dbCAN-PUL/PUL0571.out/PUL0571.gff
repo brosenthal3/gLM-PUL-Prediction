@@ -1,0 +1,50 @@
+##gff-version 3
+##sequence-region AE006468 1 6952
+# conversion-by bp_genbank2gff3.pl
+# organism Salmonella enterica subsp. enterica serovar Typhimurium str. LT2
+# Note Salmonella enterica subsp. enterica serovar Typhimurium str. LT2, complete genome.
+# date 24-JUL-2018
+AE006468	GenBank	region	1	6952	.	+	1	ID=AE006468;Dbxref=BioProject:PRJNA241,taxon:99287;Name=AE006468;Note=Salmonella enterica subsp. enterica serovar Typhimurium str. LT2%2C complete genome.,On Jan 13,2016 this sequence version replaced AE006468.1. Supported by NIH grant 5U 01 AI43283 Coding sequences below are predicted from manually evaluated computer analysis,using similarity information and the programs,GLIMMER,http://www.tigr.org/softlab/glimmer/glimmer.html and GeneMark,http://opal.biology.gatech.edu/GeneMark/ EC numbers were kindly provided by Junko Yabuzaki and the Kyoto Encyclopedia of Genes and Genomes,http://www.genome.ad.jp/kegg/,and Pedro Romero and Peter Karp at EcoCyc,http://ecocyc.PangeaSystems.com/ecocyc/ The analyses of ribosome binding sites and promoter binding sites were kindly provided by Heladia Salgado,Julio Collado-Vides and ReguonDB,http://kinich.cifn.unam.mx:8850/db/regulondb_intro.frameset This sequence was finished as follows unless otherwise noted: all regions were double stranded,sequenced with an alternate chemistries or covered by high quality data (i.e.,phred quality >%3D 30),an attempt was made to resolve all sequencing problems,such as compressions and repeats,all regions were covered by sequence from more than one m13 subclone. ;comment1=On Jan 13%2C 2016 this sequence version replaced AE006468.1. Supported by NIH grant 5U 01 AI43283 Coding sequences below are predicted from manually evaluated computer analysis%2C using similarity information and the programs%3B GLIMMER%3B http://www.tigr.org/softlab/glimmer/glimmer.html and GeneMark%3B http://opal.biology.gatech.edu/GeneMark/ EC numbers were kindly provided by Junko Yabuzaki and the Kyoto Encyclopedia of Genes and Genomes%3B http://www.genome.ad.jp/kegg/%2C and Pedro Romero and Peter Karp at EcoCyc%3B http://ecocyc.PangeaSystems.com/ecocyc/ The analyses of ribosome binding sites and promoter binding sites were kindly provided by Heladia Salgado%2C Julio Collado-Vides and ReguonDB%3B http://kinich.cifn.unam.mx:8850/db/regulondb_intro.frameset This sequence was finished as follows unless otherwise noted: all regions were double stranded%2C sequenced with an alternate chemistries or covered by high quality data (i.e.%2C phred quality >%3D 30)%3B an attempt was made to resolve all sequencing problems%2C such as compressions and repeats%3B all regions were covered by sequence from more than one m13 subclone. ;culture_collection=ATCC:700720,SGSC:1412;date=24-JUL-2018;focus=_no_value;mol_type=genomic DNA;organism=Salmonella enterica subsp. enterica serovar Typhimurium str. LT2;serovar=Typhimurium;strain=LT2;sub_species=enterica;type_material=type strain of Salmonella enterica
+AE006468	GenBank	gene	1	839	.	-	1	ID=STM1310;Name=nadE;locus_tag=STM1310
+AE006468	GenBank	mRNA	1	828	.	-	1	ID=STM1310;Parent=STM1310
+AE006468	GenBank	regulatory	834	839	.	-	1	Parent=STM1310;Name=nadE;Note=putative RBS for nadE%3B RegulonDB:STMS1H001558;locus_tag=STM1310;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	1	828	.	-	1	ID=STM1310;Parent=STM1310;eC_number=6.3.5.1;Name=nadE;Note=prefers NH3 over glutamine%3B similar to E. coli NAD synthetase%2C prefers NH3 over glutamine (AAC74810.1)%3B Blastp hit to AAC74810.1 (275 aa)%2C 89%25 identity in aa 1 - 275;codon_start=1;locus_tag=STM1310;product=NAD synthetase;protein_id=AAL20235.1;transl_table=11;translation=length.275
+AE006468	GenBank	exon	1	828	.	-	1	Parent=STM1310
+AE006468	GenBank	gene	919	1388	.	+	1	ID=STM1311;Name=osmE;locus_tag=STM1311
+AE006468	GenBank	mRNA	1047	1388	.	+	1	ID=STM1311;Parent=STM1311
+AE006468	GenBank	regulatory	919	927	.	+	1	Parent=STM1311;Name=osmE;Note=putative -35_signal for osmE%3B RegulonDB:STMLTH004482;locus_tag=STM1311;regulatory_class=minus_35_signal
+AE006468	GenBank	regulatory	943	951	.	+	1	Parent=STM1311;Name=osmE;Note=putative -10_signal for osmE%3B RegulonDB:STMLTH004482;locus_tag=STM1311;regulatory_class=minus_10_signal
+AE006468	GenBank	protein_binding_site	1026	1040	.	+	1	ID=STM1311;Parent=STM1311;Name=osmE;Note=putative binding site for IHF%2C RegulonDB: STMS1H000219;bound_moiety=IHF;locus_tag=STM1311
+AE006468	GenBank	regulatory	1036	1041	.	+	1	Parent=STM1311;Name=osmE;Note=putative RBS for osmE%3B RegulonDB:STMS1H001559;locus_tag=STM1311;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	1047	1388	.	+	1	ID=STM1311;Parent=STM1311;Alias=STM1311;Name=osmE;Note=similar to E. coli activator of ntrL gene (AAC74809.1)%3B Blastp hit to AAC74809.1 (112 aa)%2C 96%25 identity in aa 1 - 112;codon_start=1;locus_tag=STM1311;product=transcriptional activator of ntrL gene;protein_id=AAL20236.1;transl_table=11;translation=length.113
+AE006468	GenBank	exon	1047	1388	.	+	1	Parent=STM1311
+AE006468	GenBank	gene	1676	2009	.	+	1	ID=STM1312;Name=celA;locus_tag=STM1312
+AE006468	GenBank	mRNA	1689	2009	.	+	1	ID=STM1312;Parent=STM1312
+AE006468	GenBank	regulatory	1676	1681	.	+	1	Parent=STM1312;Name=celA;Note=putative RBS for celA%3B RegulonDB:STMS1H001560;locus_tag=STM1312;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	1689	2009	.	+	1	ID=STM1312;Parent=STM1312;Name=celA;Note=similar to E. coli PEP-dependent phosphotransferase enzyme IV for cellobiose%2C arbutin%2C and salicin (AAC74808.1)%3B Blastp hit to AAC74808.1 (106 aa)%2C 96%25 identity in aa 1 - 106;codon_start=1;locus_tag=STM1312;product=PTS family sugar specific enzyme IIB for cellobiose%2C arbutin%2C and salicin;protein_id=AAL20237.1;transl_table=11;translation=length.106
+AE006468	GenBank	exon	1689	2009	.	+	1	Parent=STM1312
+AE006468	GenBank	gene	2078	3450	.	+	1	ID=STM1313;Name=celB;locus_tag=STM1313
+AE006468	GenBank	mRNA	2092	3450	.	+	1	ID=STM1313;Parent=STM1313
+AE006468	GenBank	regulatory	2078	2083	.	+	1	Parent=STM1313;Name=celB;Note=putative RBS for celB%3B RegulonDB:STMS1H001561;locus_tag=STM1313;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	2092	3450	.	+	1	ID=STM1313;Parent=STM1313;Name=celB;Note=similar to E. coli PEP-dependent phosphotransferase enzyme II for cellobiose%2C arbutin%2C and salicin (AAC74807.1)%3B Blastp hit to AAC74807.1 (452 aa)%2C 94%25 identity in aa 1 - 452;codon_start=1;locus_tag=STM1313;product=PTS family sugar specific enzyme II for cellobiose%2C arbutin%2C and salicin;protein_id=AAL20238.1;transl_table=11;translation=length.452
+AE006468	GenBank	exon	2092	3450	.	+	1	Parent=STM1313
+AE006468	GenBank	gene	3490	3848	.	+	1	ID=STM1314;Name=celC;locus_tag=STM1314
+AE006468	GenBank	mRNA	3501	3848	.	+	1	ID=STM1314;Parent=STM1314
+AE006468	GenBank	regulatory	3490	3495	.	+	1	Parent=STM1314;Name=celC;Note=putative RBS for celC%3B RegulonDB:STMS1H001562;locus_tag=STM1314;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	3501	3848	.	+	1	ID=STM1314;Parent=STM1314;Name=celC;Note=similar to E. coli PEP-dependent phosphotransferase enzyme III for cellobiose%2C arbutin%2C and salicin (AAC74806.1)%3B Blastp hit to AAC74806.1 (116 aa)%2C 87%25 identity in aa 1 - 115;codon_start=1;locus_tag=STM1314;product=PTS family sugar specific enzyme III for cellobiose%2C arbutin%2C and salicin;protein_id=AAL20239.1;transl_table=11;translation=length.115
+AE006468	GenBank	exon	3501	3848	.	+	1	Parent=STM1314
+AE006468	GenBank	gene	3849	4701	.	+	1	ID=STM1315;Name=celD;locus_tag=STM1315
+AE006468	GenBank	mRNA	3859	4701	.	+	1	ID=STM1315;Parent=STM1315
+AE006468	GenBank	regulatory	3849	3854	.	+	1	Parent=STM1315;Name=celD;Note=putative RBS for celD%3B RegulonDB:STMS1H001563;locus_tag=STM1315;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	3859	4701	.	+	1	ID=STM1315;Parent=STM1315;Name=celD;Note=AraC/XylS family%3B similar to E. coli negative transcriptional regulator of cel operon (AAC74805.1)%3B Blastp hit to AAC74805.1 (280 aa)%2C 85%25 identity in aa 1 - 280;codon_start=1;locus_tag=STM1315;product=transcriptional repressor of cel operon;protein_id=AAL20240.1;transl_table=11;translation=length.280
+AE006468	GenBank	exon	3859	4701	.	+	1	Parent=STM1315
+AE006468	GenBank	gene	4814	6181	.	+	1	ID=STM1316;Name=celF;locus_tag=STM1316
+AE006468	GenBank	mRNA	4826	6181	.	+	1	ID=STM1316;Parent=STM1316
+AE006468	GenBank	regulatory	4814	4819	.	+	1	Parent=STM1316;Name=celF;Note=putative RBS for celF%3B RegulonDB:STMS1H001564;locus_tag=STM1316;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	4826	6181	.	+	1	ID=STM1316;Parent=STM1316;eC_number=3.2.1.86;Name=celF;Note=similar to E. coli phospho-beta-glucosidase%3B cryptic (AAC74804.1)%3B Blastp hit to AAC74804.1 (450 aa)%2C 90%25 identity in aa 1 - 450%3B cellobiose-6-phosphate hydrolase;codon_start=1;locus_tag=STM1316;product=phospho-beta-glucosidase;protein_id=AAL20241.1;transl_table=11;translation=length.451
+AE006468	GenBank	exon	4826	6181	.	+	1	Parent=STM1316
+AE006468	GenBank	gene	6184	6952	.	+	1	ID=STM1317;Name=celG;locus_tag=STM1317
+AE006468	GenBank	mRNA	6194	6952	.	+	1	ID=STM1317;Parent=STM1317
+AE006468	GenBank	regulatory	6184	6189	.	+	1	Parent=STM1317;Name=celG;Note=putative RBS for celG%3B RegulonDB:STMS1H001565;locus_tag=STM1317;regulatory_class=ribosome_binding_site
+AE006468	GenBank	CDS	6194	6952	.	+	1	ID=STM1317;Parent=STM1317;Name=celG;Note=similar to E. coli orf%2C hypothetical protein (AAC74803.1)%3B Blastp hit to AAC74803.1 (249 aa)%2C 76%25 identity in aa 1 - 249;codon_start=1;locus_tag=STM1317;product=putative glucosidase;protein_id=AAL20242.1;transl_table=11;translation=length.252
+AE006468	GenBank	exon	6194	6952	.	+	1	Parent=STM1317

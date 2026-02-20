@@ -1,0 +1,15 @@
+##gff-version 3
+##sequence-region AF417111 1 3969
+# conversion-by bp_genbank2gff3.pl
+# organism Ralstonia solanacearum K60
+# Note Ralstonia solanacearum PehC (pehC) and ExuT (exuT) genes, complete cds.
+# date 20-OCT-2003
+AF417111	GenBank	region	1	3969	.	+	1	ID=AF417111;Dbxref=taxon:1091042;Name=AF417111;Note=Ralstonia solanacearum PehC (pehC) and ExuT (exuT) genes%2C complete cds.;date=20-OCT-2003;mol_type=genomic DNA;organism=Ralstonia solanacearum K60;strain=K60
+AF417111	GenBank	gene	170	2209	.	+	1	ID=pehC;Name=pehC
+AF417111	GenBank	mRNA	170	2209	.	+	1	ID=pehC;Parent=pehC
+AF417111	GenBank	CDS	170	2209	.	+	1	ID=pehC;Parent=pehC;Name=pehC;Note=exo-polygalacturonase;codon_start=1;product=PehC;protein_id=AAL24033.1;transl_table=11;translation=length.679
+AF417111	GenBank	exon	170	2209	.	+	1	Parent=pehC
+AF417111	GenBank	gene	2285	3605	.	+	1	ID=exuT;Name=exuT
+AF417111	GenBank	mRNA	2286	3605	.	+	1	ID=exuT;Parent=exuT
+AF417111	GenBank	CDS	2286	3605	.	+	1	ID=exuT;Parent=exuT;Name=exuT;Note=galacturonate transporter;codon_start=1;product=ExuT;protein_id=AAL24034.1;transl_table=11;translation=length.439
+AF417111	GenBank	exon	2286	3605	.	+	1	Parent=exuT

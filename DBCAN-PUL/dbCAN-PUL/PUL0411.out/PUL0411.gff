@@ -1,0 +1,15 @@
+##gff-version 3
+##sequence-region Z49241 1 2500
+# conversion-by bp_genbank2gff3.pl
+# organism Prevotella bryantii B14
+# Note P.ruminicola xynA gene and xynB gene.
+# date 18-APR-2005
+Z49241	GenBank	region	1	2500	.	+	1	ID=Z49241;Dbxref=taxon:752555;Name=Z49241;Note=P.ruminicola xynA gene and xynB gene.;clone=5/4a;clone_lib=subclone in pUC18 derived from lambda EMBL3 clone 5;date=18-APR-2005;germline=_no_value;mol_type=genomic DNA;organism=Prevotella bryantii B14;strain=B14;type_material=type strain of Prevotella bryantii
+Z49241	GenBank	gene	142	1251	.	+	1	ID=xynA;Name=xynA
+Z49241	GenBank	mRNA	142	1251	.	+	1	ID=xynA;Parent=xynA
+Z49241	GenBank	CDS	142	1251	.	+	1	ID=xynA;Parent=xynA;Dbxref=GOA:P48789,InterPro:IPR001000,InterPro:IPR013781,InterPro:IPR017853,UniProtKB/Swiss-Prot:P48789;Name=xynA;Note=belongs to family F (10) of glycoside hydrolases;codon_start=1;experiment=experimental evidence%2C no additional details recorded;function=xylan hydrolysis;product=endo-beta-(1%2C4)-xylanase;protein_id=CAA89207.1;transl_table=11;translation=length.369
+Z49241	GenBank	exon	142	1251	.	+	1	Parent=xynA
+Z49241	GenBank	gene	1334	2293	.	+	1	ID=xynB;Name=xynB
+Z49241	GenBank	mRNA	1334	2293	.	+	1	ID=xynB;Parent=xynB
+Z49241	GenBank	CDS	1334	2293	.	+	1	ID=xynB;Parent=xynB;Dbxref=GOA:P48791,InterPro:IPR006710,UniProtKB/Swiss-Prot:P48791;Name=xynB;Note=belongs to a newly identified family of glycoside hydrolases that also includes Bacteroides ovatus xsa (67.8%25 identical amino acids) and C.stercorarium xylA (30.7%25 identical amino acids).;codon_start=1;experiment=experimental evidence%2C no additional details recorded;function=xylan hydrolysis;product=exo-beta-(1%2C4)-xylanase/beta-(1%2C4)-xylosidase;protein_id=CAA89208.1;transl_table=11;translation=length.319
+Z49241	GenBank	exon	1334	2293	.	+	1	Parent=xynB

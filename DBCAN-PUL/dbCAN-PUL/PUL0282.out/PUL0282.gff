@@ -1,0 +1,38 @@
+##gff-version 3
+##sequence-region JF327803 1 13109
+# conversion-by bp_genbank2gff3.pl
+# organism Geobacillus stearothermophilus
+# Note Geobacillus stearothermophilus strain T-6 methyl-accepting chemotaxis protein (mcp) gene, complete cds; and galactan utilization gene cluster, complete sequence.
+# date 24-SEP-2012
+JF327803	GenBank	region	1	13109	.	+	1	ID=JF327803;Dbxref=taxon:1422;Name=JF327803;Note=Geobacillus stearothermophilus strain T-6 methyl-accepting chemotaxis protein (mcp) gene%2C complete cds%3B and galactan utilization gene cluster%2C complete sequence.,type strain of Geobacillus stearothermophilus;culture_collection=NCIMB:40222;date=24-SEP-2012;mol_type=genomic DNA;organism=Geobacillus stearothermophilus;strain=T-6
+JF327803	GenBank	region	2379	11724	.	+	1	ID=GenBank:region:JF327803:2379:11724;Note=galactan utilization gene cluster
+JF327803	GenBank	gene	81	1775	.	-	1	ID=mcp;Name=mcp
+JF327803	GenBank	mRNA	81	1775	.	-	1	ID=mcp;Parent=mcp
+JF327803	GenBank	CDS	81	1775	.	-	1	ID=mcp;Parent=mcp;Name=mcp;codon_start=1;product=methyl-accepting chemotaxis protein;protein_id=AEH26457.1;transl_table=11;translation=length.564
+JF327803	GenBank	exon	81	1775	.	-	1	Parent=mcp
+JF327803	GenBank	gene	2379	3371	.	+	1	ID=ganR;Name=ganR
+JF327803	GenBank	mRNA	2379	3371	.	+	1	ID=ganR;Parent=ganR
+JF327803	GenBank	CDS	2379	3371	.	+	1	ID=ganR;Parent=ganR;Name=ganR;codon_start=1;product=LacI family transcription regulator;protein_id=AEH26451.1;transl_table=11;translation=length.330
+JF327803	GenBank	exon	2379	3371	.	+	1	Parent=ganR
+JF327803	GenBank	gene	3493	4782	.	+	1	ID=ganE;Name=ganE
+JF327803	GenBank	mRNA	3493	4782	.	+	1	ID=ganE;Parent=ganE
+JF327803	GenBank	CDS	3493	4782	.	+	1	ID=ganE;Parent=ganE;Name=ganE;Note=sugar binding protein;codon_start=1;product=galacto-oligosaccaride ABC transporter;protein_id=AEH26452.2;transl_table=11;translation=length.429
+JF327803	GenBank	exon	3493	4782	.	+	1	Parent=ganE
+JF327803	GenBank	gene	4957	6213	.	+	1	ID=ganF;Name=ganF
+JF327803	GenBank	mRNA	4957	6213	.	+	1	ID=ganF;Parent=ganF
+JF327803	GenBank	CDS	4957	6213	.	+	1	ID=ganF;Parent=ganF;Name=ganF;codon_start=1;product=sugar ABC transport system permease component;protein_id=AEH26453.2;transl_table=11;translation=length.418
+JF327803	GenBank	exon	4957	6213	.	+	1	Parent=ganF
+JF327803	GenBank	gene	6217	7068	.	+	1	ID=ganG;Name=ganG
+JF327803	GenBank	mRNA	6217	7068	.	+	1	ID=ganG;Parent=ganG
+JF327803	GenBank	CDS	6217	7068	.	+	1	ID=ganG;Parent=ganG;Name=ganG;codon_start=1;product=sugar ABC transport system permease component;protein_id=AEH26454.1;transl_table=11;translation=length.283
+JF327803	GenBank	exon	6217	7068	.	+	1	Parent=ganG
+JF327803	GenBank	gene	7088	9151	.	+	1	ID=ganB;Name=ganB
+JF327803	GenBank	mRNA	7091	9151	.	+	1	ID=ganB;Parent=ganB
+JF327803	GenBank	CDS	7091	9151	.	+	1	ID=ganB;Parent=ganB;eC_number=3.2.1.23;Name=ganB;Note=glycoside hydrolase family 42;codon_start=1;function=hydrolyzes beta-1%2C4-D-galactosidic linkage of galactobiose and short galacto-oligosaccharides;product=beta-galactosidase;protein_id=AEH26455.1;transl_table=11;translation=length.686
+JF327803	GenBank	exon	7091	9151	.	+	1	Parent=ganB
+JF327803	GenBank	gene	9280	11724	.	+	1	ID=ganA;Name=ganA
+JF327803	GenBank	mRNA	9280	11724	.	+	1	ID=ganA;Parent=ganA
+JF327803	GenBank	signal_peptide	9280	9366	.	+	1	Parent=ganA;Name=ganA
+JF327803	GenBank	mature_protein_region	9367	11721	.	+	1	ID=ganA;Parent=ganA;Name=ganA;product=extra-cellular endo-beta-1%2C4-galactanase
+JF327803	GenBank	CDS	9280	11724	.	+	1	ID=ganA;Parent=ganA;Alias=ganA;eC_number=3.2.1.89;Name=ganA;Note=glycoside hydrolase family 53;codon_start=1;function=hydrolyzes beta-1%2C4-galactan yielding galactotetraose;product=extra-cellular endo-beta-1%2C4-galactanase precursor;protein_id=AEH26456.2;transl_table=11;translation=length.814
+JF327803	GenBank	exon	9280	11724	.	+	1	Parent=ganA

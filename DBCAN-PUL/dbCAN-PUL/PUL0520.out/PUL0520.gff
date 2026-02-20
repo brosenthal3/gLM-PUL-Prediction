@@ -1,0 +1,18 @@
+##gff-version 3
+##sequence-region AY297960 1 3318
+# conversion-by bp_genbank2gff3.pl
+# organism Klebsiella oxytoca
+# Note Klebsiella oxytoca strain M5A1 xyloside utilization operon, complete sequence; and unknown gene.
+# date 25-JUL-2016
+AY297960	GenBank	region	1	3318	.	+	1	ID=AY297960;Dbxref=taxon:571;Name=AY297960;Note=Klebsiella oxytoca strain M5A1 xyloside utilization operon%2C complete sequence%3B and unknown gene.;date=25-JUL-2016;mol_type=genomic DNA;organism=Klebsiella oxytoca;strain=M5A1
+AY297960	GenBank	protein_binding_site	1	22	.	+	1	ID=xyloside utilization operon;Name=xyloside utilization operon;bound_moiety=CRP;inference=non-experimental evidence%2C no additional details recorded
+AY297960	GenBank	protein_binding_site	23	60	.	+	1	ID=xyloside utilization operon.protein_binding_site;Alias=xyloside utilization operon;Name=xyloside utilization operon;bound_moiety=XylR;inference=non-experimental evidence%2C no additional details recorded
+AY297960	GenBank	gene	1	3318	.	+	1	ID=xyloside utilization operon.gene;Alias=xyloside utilization operon;Name=xyloside utilization operon;Note=xynTB
+AY297960	GenBank	gene	127	1581	.	+	1	ID=xynT;Name=xynT
+AY297960	GenBank	mRNA	127	1581	.	+	1	ID=xynT;Parent=xynT
+AY297960	GenBank	CDS	127	1581	.	+	1	ID=xynT;Parent=xynT;Name=xynT;Note=xylobiose:cation symporter%3B xyloside transporter%3B XynT;codon_start=1;product=xyloside permease;protein_id=AAQ62863.1;transl_table=11;translation=length.484
+AY297960	GenBank	exon	127	1581	.	+	1	Parent=xynT
+AY297960	GenBank	gene	1639	3318	.	+	1	ID=xynB;Name=xynB
+AY297960	GenBank	mRNA	1639	3318	.	+	1	ID=xynB;Parent=xynB
+AY297960	GenBank	CDS	1639	3318	.	+	1	ID=xynB;Parent=xynB;Name=xynB;Note=glysosyl hydrolase family 43%3B XynB;codon_start=1;product=beta-1%2C4-xylosidase;protein_id=AAQ62864.1;transl_table=11;translation=length.559
+AY297960	GenBank	exon	1639	3318	.	+	1	Parent=xynB

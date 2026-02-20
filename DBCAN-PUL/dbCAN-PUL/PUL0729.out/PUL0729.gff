@@ -1,0 +1,43 @@
+##gff-version 3
+##sequence-region NC_020238 1 9680
+# conversion-by bp_genbank2gff3.pl
+# organism Bacillus thuringiensis serovar kurstaki str. HD73
+# Note Bacillus thuringiensis serovar kurstaki str. HD73, complete sequence.
+# date 08-APR-2024
+NC_020238	GenBank	region	1	9680	.	+	1	ID=NC_020238;Dbxref=BioProject:PRJNA224116,taxon:1279365;Name=NC_020238;Note=Bacillus thuringiensis serovar kurstaki str. HD73%2C complete sequence.,REFSEQ INFORMATION: The reference sequence is identical to CP004069.1.  The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/  The bacteria is available from Fuping Song (fpsong@ippcaas.cn).    \n##Assembly-Data-START##\nAssembly Method :: newbler v. 2.3\nSequencing Technology :: Sanger dideoxy sequencing,454,Illumina\n##Assembly-Data-END##;comment1=REFSEQ INFORMATION: The reference sequence is identical to CP004069.1.  The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/  The bacteria is available from Fuping Song (fpsong@ippcaas.cn).    \n##Assembly-Data-START##\nAssembly Method :: newbler v. 2.3\nSequencing Technology :: Sanger dideoxy sequencing%3B 454%3B Illumina\n##Assembly-Data-END##;date=08-APR-2024;mol_type=genomic DNA;organism=Bacillus thuringiensis serovar kurstaki str. HD73;serovar=kurstaki;strain=HD73
+NC_020238	GenBank	gene	1	2676	.	+	1	ID=HD73_RS27950;Name=HD73_RS27950;old_locus_tag=HD73_5607
+NC_020238	GenBank	mRNA	1	2676	.	+	1	ID=HD73_RS27950;Parent=HD73_RS27950
+NC_020238	GenBank	CDS	1	2676	.	+	1	ID=HD73_RS27950;Parent=HD73_RS27950;gO_process=GO:0006355 - regulation of DNA-templated transcription [Evidence IEA];Name=HD73_RS27950;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_000820936.1;old_locus_tag=HD73_5607;product=PRD domain-containing protein;protein_id=WP_000820970.1;transl_table=11;translation=length.891
+NC_020238	GenBank	exon	1	2676	.	+	1	Parent=HD73_RS27950
+NC_020238	GenBank	gene	2981	3394	.	-	1	ID=HD73_RS27955;Name=exsM;locus_tag=HD73_RS27955;old_locus_tag=HD73_5608
+NC_020238	GenBank	mRNA	2981	3394	.	-	1	ID=HD73_RS27955;Parent=HD73_RS27955
+NC_020238	GenBank	CDS	2981	3394	.	-	1	ID=HD73_RS27955;Parent=HD73_RS27955;Name=exsM;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_016118901.1;locus_tag=HD73_RS27955;old_locus_tag=HD73_5608;product=exosporium regulatory protein ExsM;protein_id=WP_000207046.1;transl_table=11;translation=length.137
+NC_020238	GenBank	exon	2981	3394	.	-	1	Parent=HD73_RS27955
+NC_020238	GenBank	gene	3582	4763	.	+	1	ID=HD73_RS27960;Name=HD73_RS27960;old_locus_tag=HD73_5609
+NC_020238	GenBank	mRNA	3582	4763	.	+	1	ID=HD73_RS27960;Parent=HD73_RS27960
+NC_020238	GenBank	CDS	3582	4763	.	+	1	ID=HD73_RS27960;Parent=HD73_RS27960;Name=HD73_RS27960;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_000794695.1;old_locus_tag=HD73_5609;product=chromate transporter;protein_id=WP_000856213.1;transl_table=11;translation=length.393
+NC_020238	GenBank	exon	3582	4763	.	+	1	Parent=HD73_RS27960
+NC_020238	GenBank	gene	4802	5506	.	-	1	ID=HD73_RS27965;Name=chbG;locus_tag=HD73_RS27965;old_locus_tag=HD73_5610
+NC_020238	GenBank	mRNA	4802	5506	.	-	1	ID=HD73_RS27965;Parent=HD73_RS27965
+NC_020238	GenBank	CDS	4802	5506	.	-	1	ID=HD73_RS27965;Parent=HD73_RS27965;eC_number=3.5.1.105;gO_function=GO:0016811 - hydrolase activity%2C acting on carbon-nitrogen (but not peptide) bonds%2C in linear amides [Evidence IEA];gO_process=GO:0000272 - polysaccharide catabolic process [Evidence IEA];Name=chbG;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_000593491.1;locus_tag=HD73_RS27965;old_locus_tag=HD73_5610;product=chitin disaccharide deacetylase;protein_id=WP_000593487.1;transl_table=11;translation=length.234
+NC_020238	GenBank	exon	4802	5506	.	-	1	Parent=HD73_RS27965
+NC_020238	GenBank	gene	5556	6881	.	-	1	ID=HD73_RS27970;Name=celF;gene_synonym=chbF;locus_tag=HD73_RS27970;old_locus_tag=HD73_5611
+NC_020238	GenBank	mRNA	5556	6881	.	-	1	ID=HD73_RS27970;Parent=HD73_RS27970
+NC_020238	GenBank	CDS	5556	6881	.	-	1	ID=HD73_RS27970;Parent=HD73_RS27970;eC_number=3.2.1.86;Name=celF;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;gene_synonym=chbF;inference=COORDINATES: similar to AA sequence:RefSeq:WP_000145752.1;locus_tag=HD73_RS27970;old_locus_tag=HD73_5611;product=6-phospho-beta-glucosidase;protein_id=WP_000145762.1;transl_table=11;translation=length.441
+NC_020238	GenBank	exon	5556	6881	.	-	1	Parent=HD73_RS27970
+NC_020238	GenBank	gene	6885	7208	.	-	1	ID=HD73_RS27975;Name=HD73_RS27975;old_locus_tag=HD73_5612
+NC_020238	GenBank	mRNA	6885	7208	.	-	1	ID=HD73_RS27975;Parent=HD73_RS27975
+NC_020238	GenBank	CDS	6885	7208	.	-	1	ID=HD73_RS27975;Parent=HD73_RS27975;gO_function=GO:0016740 - transferase activity [Evidence IEA];gO_process=GO:0009401 - phosphoenolpyruvate-dependent sugar phosphotransferase system [Evidence IEA];Name=HD73_RS27975;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_000989046.1;old_locus_tag=HD73_5612;product=PTS lactose/cellobiose transporter subunit IIA;protein_id=WP_000989059.1;transl_table=11;translation=length.107
+NC_020238	GenBank	exon	6885	7208	.	-	1	Parent=HD73_RS27975
+NC_020238	GenBank	gene	7390	8697	.	-	1	ID=HD73_RS27980;Name=celB;locus_tag=HD73_RS27980;old_locus_tag=HD73_5613
+NC_020238	GenBank	mRNA	7390	8697	.	-	1	ID=HD73_RS27980;Parent=HD73_RS27980
+NC_020238	GenBank	CDS	7390	8697	.	-	1	ID=HD73_RS27980;Parent=HD73_RS27980;eC_number=2.7.1.205;gO_function=GO:0019191 - cellobiose transmembrane transporter activity [Evidence IEA]%3B GO:0008982 - protein-N(PI)-phosphohistidine-sugar phosphotransferase activity [Evidence IEA];gO_process=GO:0009401 - phosphoenolpyruvate-dependent sugar phosphotransferase system [Evidence IEA];Name=celB;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_001168817.1;locus_tag=HD73_RS27980;old_locus_tag=HD73_5613;product=PTS cellobiose transporter subunit IIC;protein_id=WP_001168848.1;transl_table=11;translation=length.435
+NC_020238	GenBank	exon	7390	8697	.	-	1	Parent=HD73_RS27980
+NC_020238	GenBank	gene	8714	9016	.	-	1	ID=HD73_RS27985;Name=HD73_RS27985;old_locus_tag=HD73_5614
+NC_020238	GenBank	mRNA	8714	9016	.	-	1	ID=HD73_RS27985;Parent=HD73_RS27985
+NC_020238	GenBank	CDS	8714	9016	.	-	1	ID=HD73_RS27985;Parent=HD73_RS27985;eC_number=2.7.1.-;gO_function=GO:0008982 - protein-N(PI)-phosphohistidine-sugar phosphotransferase activity [Evidence IEA];gO_process=GO:0008643 - carbohydrate transport [Evidence IEA]%3B GO:0009401 - phosphoenolpyruvate-dependent sugar phosphotransferase system [Evidence IEA];Name=HD73_RS27985;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_002089627.1;old_locus_tag=HD73_5614;product=PTS sugar transporter subunit IIB;protein_id=WP_001023567.1;transl_table=11;translation=length.100
+NC_020238	GenBank	exon	8714	9016	.	-	1	Parent=HD73_RS27985
+NC_020238	GenBank	gene	9363	9680	.	-	1	ID=HD73_RS27990;Name=HD73_RS27990;old_locus_tag=HD73_5615
+NC_020238	GenBank	mRNA	9363	9680	.	-	1	ID=HD73_RS27990;Parent=HD73_RS27990
+NC_020238	GenBank	CDS	9363	9680	.	-	1	ID=HD73_RS27990;Parent=HD73_RS27990;gO_function=GO:0016740 - transferase activity [Evidence IEA];gO_process=GO:0009401 - phosphoenolpyruvate-dependent sugar phosphotransferase system [Evidence IEA];Name=HD73_RS27990;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_002068354.1;old_locus_tag=HD73_5615;product=PTS lactose/cellobiose transporter subunit IIA;protein_id=WP_000379645.1;transl_table=11;translation=length.105
+NC_020238	GenBank	exon	9363	9680	.	-	1	Parent=HD73_RS27990

@@ -1,0 +1,321 @@
+LOCUS       NZ_MYFP02000002         5801 bp    DNA     linear   CON 13-SEP-2024
+DEFINITION  Microbacterium sp. MEC084 scaffold_1, whole genome shotgun
+            sequence.
+ACCESSION   NZ_MYFP02000002 REGION: 307028..312828
+VERSION     NZ_MYFP02000002.1
+DBLINK      BioProject: PRJNA224116
+            BioSample: SAMN06458375
+            Assembly: GCF_004514465.2
+KEYWORDS    WGS; RefSeq.
+SOURCE      Microbacterium sp. MEC084
+  ORGANISM  Microbacterium sp. MEC084
+            Bacteria; Bacillati; Actinomycetota; Actinomycetes; Micrococcales;
+            Microbacteriaceae; Microbacterium.
+REFERENCE   1  (bases 1 to 5801)
+  AUTHORS   Arya,A.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (06-JAN-2020) Engineering, University of Georgia, 220
+            Riverbend Rd, Athens, GA 30602, USA
+REFERENCE   2  (bases 1 to 5801)
+  AUTHORS   Arya,A.S.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (08-MAR-2017) Microbiology, University of Georgia, 120
+            Cedar St. Dept. of Microbiology, Athens, GA 30602, USA
+COMMENT     REFSEQ INFORMATION: The reference sequence is identical to
+            MYFP02000002.1.
+            The annotation was added by the NCBI Prokaryotic Genome Annotation
+            Pipeline (PGAP). Information about PGAP can be found here:
+            https://www.ncbi.nlm.nih.gov/genome/annotation_prok/
+            
+            ##Genome-Assembly-Data-START##
+            Assembly Method        :: A5-miseq pipeline v. 20160825
+            Genome Representation  :: Full
+            Expected Final Version :: No
+            Genome Coverage        :: 504x
+            Sequencing Technology  :: Illumina MiSeq
+            ##Genome-Assembly-Data-END##
+            
+            ##Genome-Annotation-Data-START##
+            Annotation Provider               :: NCBI RefSeq
+            Annotation Name                   :: GCF_004514465.2-RS_2024_09_13
+            Annotation Date                   :: 09/13/2024 05:24:23
+            Annotation Pipeline               :: NCBI Prokaryotic Genome
+                                                 Annotation Pipeline (PGAP)
+            Annotation Method                 :: Best-placed reference protein
+                                                 set; GeneMarkS-2+
+            Annotation Software revision      :: 6.8
+            Features Annotated                :: Gene; CDS; rRNA; tRNA; ncRNA
+            Genes (total)                     :: 3,005
+            CDSs (total)                      :: 2,947
+            Genes (coding)                    :: 2,876
+            CDSs (with protein)               :: 2,876
+            Genes (RNA)                       :: 58
+            rRNAs                             :: 3, 4, 1 (5S, 16S, 23S)
+            complete rRNAs                    :: 3, 1, 1 (5S, 16S, 23S)
+            partial rRNAs                     :: 3 (16S)
+            tRNAs                             :: 47
+            ncRNAs                            :: 3
+            Pseudo Genes (total)              :: 71
+            CDSs (without protein)            :: 71
+            Pseudo Genes (ambiguous residues) :: 0 of 71
+            Pseudo Genes (frameshifted)       :: 14 of 71
+            Pseudo Genes (incomplete)         :: 56 of 71
+            Pseudo Genes (internal stop)      :: 4 of 71
+            Pseudo Genes (multiple problems)  :: 3 of 71
+            ##Genome-Annotation-Data-END##
+FEATURES             Location/Qualifiers
+     source          1..5801
+                     /organism="Microbacterium sp. MEC084"
+                     /mol_type="genomic DNA"
+                     /submitter_seqid="scaffold_1"
+                     /strain="MEC084"
+                     /isolation_source="silty top soil from campfire"
+                     /db_xref="taxon:1963027"
+                     /geo_loc_name="USA: Nantahala National Forest, North
+                     Carolina"
+                     /collection_date="2010-07"
+     gene            complement(<1)
+                     /locus_tag="B5M43_RS04120"
+                     /old_locus_tag="B5M43_004105"
+     CDS             complement(<1)
+                     /locus_tag="B5M43_RS04120"
+                     /old_locus_tag="B5M43_004105"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_011691761.1"
+                     /GO_function="GO:0016491 - oxidoreductase activity
+                     [Evidence IEA]; GO:0016651 - oxidoreductase activity,
+                     acting on NAD(P)H [Evidence IEA]"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="Gfo/Idh/MocA family protein"
+                     /protein_id="WP_055987796.1"
+                     /translation="MTRRMPRSGIVGTGFMGGVHTRAVRWAGGEVVAFAGRDPERTRA
+                     AAEAANVALALDPHELVRHPDVDIVHICTPNSQHLELALAAVAAGKHVVCEKPLATTG
+                     ADAVRLRAAAAAAGVVHAVPFVYRFYPTVREARARIAASGERIWLAHGHYLQDWLSDR
+                     STYNWRVDDAGSRAFADIGVHWCDLFEFATGHRIVRLLAQQSRLHDTRISGGREVSVA
+                     TEDGTTMMFQTDRGASGTVVISQASPGRKNRLWLSLDGAERSYAFDQENPGDLWVGSA
+                     DAVLLLAKGHETLTADVASSYVTVPSGHPQGYQDCFGLFMRDVHRAIAGEQVDGLPTF
+                     ADGARAAVLTDAVIASARSEAWIEVTGDRAAAAASAVGVA"
+     gene            complement(1..972)
+                     /locus_tag="B5M43_RS04125"
+                     /old_locus_tag="B5M43_004110"
+     CDS             complement(1..972)
+                     /locus_tag="B5M43_RS04125"
+                     /old_locus_tag="B5M43_004110"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_013600194.1"
+                     /GO_component="GO:0005886 - plasma membrane [Evidence
+                     IEA]"
+                     /GO_function="GO:0022857 - transmembrane transporter
+                     activity [Evidence IEA]"
+                     /GO_process="GO:0008643 - carbohydrate transport [Evidence
+                     IEA]"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="ABC transporter permease"
+                     /protein_id="WP_134746504.1"
+                     /translation="MSSPATATRPSLVSRALAHLDWRSNIIYIAFVVVFILFAIFLGN
+                     DGFLSPNNMLNIVRQTATISIMAVAMTFVIATAEIDLSVGSVAGLASVVTAMATAQFG
+                     LVPGILAGLLAGAVIGAVNGGLVALLKIPSFLVTLGMLGLAAGVSQWITASAPQPISD
+                     RLYVLIFGGGDFGPVPGLLVWTVVAVAVGWLVMNRTGYGRRVLATGGNPTAAAYTGIN
+                     TARIKFTVLLTSGVAAALAGMLYAGRLESGRFQWGQGDELTVIAAVILGGTSLFGGRG
+                     AIIGTLFGSLFMGLVNNGLILAGLDVAQQQVVRGAIIIAAVALSRKK"
+     gene            complement(969..2489)
+                     /locus_tag="B5M43_RS04130"
+                     /old_locus_tag="B5M43_004115"
+     CDS             complement(969..2489)
+                     /locus_tag="B5M43_RS04130"
+                     /old_locus_tag="B5M43_004115"
+                     /EC_number="7.5.2.-"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_011691763.1"
+                     /GO_function="GO:0140359 - ABC-type transporter activity
+                     [Evidence IEA]; GO:0005524 - ATP binding [Evidence IEA];
+                     GO:0016887 - ATP hydrolysis activity [Evidence IEA];
+                     GO:0042626 - ATPase-coupled transmembrane transporter
+                     activity [Evidence IEA]"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="sugar ABC transporter ATP-binding protein"
+                     /protein_id="WP_055987792.1"
+                     /translation="MADTIPVGPAVRMRQIVKNFGSVEVLKSVDMDIVAGEVHALAGE
+                     NGAGKSTLMKVLQGVHPITSGTIEIDGEPVDIRSTADAERAGIGMVFQEFSLIPTMTV
+                     AQNIFLNREPRGAGGLIDDGAAERAAKELFDELDVRIDPGARVEELGTAYWQLVEIAK
+                     ALAKNARVLVMDEPTASLAKHEVENLFELIHTLKSRGIAIVYISHRMDEIRRVADRIT
+                     VLRDGGVVLASPVAELTAAEIIEAIIGRRLASELVYRDRGLDPEAPVLLEAEEIASTS
+                     VLESVSLAIRAGEIVGLAGLMGSGRTEFARVVAGLDRPTRGTLSVEGRPVRFNGPLAA
+                     QAAGVALIPEDRREQGLVLEHSVSDNLTLPVLDRVKTGPLLSPRKLRELTGELVSRFA
+                     VKVADPYAPVNRLSGGNQQKVVVAKWVNTDPRILLMDEPTAGVDIGTKTEILDIVRDF
+                     ASRGNAVLFISSELPELLAVADRIVVLREGRSFRDLVRADIESEEQLQLIIQGEAA"
+     gene            complement(2482..3672)
+                     /locus_tag="B5M43_RS04135"
+                     /old_locus_tag="B5M43_004120"
+     CDS             complement(2482..3672)
+                     /locus_tag="B5M43_RS04135"
+                     /old_locus_tag="B5M43_004120"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_013600196.1"
+                     /GO_function="GO:0016491 - oxidoreductase activity
+                     [Evidence IEA]; GO:0016651 - oxidoreductase activity,
+                     acting on NAD(P)H [Evidence IEA]"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="Gfo/Idh/MocA family protein"
+                     /protein_id="WP_055987789.1"
+                     /translation="MQDLNIAMIGGGFMGKAHSLAYAAMPMFFWPAPARPVKKVVVDV
+                     TDELARTAAERYAWESSSSSWRDVVEDPSIDVIDIATPNNLHAEIAIAAAEAGKHIIC
+                     EKPLAPTAEEAGRMYQAAKDAGVVTAVAFNYRRTPAVALAKKYIEEGALGEILNFRGT
+                     YLQDWSADPNSPLSWRFQKHIAGSGAVGDIGSHVVDLARYLVGEIAEVSSLVSTFITD
+                     RPLQAGGFDALGGATKSDGPRGAVDVDDEAMSLIRFRNGAVGSIEATRNAWGRNNFIT
+                     FEIHGTEGSVFFNYENRDELQVAFKNDPADRRGFRTVYSGPNTPYGESLWPIPALGIG
+                     YGETKIIEAHDFLKAVVEGGTVEPNFADGYQAALVDEAILESGRTGQWVKVPDAVAES
+                     SSDG"
+     gene            complement(3761..4897)
+                     /locus_tag="B5M43_RS04140"
+                     /old_locus_tag="B5M43_004125"
+     CDS             complement(3761..4897)
+                     /locus_tag="B5M43_RS04140"
+                     /old_locus_tag="B5M43_004125"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_013600192.1"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="substrate-binding domain-containing protein"
+                     /protein_id="WP_230667641.1"
+                     /translation="MTAAVGLVAALAGCTPAGEQASSEVDPEIAAEIDAALAEITGQV
+                     LSTGPNGEEPEAVDVTEVTDEQAAQVAELGLTAAIVMHYGGNDWANAQIDGLNAEFER
+                     LGIDVIATTDADFDPATQVSQIETVLTQDPDIIVSIPTDPVATAAAYKRAAEQGVKLV
+                     FMDNVPDGFQAGRDYVSMVSADNYGNGVTSAYLLARALGGEGQIGIIYHEADFFVTKQ
+                     RYEGFKDTITAEFPGIEIVQEQGIAGPDFAGDAQGVANAMLTKNADLDGIWAVWDVPA
+                     EGVMAAARETGRTDIKIATEDLGLNVAIALAKDQMIVGLGAQLPYDQGVAEADLAALS
+                     ILGEDVPAYVALSSLPVDHENVLEAWKTVYRSDPPASVTDAYVD"
+     gene            complement(4977..5801)
+                     /locus_tag="B5M43_RS04145"
+                     /old_locus_tag="B5M43_004130"
+     CDS             complement(4977..5801)
+                     /locus_tag="B5M43_RS04145"
+                     /old_locus_tag="B5M43_004130"
+                     /inference="COORDINATES: protein motif:HMM:NF013429.5"
+                     /GO_function="GO:0016853 - isomerase activity [Evidence
+                     IEA]"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="sugar phosphate isomerase/epimerase family
+                     protein"
+                     /protein_id="WP_167626802.1"
+                     /translation="MVKLAYEANAWGGVVGTPGAVTDIGSGFYETPGDVVETLGAIAS
+                     AGYTGVELFDGNLLPFEHSVDEFARAVEAAGLEVAGVYSGGHLIYPDAHEDELARFDR
+                     SIRLAAAAGARHYVLGGGAVRSSGRRDADFEVAGAFLDRVAERAEAAGLVVSYHPHLG
+                     SLAQSPEQIDALFAATSVGMCADVAHIAAGGGDPVDVINRYAARLKYVHLKDVDLSSS
+                     AFLPLGEGDLDLGSIIDAVVLARYDDWITVELDGYPGDPASAAERSLRFLTGHQPG"
+ORIGIN      
+        1 tcacttcttc cgggacaggg cgacggccgc gatgatgatg gctccgcgca cgacctgctg
+       61 ctgcgccacg tcgagacccg ccaggatgag cccgttgttg accaggccca tgaacaggga
+      121 gccgaacagg gtgccgatga tggcaccgcg tccgccgaag aggctggttc cgccgaggat
+      181 gacggcggcg atgaccgtga gctcatcgcc ctgcccccac tggaaccgcc cggattccag
+      241 ccggccggcg tagagcatgc ccgcaagcgc ggccgccact cccgaggtga gcagcacggt
+      301 gaacttgatg cgggccgtgt tgatcccggt gtacgccgcc gccgtggggt tgccgcccgt
+      361 ggcgagcacc ctccggccgt atccggtgcg gttcatcacc agccatccga cggcgaccgc
+      421 gacgaccgtc cacaccagca gaccagggac cgggccgaag tcgccgccgc cgaagatcag
+      481 cacatacagg cgatcgctga tcggctgagg tgctgacgca gtgatccact gggacacccc
+      541 cgcagcgagg ccgagcatgc cgagggtgac gaggaacgac gggatcttca gaagcgcgac
+      601 gaggcccccg ttgacggccc cgatcacggc tccggcgagc agcccggcga ggatgccggg
+      661 caccaggccg aactgggctg tcgccatggc ggtgaccacc gaggccaggc cagccacgga
+      721 gccgacgctc agatcgatct ccgcggtggc gatcacgaag gtcatcgcga ccgccatgat
+      781 cgagatcgtc gcggtctggc gcacgatgtt gagcatgttg ttcggcgaca ggaacccgtc
+      841 gttgcccagg aagatcgcga acaggatgaa caccaccacg aaggcgatgt agatgatgtt
+      901 gctccgccag tccaggtgcg cgagggcacg cgagacgagg gatggccgtg tggccgttgc
+      961 tgggctgctc atgccgcctc tccttggatg atgagttgaa gctgttcttc gctctcgatg
+     1021 tcggcgcgga ccaggtcacg gaaggaccgt ccctcacgga gcacgacgat gcggtccgcg
+     1081 accgcgagaa gttcgggcag ttcggacgag atgaacagca ccgcgttgcc ccgggaggcg
+     1141 aagtcccgca cgatgtcgag gatctcggtc ttggttccga tgtcgacacc cgcggtgggc
+     1201 tcgtccatca gcaggatgcg cgggtcggtg ttgacccact tggcgacgac caccttctgc
+     1261 tggttgccgc ccgagagccg gttgacgggg gcgtaggggt cggcgacctt caccgcgaag
+     1321 cgcgacacga gctcgccggt gagctcgcgc agcttccgcg gtgacaggag cggtcccgtc
+     1381 ttcacccggt cgaggacggg cagggtgaga ttgtcggaca cggagtgctc gaggacgagc
+     1441 ccctgctcgc gtcgatcctc cgggatcagg gcgacgccgg ccgcctgggc ggcgagcggg
+     1501 ccgttgaacc ggacgggcct cccctcgacg ctcagcgtgc cccgggtcgg ccgatccaat
+     1561 cccgcgacca cgcgcgcgaa ttcggtgcgt ccgctgccca tgaggccggc gagaccgacg
+     1621 atctcccccg cgcggatcgc caggctcacc gactcgagga cgctggtgct ggcgatctcc
+     1681 tcggcttcga gcagcacggg agcttcgggg tccaggcctc gatcccggta cacgagctcg
+     1741 gacgcgagac ggcggccgat gatggcctcg atgatctccg cggcggtcag ctccgccacc
+     1801 ggagaggcga gtacgacacc gccgtcgcgg aggacggtga tccgatccgc gactcggcgg
+     1861 atctcgtcca tccgatggga gatgtacacg atggcgattc cgcggctctt caaggtgtgg
+     1921 atcagctcga agaggttctc cacctcgtgc ttggcgaggc tggcggtcgg ctcgtccatc
+     1981 acgaggacgc gggcgttctt cgccagggcc ttcgcgatct ccaccagctg ccagtacgcc
+     2041 gtgccgagct cctccacacg ggcacccggg tcgatgcgga cgtcgagctc gtcgaagagc
+     2101 tccttcgctg cgcgctcggc cgcaccgtcg tcgatcaggc ctcccgcacc cctcggctca
+     2161 cggttgagga agatgttctg agccactgtc atcgtgggga tcaggctgaa ctcctggaag
+     2221 accatgccga tgcccgctcg ctcggcgtcc gcggtgctgc ggatgtcgac gggctcgccg
+     2281 tcgatctcga tcgtgcccga cgtgatggga tgcacgccct gcagcacctt catgagcgtc
+     2341 gacttcccgg cgccgttctc accggcgagc gcatgcacct cccccgccac gatgtccatg
+     2401 tcgacggact tcagaacctc gaccgaaccg aagttcttga cgatctgacg catgcggacc
+     2461 gccggaccga cggggatcgt gtcagccatc ggaggagctc tctgcgacgg catccggaac
+     2521 cttcacccac tgacccgtgc gacccgactc gaggatggcc tcgtcgacga gcgcggcctg
+     2581 gtagccgtcg gcgaagttcg gctcgaccgt gccaccctcg acgaccgcct tgaggaagtc
+     2641 gtgagcctcg atgatcttcg tctctccgta cccgatgccc agggccggga tgggccagag
+     2701 cgactcgccg taaggagtgt tcgggcccga gtagacggtg cggaacccgc ggcggtcggc
+     2761 ggggtcgttc ttgaacgcga cctgcagctc gtcgcgattc tcgtaattga agaagaccga
+     2821 gccctcggtg ccgtggatct cgaaggtgat gaagttgttc cgcccccagg cgttccgcgt
+     2881 ggcctcgatc gaccccactg caccgttgcg gaagcggatc agggacatcg cctcgtcgtc
+     2941 gacgtcgaca gcgccgcggg gcccgtcgga cttcgtcgct cccccgagtg cgtcgaaccc
+     3001 gcccgcctgc agcggccgat cggtgatgaa cgtggagacc agcgaactga cctcggcaat
+     3061 ctcgccgacc aggtagcgcg cgaggtccac gacgtgggag ccgatgtctc cgacggcgcc
+     3121 cgagccggcg atgtgcttct ggaaccgcca gctcagcggg gagttcgggt cggcgctcca
+     3181 gtcctgcagg taggtgccgc ggaagttgag gatctcgccg agggcgccct cctcgatgta
+     3241 cttcttggcg agcgcgaccg ccggagtccg acggtagttg aaggcgaccg ccgtgacaac
+     3301 accggcgtcc ttcgccgcct gatacatgcg accggcctcc tcggcggtcg gcgcgagcgg
+     3361 cttctcgcag atgatgtgct tgcccgcctc cgccgccgcg atcgcgatct cggcgtgcag
+     3421 gttgttcggg gtggcgatgt cgatcacgtc gatggacgga tcctcgacga catcccgcca
+     3481 cgacgaggag gacgactccc acgcgtagcg ttctgcggcc gtgcgcgcga gctcgtctgt
+     3541 gacatcgacg acgaccttct tcacgggacg ggccggcgcc ggccagaaga acatcggcat
+     3601 cgccgcgtag gcgagagagt gtgccttgcc catgaagccg ccgccgatca tggcgatgtt
+     3661 gaggtcctgc atgatttcct ttcgagcgcg gtgtcccgcg cgatgacgga gatggtctgc
+     3721 cggtggggcc gacgtcccgg ccccaccgga gggtcggcgc tcagtcgacg tacgcgtcgg
+     3781 tcaccgatgc cggcggatcg ctgcggtaga cggtcttcca cgcctcgagc acgttctcgt
+     3841 ggtcgacggg cagcgagctg agggccacgt atgcgggcac gtcctcgccg aggatgctca
+     3901 gcgctgccag gtcggcctcg gcgacgccct ggtcataggg cagctgtgcg cccagcccga
+     3961 cgatcatctg atccttcgcc agggcgatgg cgacgttcag ccccaggtcc tcggtcgcga
+     4021 tcttgatgtc ggtgcggccc gtctcccgag cggcggccat gacgccctcg gccgggacgt
+     4081 cccacacggc ccagatgcca tccaggtcgg cgttcttggt gagcatcgcg ttggctacgc
+     4141 cttgggcgtc accggcgaag tccggcccgg cgatcccctg ctcctggacg atctcgatac
+     4201 cggggaactc cgccgtgatg gtgtccttga acccctcgta gcgctgcttc gtcacgaaga
+     4261 agtcggcctc gtggtagatg atcccgatct gtccctcgcc gcccagcgca cgggcgagca
+     4321 ggtaagccga ggtgaccccg ttgccgtagt tgtccgccga caccatggag acgtaatccc
+     4381 tgccggcctg gaagccgtcg gggacattgt ccatgaagac cagcttcacg ccctgttcgg
+     4441 cggccctctt gtaggcggcg gcggtggcga ccgggtccgt gggaatggag acgatgatgt
+     4501 ccgggtcctg cgtcaggacg gtctcgatct gcgagacctg cgtggcgggg tcgaagtcgg
+     4561 cgtctgtggt ggcgatcacg tcgatgccga gccgttcgaa ctccgcattc agaccgtcga
+     4621 tctgggcgtt ggcccagtcg ttgccgccgt agtgcatgac gatcgccgcc gtcagcccga
+     4681 gttcggcgac ctgcgccgcc tgctcgtcgg tgacctcggt gacgtcgacg gcctccggct
+     4741 cctcgccgtt cgggccggtg ctgagcacct ggccggtgat ctccgccagc gcggcgtcga
+     4801 tctcggccgc gatctccgga tcgacctcgg acgaggcctg ctcaccggcc ggggtgcagc
+     4861 cggcgagtgc cgcgacaaga ccgactgctg cggtcaccgc gagtgctgct cgaaacttca
+     4921 tcgctcatac tcctttggat gggatggggt ggtgtgtact gctgcccgga ccgggatcac
+     4981 ccgggctggt ggccggtgag gaaccgcagg ctccgctccg cggccgaggc cggatctccc
+     5041 ggatagccgt ccagctcgac ggtgatccag tcgtcgtatc gggcgagcac gacggcgtcg
+     5101 atgatgctgc cgaggtcgag gtcgccctct ccgagcggca ggaacgcgct gctcgacagg
+     5161 tcgacatcct tcaggtggac gtacttcagg cgagccgcat agcggttgat gacgtcgacg
+     5221 gggtccccac cgccggcggc gatatgggcc acgtcggcgc acatcccgac agaggtcgcc
+     5281 gcgaagaggg cgtcgatctg ctcgggcgac tgcgccaggc tcccgaggtg cgggtggtag
+     5341 ctgacgacga gccccgcggc ctccgcgcgt tcagcgaccc ggtcgaggaa ggccccggcc
+     5401 acctcgaagt ccgcatcgcg tcggccgctg gagcgcacgg cgcccccgcc cagcacgtag
+     5461 tggcgcgcac ccgcggccgc agccaggcgg atcgaccgat cgaatcgggc cagctcgtcc
+     5521 tcgtgcgcgt cggggtagat cagatgcccc ccgctgtaca ccccggcgac ctcgagcccg
+     5581 gcggcctcta cggccctcgc gaactcgtcc accgagtgct cgaagggcag cagattgccg
+     5641 tcgaagagct ccaccccggt gtagccggcc gaggcgatgg ctccgagcgt ctccacgaca
+     5701 tctcccggcg tctcgtagaa cccggagccg atgtccgtca cggcgcccgg ggttccgacg
+     5761 actcctcccc aggcattcgc ctcgtacgcg agcttcacca t
+//

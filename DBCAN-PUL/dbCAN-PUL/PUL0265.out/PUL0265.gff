@@ -1,0 +1,21 @@
+##gff-version 3
+##sequence-region X78853 1 3536
+# conversion-by bp_genbank2gff3.pl
+# organism Staphylococcus xylosus
+# Note S.xylosus malR gene and malA gene.
+# date 18-APR-2005
+X78853	GenBank	region	1	3536	.	+	1	ID=X78853;Dbxref=taxon:1288;Name=X78853;Note=S.xylosus malR gene and malA gene.;clone=pRA5;clone_lib=genomic in E.coli;date=18-APR-2005;isolate=cured strain C2a;mol_type=genomic DNA;organism=Staphylococcus xylosus;strain=DSM 20267
+X78853	GenBank	regulatory	252	289	.	+	1	ID=GenBank:regulatory:X78853:252:289;Note=rho independent;regulatory_class=terminator
+X78853	GenBank	regulatory	358	363	.	+	1	ID=GenBank:regulatory:X78853:358:363;regulatory_class=minus_35_signal
+X78853	GenBank	regulatory	381	386	.	+	1	ID=GenBank:regulatory:X78853:381:386;regulatory_class=minus_10_signal
+X78853	GenBank	regulatory	427	433	.	+	1	ID=GenBank:regulatory:X78853:427:433;regulatory_class=ribosome_binding_site
+X78853	GenBank	gene	439	1452	.	+	1	ID=malR;Name=malR
+X78853	GenBank	mRNA	439	1452	.	+	1	ID=malR;Parent=malR
+X78853	GenBank	regulatory	1442	1447	.	+	1	Parent=malR;Name=malR;regulatory_class=ribosome_binding_site
+X78853	GenBank	CDS	439	1452	.	+	1	ID=malR;Parent=malR;Dbxref=GOA:Q56201,InterPro:IPR000843,InterPro:IPR001761,InterPro:IPR010982,UniProtKB/Swiss-Prot:Q56201;Name=malR;codon_start=1;product=regulator protein;protein_id=CAA55408.1;transl_table=11;translation=length.337
+X78853	GenBank	exon	439	1452	.	+	1	Parent=malR
+X78853	GenBank	regulatory	3265	3299	.	+	1	ID=GenBank:regulatory:X78853:3265:3299;Note=rho independent;regulatory_class=terminator
+X78853	GenBank	gene	1454	3103	.	+	1	ID=malA;Name=malA
+X78853	GenBank	mRNA	1454	3103	.	+	1	ID=malA;Parent=malA
+X78853	GenBank	CDS	1454	3103	.	+	1	ID=malA;Parent=malA;Dbxref=GOA:Q60015,HSSP:1UOK,InterPro:IPR006046,InterPro:IPR006047,InterPro:IPR006589,InterPro:IPR013780,InterPro:IPR013781,InterPro:IPR017853,UniProtKB/TrEMBL:Q60015;eC_number=3.2.1.20;Name=malA;codon_start=1;product=alpha-D-1%2C4-glucosidase;protein_id=CAA55409.1;transl_table=11;translation=length.549
+X78853	GenBank	exon	1454	3103	.	+	1	Parent=malA

@@ -1,0 +1,19 @@
+##gff-version 3
+##sequence-region MSTB01000008 1 4631
+# conversion-by bp_genbank2gff3.pl
+# organism Lactobacillus rhamnosus
+# Note Lactobacillus rhamnosus strain AMC143 contig_35, whole genome shotgun sequence.
+# date 01-FEB-2017
+MSTB01000008	GenBank	region	1	4631	.	+	1	ID=MSTB01000008;Dbxref=BioProject:PRJNA357881,taxon:47715;Name=MSTB01000008;Note=Lactobacillus rhamnosus strain AMC143 contig_35%2C whole genome shotgun sequence.,\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7,SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454,IonTorrent\n##Genome-Assembly-Data-END##;collection_date=2010;comment1=\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7%3B SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454%3B IonTorrent\n##Genome-Assembly-Data-END##;country=USA;date=01-FEB-2017;host=Homo sapiens;isolation_source=infant stools;mol_type=genomic DNA;organism=Lactobacillus rhamnosus;strain=AMC143;submitter_seqid=contig_35
+MSTB01000008	GenBank	CDS	1	1793	.	+	1	ID=BT102_01370;Name=BT102_01370;Note=phosphoenolpyruvate-dependent sugar phosphotransferase system%3B catalyzes the phosphorylation of incoming sugar substrates concomitant with their translocation across the cell membrane%3B IIB is phosphorylated by IIA and then transfers the phosphoryl group to the sugar%3B IIC forms the translocation channel%3B frameshifted%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005714409.1;product=PTS lactose transporter subunit IIBC;protein_id=WP_005714409.1;transl_table=11;translation=length.597
+MSTB01000008	GenBank	pseudogene	1	1793	.	+	1	ID=BT102_01370.pseudogene;Alias=BT102_01370;Name=BT102_01370;pseudo=""
+MSTB01000008	GenBank	gene	1847	2716	.	+	1	ID=BT102_01375;Name=BT102_01375
+MSTB01000008	GenBank	mRNA	1847	2716	.	+	1	ID=BT102_01375;Parent=BT102_01375
+MSTB01000008	GenBank	CDS	1847	2716	.	+	1	ID=BT102_01375;Parent=BT102_01375;Name=BT102_01375;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005691319.1;product=transcriptional regulator;protein_id=ONG01734.1;transl_table=11;translation=length.289
+MSTB01000008	GenBank	exon	1847	2716	.	+	1	Parent=BT102_01375
+MSTB01000008	GenBank	gene	2817	3182	.	+	1	ID=BT102_01380;Name=BT102_01380
+MSTB01000008	GenBank	mRNA	2817	3182	.	+	1	ID=BT102_01380;Parent=BT102_01380
+MSTB01000008	GenBank	CDS	2817	3182	.	+	1	ID=BT102_01380;Parent=BT102_01380;Name=BT102_01380;Note=catalyzes the phosphorylation of incoming sugar substrates concomitant with their translocation across the cell membrane%3B protein IIA transfers a phosphoryl group to IIB which then transfers the phosphoryl group to the sugar%3B IIC forms the translocation channel for the sugar uptake%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005691321.1;product=gnl|TC-DB|Q045H4|4.A.3.1.3;protein_id=ONG01735.1;transl_table=11;translation=length.121
+MSTB01000008	GenBank	exon	2817	3182	.	+	1	Parent=BT102_01380
+MSTB01000008	GenBank	CDS	3208	4631	.	+	1	ID=BT102_01385;Name=BT102_01385;Note=frameshifted%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005714800.1;product=6-phospho-beta-galactosidase;protein_id=WP_005714800.1;transl_table=11;translation=length.475
+MSTB01000008	GenBank	pseudogene	3208	4631	.	+	1	ID=BT102_01385.pseudogene;Alias=BT102_01385;Name=BT102_01385;pseudo=""

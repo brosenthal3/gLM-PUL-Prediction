@@ -1,0 +1,16 @@
+##gff-version 3
+##sequence-region D83026 1 1858
+# conversion-by bp_genbank2gff3.pl
+# organism Bacillus subtilis
+# Note Bacillus subtilis genome sequence covering lic-cel region.
+# date 26-JUL-2016
+D83026	GenBank	region	1	1858	.	+	1	ID=D83026;Dbxref=taxon:1423;Name=D83026;Note=Bacillus subtilis genome sequence covering lic-cel region.,On Jan 17,1997 this sequence version replaced gi:1109601.;comment1=On Jan 17%2C 1997 this sequence version replaced gi:1109601.;date=26-JUL-2016;mol_type=genomic DNA;organism=Bacillus subtilis;strain=BGSC 1A1
+D83026	GenBank	regulatory	1111	1118	.	+	1	ID=GenBank:regulatory:D83026:1111:1118;regulatory_class=ribosome_binding_site
+D83026	GenBank	gene	1	834	.	+	1	ID=licT;Name=licT
+D83026	GenBank	mRNA	1	834	.	+	1	ID=licT;Parent=licT
+D83026	GenBank	CDS	1	834	.	+	1	ID=licT;Parent=licT;Name=licT;codon_start=1;function=regulation of the licS gene;product=LicT antiterminator;protein_id=BAA11696.1;transl_table=11;translation=length.277
+D83026	GenBank	exon	1	834	.	+	1	Parent=licT
+D83026	GenBank	gene	1130	1858	.	+	1	ID=licS;Name=licS
+D83026	GenBank	mRNA	1130	1858	.	+	1	ID=licS;Parent=licS
+D83026	GenBank	CDS	1130	1858	.	+	1	ID=licS;Parent=licS;Name=licS;codon_start=1;product=beta-glucanase precursor;protein_id=BAA11697.1;transl_table=11;translation=length.242
+D83026	GenBank	exon	1130	1858	.	+	1	Parent=licS

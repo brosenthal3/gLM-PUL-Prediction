@@ -1,0 +1,27 @@
+##gff-version 3
+##sequence-region AF508972 1 4432
+# conversion-by bp_genbank2gff3.pl
+# organism Corynebacterium glutamicum
+# Note Corynebacterium glutamicum strain R probable substrate-binding component of iron ABC transporter gene, partial cds; and beta-glucoside catabolism operon gene, complete sequence.
+# date 24-JUL-2016
+AF508972	GenBank	region	1	4432	.	+	1	ID=AF508972;Dbxref=taxon:1718;Name=AF508972;Note=Corynebacterium glutamicum strain R probable substrate-binding component of iron ABC transporter gene%2C partial cds%3B and beta-glucoside catabolism operon gene%2C complete sequence.;date=24-JUL-2016;mol_type=genomic DNA;organism=Corynebacterium glutamicum;strain=R
+AF508972	GenBank	gene	1	4432	.	+	1	ID=beta-glucoside catabolism operon;Name=beta-glucoside catabolism operon
+AF508972	GenBank	gene_component_region	74	100	.	+	1	Parent=beta-glucoside catabolism operon;Name=beta-glucoside catabolism operon;Note=ribonucleic antiterminator sequence
+AF508972	GenBank	regulatory	1	6	.	+	1	Parent=beta-glucoside catabolism operon;Name=beta-glucoside catabolism operon;regulatory_class=minus_35_signal
+AF508972	GenBank	regulatory	25	30	.	+	1	Parent=beta-glucoside catabolism operon;Name=beta-glucoside catabolism operon;regulatory_class=minus_10_signal
+AF508972	GenBank	regulatory	95	141	.	+	1	Parent=beta-glucoside catabolism operon;Name=beta-glucoside catabolism operon;Note=regulatory transcription terminator;regulatory_class=terminator
+AF508972	GenBank	gene	184	2053	.	+	1	ID=bglF;Name=bglF
+AF508972	GenBank	mRNA	197	2053	.	+	1	ID=bglF;Parent=bglF
+AF508972	GenBank	regulatory	184	188	.	+	1	Parent=bglF;Name=bglF;Note=putative;regulatory_class=ribosome_binding_site
+AF508972	GenBank	CDS	197	2053	.	+	1	ID=bglF;Parent=bglF;Name=bglF;Note=function in beta-glucoside PTS;codon_start=1;experiment=experimental evidence%2C no additional details recorded;product=gnl|TC-DB|Q8GGK3|4.A.1.2.5;protein_id=AAO15901.1;transl_table=11;translation=length.618
+AF508972	GenBank	exon	197	2053	.	+	1	Parent=bglF
+AF508972	GenBank	gene	2096	3523	.	+	1	ID=bglA;Name=bglA
+AF508972	GenBank	mRNA	2114	3523	.	+	1	ID=bglA;Parent=bglA
+AF508972	GenBank	regulatory	2096	2101	.	+	1	Parent=bglA;Name=bglA;Note=putative;regulatory_class=ribosome_binding_site
+AF508972	GenBank	CDS	2114	3523	.	+	1	ID=bglA;Parent=bglA;Name=bglA;Note=function in utilization of beta-glucosides;codon_start=1;experiment=experimental evidence%2C no additional details recorded;product=GH1;protein_id=AAO15902.1;transl_table=11;translation=length.469
+AF508972	GenBank	exon	2114	3523	.	+	1	Parent=bglA
+AF508972	GenBank	gene	3548	4432	.	+	1	ID=bglG;Name=bglG
+AF508972	GenBank	mRNA	3563	4432	.	+	1	ID=bglG;Parent=bglG
+AF508972	GenBank	regulatory	3548	3552	.	+	1	Parent=bglG;Name=bglG;Note=putative;regulatory_class=ribosome_binding_site
+AF508972	GenBank	CDS	3563	4432	.	+	1	ID=bglG;Parent=bglG;Name=bglG;codon_start=1;product=transcription antiterminator protein;protein_id=AAO15903.1;transl_table=11;translation=length.289
+AF508972	GenBank	exon	3563	4432	.	+	1	Parent=bglG

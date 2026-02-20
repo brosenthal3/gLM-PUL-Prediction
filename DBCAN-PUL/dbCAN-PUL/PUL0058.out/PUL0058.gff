@@ -1,0 +1,43 @@
+##gff-version 3
+##sequence-region Z25795 1 8517
+# conversion-by bp_genbank2gff3.pl
+# organism Bacillus subtilis subsp. subtilis str. 168
+# Note B.subtilis glycogen operon DNA.
+# date 14-NOV-2006
+Z25795	GenBank	region	1	8517	.	+	1	ID=Z25795;Dbxref=taxon:224308;Name=Z25795;Note=B.subtilis glycogen operon DNA.;clone=pKBU1 and pKBU101;clone_lib=Lambda EMBL12 genebank;date=14-NOV-2006;isolate=0G1;mol_type=genomic DNA;organism=Bacillus subtilis subsp. subtilis str. 168;strain=168;sub_species=subtilis;type_material=type strain of Bacillus subtilis
+Z25795	GenBank	tRNA	1	40	.	+	1	ID=tRNA-Asn;Name=tRNA-Asn;Note=part of trnB region%3B nt 1-418 also sequenced by Green CJ and Vold BS (1983). Sequence analysis of a cluster of twenty-one tRNA genes in Bacillus subtilis. Nucleic Acids Res. 16:5763-5774 (citation 4).;citation=[3];product=tRNA-Asn
+Z25795	GenBank	exon	1	40	.	+	1	Parent=tRNA-Asn
+Z25795	GenBank	tRNA	44	134	.	+	1	ID=tRNA-Ser;Name=tRNA-Ser;Note=codon recognized: AGC%3B part of trnB region%3B also listed in (citation 4);anticodon=(pos:78..80%2Caa:Ser%2Cseq:gct);citation=[3];product=tRNA-Ser
+Z25795	GenBank	exon	44	134	.	+	1	Parent=tRNA-Ser
+Z25795	GenBank	stem_loop	235	263	.	+	1	ID=GenBank:stem_loop:Z25795:235:263;Note=label:T1%3B putatitive terminator downstream trnB%3B also listed in (citation 4);citation=[3];function=terminator
+Z25795	GenBank	stem_loop	381	402	.	+	1	ID=GenBank:stem_loop:Z25795:381:402;Note=label:T2%3B putative terminator downstream from trnB%3B also listed in (citation 4);citation=[3];function=terminator
+Z25795	GenBank	regulatory	417	424	.	+	1	ID=GenBank:regulatory:Z25795:417:424;Note=-35 region of bvx promoter recognized by Bacillus subtilis RNA polymerase containing the sporulation sigma factor E;citation=[3];regulatory_class=minus_35_signal
+Z25795	GenBank	regulatory	438	445	.	+	1	ID=GenBank:regulatory:Z25795:438:445;Note=-10 region of bvx promoter recognized by Bacillus subtilis RNA polymerase containing the sigma factor E.;citation=[3];regulatory_class=minus_10_signal
+Z25795	GenBank	regulatory	448	460	.	+	1	ID=GenBank:regulatory:Z25795:448:460;citation=[3];regulatory_class=ribosome_binding_site
+Z25795	GenBank	tRNA	160	231	.	+	1	ID=tRNA-Glu;Name=tRNA-Glu;Note=codon recognized: GAA%3B part of trnB region%3B also listed in citation 4;anticodon=(pos:193..195%2Caa:Glu%2Cseq:ttc);citation=[3];product=tRNA-Glu
+Z25795	GenBank	exon	160	231	.	+	1	Parent=tRNA-Glu
+Z25795	GenBank	gene	464	2347	.	+	1	ID=glgB;Name=glgB
+Z25795	GenBank	mRNA	464	2347	.	+	1	ID=glgB;Parent=glgB
+Z25795	GenBank	regulatory	2327	2337	.	+	1	Parent=glgB;Name=glgB;citation=[3];regulatory_class=ribosome_binding_site
+Z25795	GenBank	CDS	464	2347	.	+	1	ID=glgB;Parent=glgB;Dbxref=GOA:P39118,InterPro:IPR004193,InterPro:IPR006047,InterPro:IPR006048,InterPro:IPR006407,InterPro:IPR013780,InterPro:IPR013781,InterPro:IPR013783,InterPro:IPR017853,UniProtKB/Swiss-Prot:P39118;eC_number=2.4.1.18;Name=glgB;Note=first gene of glycogen operon;citation=[3];codon_start=1;experiment=experimental evidence%2C no additional details recorded;function=introduces alpha-1%2C6-linkages in starch and glycogen;product=1%2C4-alpha-glucan branching enzyme;protein_id=CAA81040.1;transl_table=11;translation=length.627
+Z25795	GenBank	exon	464	2347	.	+	1	Parent=glgB
+Z25795	GenBank	regulatory	3494	3501	.	+	1	ID=GenBank:regulatory:Z25795:3494:3501;citation=[3];regulatory_class=ribosome_binding_site
+Z25795	GenBank	gene	2344	3486	.	+	1	ID=glgC;Name=glgC
+Z25795	GenBank	mRNA	2344	3486	.	+	1	ID=glgC;Parent=glgC
+Z25795	GenBank	CDS	2344	3486	.	+	1	ID=glgC;Parent=glgC;Dbxref=GOA:P39122,InterPro:IPR005835,InterPro:IPR005836,InterPro:IPR011004,InterPro:IPR011831,InterPro:IPR023049,UniProtKB/Swiss-Prot:P39122;eC_number=2.7.7.27;Name=glgC;Note=second gene in glycogen operon;citation=[3];codon_start=1;function=activates glucose-1-phosphate using ATP;product=ADP-glucose pyrophosphorylase;protein_id=CAA81041.1;transl_table=11;translation=length.380
+Z25795	GenBank	exon	2344	3486	.	+	1	Parent=glgC
+Z25795	GenBank	gene	3510	4541	.	+	1	ID=glgD;Name=glgD
+Z25795	GenBank	mRNA	3510	4541	.	+	1	ID=glgD;Parent=glgD
+Z25795	GenBank	regulatory	4519	4531	.	+	1	Parent=glgD;Name=glgD;citation=[3];regulatory_class=ribosome_binding_site
+Z25795	GenBank	CDS	3510	4541	.	+	1	ID=glgD;Parent=glgD;Dbxref=GOA:P39124,InterPro:IPR005835,InterPro:IPR011004,InterPro:IPR011832,UniProtKB/Swiss-Prot:P39124;Name=glgD;Note=third gene in glycogen operon;citation=[3];codon_start=1;function=unknown;product=protein with similarity to ADP-glucose pyrophosphorylase;protein_id=CAA81042.1;transl_table=11;translation=length.343
+Z25795	GenBank	exon	3510	4541	.	+	1	Parent=glgD
+Z25795	GenBank	gene	4538	5992	.	+	1	ID=glgA;Name=glgA
+Z25795	GenBank	mRNA	4538	5992	.	+	1	ID=glgA;Parent=glgA
+Z25795	GenBank	regulatory	5965	5974	.	+	1	Parent=glgA;Name=glgA;citation=[3];regulatory_class=ribosome_binding_site
+Z25795	GenBank	CDS	4538	5992	.	+	1	ID=glgA;Parent=glgA;Dbxref=GOA:P39125,InterPro:IPR001296,InterPro:IPR011835,InterPro:IPR013534,UniProtKB/Swiss-Prot:P39125;eC_number=2.4.1.21;Name=glgA;Note=fourth gene in glycogen operon;citation=[3];codon_start=1;function=synthesizes alpha-1%2C4-glucan chains using ADP-glucose;product=starch (bacterial glycogen) synthase;protein_id=CAA81043.1;transl_table=11;translation=length.484
+Z25795	GenBank	exon	4538	5992	.	+	1	Parent=glgA
+Z25795	GenBank	stem_loop	8375	8401	.	+	1	ID=GenBank:stem_loop:Z25795:8375:8401;Note=putative terminator of glycogen operon;citation=[3];function=terminator
+Z25795	GenBank	gene	5979	8375	.	+	1	ID=glgP;Name=glgP
+Z25795	GenBank	mRNA	5979	8375	.	+	1	ID=glgP;Parent=glgP
+Z25795	GenBank	CDS	5979	8375	.	+	1	ID=glgP;Parent=glgP;Dbxref=GOA:P39123,InterPro:IPR000811,InterPro:IPR011833,UniProtKB/Swiss-Prot:P39123;Name=glgP;Note=fifth and last gene of glycogen operon;citation=[3];codon_start=1;function=degrades starch and glycogen by phosphorylation;product=Glycogen Phosphorylase;protein_id=CAA81044.1;transl_table=11;translation=length.798
+Z25795	GenBank	exon	5979	8375	.	+	1	Parent=glgP

@@ -1,0 +1,27 @@
+##gff-version 3
+##sequence-region AB063629 1 7232
+# conversion-by bp_genbank2gff3.pl
+# organism Pseudoalteromonas piscicida
+# Note Pseudoalteromonas piscicida chiD, cbp1, chiA genes for chitinase D, chitin-binding protein 1, chitinase A, complete cds.
+# date 14-DEC-2007
+AB063629	GenBank	region	1	7232	.	+	1	ID=AB063629;Dbxref=taxon:43662;Name=AB063629;Note=Pseudoalteromonas piscicida chiD%2C cbp1%2C chiA genes for chitinase D%2C chitin-binding protein 1%2C chitinase A%2C complete cds.,On Jan 14,2002 this sequence version replaced D13762.1.,originally submitted as 'Alteromonas sp. O-7';comment1=On Jan 14%2C 2002 this sequence version replaced D13762.1.;date=14-DEC-2007;mol_type=genomic DNA;organism=Pseudoalteromonas piscicida;strain=O-7
+AB063629	GenBank	signal_peptide	1	81	.	+	1	ID=GenBank:signal_peptide:AB063629:1:81
+AB063629	GenBank	gene	1	3150	.	+	1	ID=chiD;Name=chiD
+AB063629	GenBank	mRNA	1	3114	.	+	1	ID=chiD;Parent=chiD
+AB063629	GenBank	regulatory	3137	3150	.	+	1	Parent=chiD;Name=chiD;regulatory_class=terminator
+AB063629	GenBank	regulatory	3147	3150	.	+	1	Parent=chiD;Name=chiD;inference=non-experimental evidence%2C no additional details recorded;regulatory_class=ribosome_binding_site
+AB063629	GenBank	CDS	1	3114	.	+	1	ID=chiD;Parent=chiD;Name=chiD;Note=ChiD;codon_start=1;product=CBM5|GH18;protein_id=BAB79618.1;transl_table=11;translation=length.1037
+AB063629	GenBank	exon	1	3114	.	+	1	Parent=chiD
+AB063629	GenBank	signal_peptide	3160	3237	.	+	1	ID=GenBank:signal_peptide:AB063629:3160:3237
+AB063629	GenBank	regulatory	4627	4631	.	+	1	ID=GenBank:regulatory:AB063629:4627:4631;inference=non-experimental evidence%2C no additional details recorded;regulatory_class=ribosome_binding_site
+AB063629	GenBank	gene	3160	4609	.	+	1	ID=cbp1;Name=cbp1
+AB063629	GenBank	mRNA	3160	4587	.	+	1	ID=cbp1;Parent=cbp1
+AB063629	GenBank	regulatory	4593	4609	.	+	1	Parent=cbp1;Name=cbp1;regulatory_class=terminator
+AB063629	GenBank	CDS	3160	4587	.	+	1	ID=cbp1;Parent=cbp1;Name=cbp1;Note=Cbp1;codon_start=1;product=CBM5|AA10;protein_id=BAB79619.1;transl_table=11;translation=length.475
+AB063629	GenBank	exon	3160	4587	.	+	1	Parent=cbp1
+AB063629	GenBank	signal_peptide	4640	4702	.	+	1	ID=GenBank:signal_peptide:AB063629:4640:4702
+AB063629	GenBank	gene	4640	7232	.	+	1	ID=chiA;Name=chiA
+AB063629	GenBank	mRNA	4640	7102	.	+	1	ID=chiA;Parent=chiA
+AB063629	GenBank	regulatory	7212	7232	.	+	1	Parent=chiA;Name=chiA;regulatory_class=terminator
+AB063629	GenBank	CDS	4640	7102	.	+	1	ID=chiA;Parent=chiA;Name=chiA;Note=ChiA;codon_start=1;product=CBM5|GH18;protein_id=BAB79620.1;transl_table=11;translation=length.820
+AB063629	GenBank	exon	4640	7102	.	+	1	Parent=chiA

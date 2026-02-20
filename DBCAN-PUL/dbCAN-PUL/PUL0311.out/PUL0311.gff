@@ -1,0 +1,55 @@
+##gff-version 3
+##sequence-region HG738867 1 9337
+# conversion-by bp_genbank2gff3.pl
+# organism Escherichia coli str. K-12 substr. MC4100
+# Note Escherichia coli str. K-12 substr. MC4100 complete genome.
+# date 27-FEB-2015
+HG738867	GenBank	region	1	9337	.	+	1	ID=HG738867;Dbxref=BioProject:PRJEB4621,taxon:1403831;Name=HG738867;Note=Escherichia coli str. K-12 substr. MC4100 complete genome.,The annotation of this whole genome reference is derived from the Escherichia coli K-12 strain MC4100 substrain BW2952 reference (accession NC_012759) by whole genome Illumina paired-end sequencing,read mapping,variant calling,and reference adaptation by application of variants and manual curation of further annotation changes. ;comment1=The annotation of this whole genome reference is derived from the Escherichia coli K-12 strain MC4100 substrain BW2952 reference (accession NC_012759) by whole genome Illumina paired-end sequencing%2C read mapping%2C variant calling%2C and reference adaptation by application of variants and manual curation of further annotation changes. ;date=27-FEB-2015;mol_type=genomic DNA;organism=Escherichia coli str. K-12 substr. MC4100;strain=K-12;sub_strain=MC4100
+HG738867	GenBank	gene	1	2619	.	+	1	ID=BN896_3222;Name=bcsA;locus_tag=BN896_3222
+HG738867	GenBank	gene_component_region	43	2595	.	+	1	Parent=BN896_3222;Name=bcsA;Note=cellulose synthase catalytic subunit%3B Provisional%3B Region: bcsA%3B PRK11498;locus_tag=BN896_3222
+HG738867	GenBank	gene_component_region	550	1032	.	+	1	Parent=BN896_3222;Name=bcsA;Note=Glycosyltransferase family A (GT-A) includes diverse families of glycosyl transferases with a common GT-A type structural fold%3B Region: Glyco_tranf_GTA_type%3B cl11394;locus_tag=BN896_3222
+HG738867	GenBank	gene_component_region	817	1515	.	+	1	Parent=BN896_3222;Name=bcsA;Note=CESA_CelA_like are involved in the elongation of the glucan chain of cellulose%3B Region: CESA_CelA_like%3B cd06421;locus_tag=BN896_3222
+HG738867	GenBank	gene_component_region	1078	1086	.	+	1	Parent=BN896_3222;Name=bcsA;Note=DXD motif%3B other site;locus_tag=BN896_3222
+HG738867	GenBank	gene_component_region	2080	2373	.	+	1	Parent=BN896_3222;Name=bcsA;Note=PilZ domain%3B Region: PilZ%3B cl01260;locus_tag=BN896_3222
+HG738867	GenBank	mRNA	1	2619	.	+	1	ID=BN896_3222;Parent=BN896_3222
+HG738867	GenBank	CDS	1	2619	.	+	1	ID=BN896_3222;Parent=BN896_3222;Dbxref=EnsemblGenomes-Gn:BN896_3222,EnsemblGenomes-Tr:CDJ73343,GOA:U6N9W8,InterPro:IPR001173,InterPro:IPR003919,InterPro:IPR009875,InterPro:IPR029044,UniProtKB/TrEMBL:U6N9W8;Name=bcsA;Note=polymerizes uridine 5'-diphosphate glucose to cellulose%3B acts with BcsB%2C BcsZ and BcsC in cellulose biosynthesis;codon_start=1;locus_tag=BN896_3222;product=cellulose synthase catalytic subunit;protein_id=CDJ73343.1;transl_table=11;translation=length.872
+HG738867	GenBank	exon	1	2619	.	+	1	Parent=BN896_3222
+HG738867	GenBank	gene	2630	4969	.	+	1	ID=BN896_3221;Name=bcsB;locus_tag=BN896_3221
+HG738867	GenBank	gene_component_region	2630	4861	.	+	1	Parent=BN896_3221;Name=bcsB;Note=cellulose synthase regulator protein%3B Provisional%3B Region: PRK11114;locus_tag=BN896_3221
+HG738867	GenBank	gene_component_region	2834	4672	.	+	1	Parent=BN896_3221;Name=bcsB;Note=Bacterial cellulose synthase subunit%3B Region: BcsB%3B pfam03170;locus_tag=BN896_3221
+HG738867	GenBank	mRNA	2630	4969	.	+	1	ID=BN896_3221;Parent=BN896_3221
+HG738867	GenBank	CDS	2630	4969	.	+	1	ID=BN896_3221;Parent=BN896_3221;Dbxref=EnsemblGenomes-Gn:BN896_3221,EnsemblGenomes-Tr:CDJ73344,GOA:U6NDC3,InterPro:IPR003920,InterPro:IPR018513,UniProtKB/TrEMBL:U6NDC3;Name=bcsB;Note=binds the cellulose synthase activator%2C bis-(3'-5') cyclic diguanylic acid (c-di-GMP);codon_start=1;locus_tag=BN896_3221;product=cellulose synthase regulator protein;protein_id=CDJ73344.1;transl_table=11;translation=length.779
+HG738867	GenBank	exon	2630	4969	.	+	1	Parent=BN896_3221
+HG738867	GenBank	gene	4976	6082	.	+	1	ID=BN896_3220;Name=bcsZ;locus_tag=BN896_3220
+HG738867	GenBank	gene_component_region	4976	6079	.	+	1	Parent=BN896_3220;Name=bcsZ;Note=Glycosyl hydrolases family 8%3B Region: Glyco_hydro_8%3B cl01351;locus_tag=BN896_3220
+HG738867	GenBank	mRNA	4976	6082	.	+	1	ID=BN896_3220;Parent=BN896_3220
+HG738867	GenBank	CDS	4976	6082	.	+	1	ID=BN896_3220;Parent=BN896_3220;Dbxref=EnsemblGenomes-Gn:BN896_3220,EnsemblGenomes-Tr:CDJ73345,GOA:U6NF65,InterPro:IPR002037,InterPro:IPR008928,InterPro:IPR012341,InterPro:IPR019834,UniProtKB/TrEMBL:U6NF65;Name=bcsZ;Note=catalyzes the hydrolysis of 1%2C4-beta-D-glucosidic linkages in cellulose%2C lichenin and cereal beta-D-glucans;codon_start=1;locus_tag=BN896_3220;product=endo-1%2C4-D-glucanase;protein_id=CDJ73345.1;transl_table=11;translation=length.368
+HG738867	GenBank	exon	4976	6082	.	+	1	Parent=BN896_3220
+HG738867	GenBank	gene	6115	9337	.	+	1	ID=BN896_3219;Name=bcsC;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6115	9337	.	+	1	Parent=BN896_3219;Name=bcsC;Note=cellulose synthase subunit BcsC%3B Provisional%3B Region: PRK11447;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6973	7311	.	+	1	Parent=BN896_3219;Name=bcsC;Note=Tetratricopeptide repeat domain%3B typically contains 34 amino acids [WLF]-X(2)-[LIM]-[GAS]-X(2)-[YLF]-X(8)-[ASE]-X(3)-[FYL]- X(2)-[ASL]-X(4)-[PKE] is the consensus sequence%3B found in a variety of organisms including bacteria%2C cyanobacteria%2C yeast%2C fungi%3B Region: TPR%3B cd00189;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6973	6978	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6982	6987	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6994	6999	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7090	7095	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7135	7140	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7147	7152	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7228	7233	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7240	7245	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7252	7257	.	-	1	Parent=BN896_3219;Name=bcsC;Note=binding surface;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	6991	6993	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7027	7029	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7039	7041	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7048	7050	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7135	7137	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7171	7173	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7183	7185	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7192	7194	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7237	7239	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7273	7275	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7285	7287	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	7294	7296	.	-	1	Parent=BN896_3219;Name=bcsC;Note=TPR motif%3B other site;locus_tag=BN896_3219
+HG738867	GenBank	gene_component_region	8464	9337	.	+	1	Parent=BN896_3219;Name=bcsC;Note=Cellulose synthase operon protein C C-terminus (BCSC_C)%3B Region: BCSC_C%3B pfam05420;locus_tag=BN896_3219
+HG738867	GenBank	mRNA	6115	9337	.	+	1	ID=BN896_3219;Parent=BN896_3219
+HG738867	GenBank	CDS	6115	9337	.	+	1	ID=BN896_3219;Parent=BN896_3219;Dbxref=EnsemblGenomes-Gn:BN896_3219,EnsemblGenomes-Tr:CDJ73346,GOA:U6NHA4,InterPro:IPR008410,InterPro:IPR011990,InterPro:IPR013026,InterPro:IPR019734,UniProtKB/TrEMBL:U6NHA4;Name=bcsC;Note=cellulose is produced by the multicellular morphotypes of E. coli and Salmonella typhimurium%3B the cellulose biosynthesis genes bcsA%2C bcsB%2C bcsZ and bcsC are constitutively transcribed%2C however%2C cellulose synthesis is dependent on the expression of adrA;codon_start=1;locus_tag=BN896_3219;product=cellulose synthase subunit BcsC;protein_id=CDJ73346.1;transl_table=11;translation=length.1140
+HG738867	GenBank	exon	6115	9337	.	+	1	Parent=BN896_3219

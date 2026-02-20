@@ -1,0 +1,19 @@
+##gff-version 3
+##sequence-region AF441242 1 5900
+# conversion-by bp_genbank2gff3.pl
+# organism Bifidobacterium animalis subsp. lactis
+# Note Bifidobacterium lactis sucrose-utilizing gene cluster, complete sequence.
+# date 06-JAN-2003
+AF441242	GenBank	region	1	5900	.	+	1	ID=AF441242;Dbxref=taxon:302911;Name=AF441242;Note=Bifidobacterium lactis sucrose-utilizing gene cluster%2C complete sequence.,synonym: Bifidobacterium lactis;date=06-JAN-2003;mol_type=genomic DNA;organism=Bifidobacterium animalis subsp. lactis;sub_species=lactis
+AF441242	GenBank	gene	771	2372	.	-	1	ID=scrT;Name=scrT
+AF441242	GenBank	mRNA	771	2072	.	-	1	ID=scrT;Parent=scrT
+AF441242	GenBank	CDS	771	2072	.	-	1	ID=scrT;Parent=scrT;Name=scrT;Note=sucrose symporter;codon_start=1;product=gnl|TC-DB|J9W1F3|2.A.1.2.93;protein_id=AAN01604.1;transl_table=11;translation=length.433
+AF441242	GenBank	exon	771	2072	.	-	1	Parent=scrT
+AF441242	GenBank	gene	2441	3961	.	-	1	ID=scrP;Name=scrP
+AF441242	GenBank	mRNA	2441	3961	.	-	1	ID=scrP;Parent=scrP
+AF441242	GenBank	CDS	2441	3961	.	-	1	ID=scrP;Parent=scrP;Name=scrP;Note=sucrose phosphorylase;codon_start=1;product=GH13|GH13_18;protein_id=AAN01605.1;transl_table=11;translation=length.506
+AF441242	GenBank	exon	2441	3961	.	-	1	Parent=scrP
+AF441242	GenBank	gene	4267	5247	.	+	1	ID=scrR;Name=scrR
+AF441242	GenBank	mRNA	4267	5247	.	+	1	ID=scrR;Parent=scrR
+AF441242	GenBank	CDS	4267	5247	.	+	1	ID=scrR;Parent=scrR;Name=scrR;Note=sucrose regulator%3B LacI-GalR family regulator;codon_start=1;product=DBD-Pfam|LacI%2CDBD-SUPERFAMILY|0036955;protein_id=AAN01606.1;transl_table=11;translation=length.326
+AF441242	GenBank	exon	4267	5247	.	+	1	Parent=scrR

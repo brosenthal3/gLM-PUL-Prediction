@@ -1,0 +1,237 @@
+LOCUS       MSTC01000063            4634 bp    DNA     linear   BCT 01-FEB-2017
+DEFINITION  Lactobacillus rhamnosus strain AMC010 contig_37, whole genome
+            shotgun sequence.
+ACCESSION   MSTC01000063
+VERSION     MSTC01000063.1
+DBLINK      BioProject: PRJNA357881
+            BioSample: SAMN06161582
+KEYWORDS    WGS.
+SOURCE      Lactobacillus rhamnosus
+  ORGANISM  Lactobacillus rhamnosus
+            Bacteria; Firmicutes; Bacilli; Lactobacillales; Lactobacillaceae;
+            Lactobacillus.
+REFERENCE   1  (bases 1 to 4634)
+  AUTHORS   Arnold,J., Altermann,E., Thompson,A. and Azcarate-Peril,M.A.
+  TITLE     Genome sequencing of stool bacterial isolates from healthy human
+            infants
+  JOURNAL   Unpublished
+REFERENCE   2  (bases 1 to 4634)
+  AUTHORS   Arnold,J., Altermann,E., Thompson,A. and Azcarate-Peril,M.A.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (03-JAN-2017) Cell Biology and Physiology, University of
+            North Carolina at Chapel Hill, 109 Mason Farm Road, Chapel Hill, NC
+            27599, USA
+COMMENT     ##Genome-Assembly-Data-START##
+            Assembly Method                   :: Newbler v. 2.7; SPAdes v. 3.8
+            Genome Representation             :: Full
+            Expected Final Version            :: No
+            Genome Coverage                   :: 30.0x
+            Sequencing Technology             :: 454; IonTorrent
+            ##Genome-Assembly-Data-END##
+            ##Genome-Annotation-Data-START##
+            Annotation Provider               :: NCBI
+            Annotation Date                   :: 01/04/2017 12:39:01
+            Annotation Pipeline               :: NCBI Prokaryotic Genome
+            Annotation Method                 :: Best-placed reference protein
+            Annotation Software revision      :: 4.0
+            Features Annotated                :: Gene; CDS; rRNA; tRNA; ncRNA;
+            Genes (total)                     :: 3,230
+            CDS (total)                       :: 3,171
+            Genes (coding)                    :: 2,715
+            CDS (coding)                      :: 2,715
+            Genes (RNA)                       :: 59
+            rRNAs                             :: 1, 1, 1 (5S, 16S, 23S)
+            complete rRNAs                    :: 1, 1, 1 (5S, 16S, 23S)
+            tRNAs                             :: 53
+            ncRNAs                            :: 3
+            Pseudo Genes (total)              :: 456
+            Pseudo Genes (ambiguous residues) :: 3 of 456
+            Pseudo Genes (frameshifted)       :: 384 of 456
+            Pseudo Genes (incomplete)         :: 49 of 456
+            Pseudo Genes (internal stop)      :: 44 of 456
+            Pseudo Genes (multiple problems)  :: 22 of 456
+            ##Genome-Annotation-Data-END##
+            Bacteria and source DNA available from M. Andrea Azcarate-Peril,
+            University of North Carolina at Chapel Hill.
+            Annotation was added by the NCBI Prokaryotic Genome Annotation
+            Pipeline (released 2013). Information about the Pipeline can be
+            found here: https://www.ncbi.nlm.nih.gov/genome/annotation_prok/
+            Annotation Pipeline
+            set; GeneMarkS+
+            repeat_region
+            partial rRNAs                     ::
+FEATURES             Location/Qualifiers
+     source          1..4634
+                     /organism="Lactobacillus rhamnosus"
+                     /mol_type="genomic DNA"
+                     /submitter_seqid="contig_37"
+                     /strain="AMC010"
+                     /isolation_source="infant stools"
+                     /host="Homo sapiens"
+                     /db_xref="taxon:47715"
+                     /country="USA"
+                     /collection_date="2011"
+     gene            1..1794
+                     /locus_tag="BVG98_10115"
+     CDS             1..1794
+                     /locus_tag="BVG98_10115"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_005714409.1"
+                     /note="phosphoenolpyruvate-dependent sugar
+                     phosphotransferase system; catalyzes the phosphorylation of
+                     incoming sugar substrates concomitant with their
+                     translocation across the cell membrane; IIB is
+                     phosphorylated by IIA and then transfers the phosphoryl
+                     group to the sugar; IIC forms the translocation channel;
+                     Derived by automated computational analysis using gene
+                     prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="gnl|TC-DB|P11162|4.A.3.1.1"
+                     /protein_id="ONF99735.1"
+                     /translation="MQVIVKRLEKHQALFEKISRNIYLMAIKDGFLAAMPIILFSSIFI
+                     LLSNIPPLIGIKVPVDLNAWFNKIYNYTMGFVGFYVAGTTAKALTGSMNQRIKGGRFLN
+                     NTSTMMASMVGFMLLAIGTTSKGNFLPTFFGTQGILSAFVAAFVTVWVYKFCVERDLTI
+                     KMPKEVPGAISQNFRDIIPFGAATLIFSLIDVASRAALKVPFSAIIATVLAPVFKGAET
+                     YPGMMFIWFLIPMFWFLGVHGPSVVKPALESALFGNTTANLDLFKAGNFPYHALTENFG
+                     NFVGELGGTGATFIVPFLFMFFMKSKQLKAIGKASFIPVMFAVNEPLLFGAPIILNPYF
+                     LIPFVLAPVVNVVIGKAFIDFHIMRGFMYFMSWALPGPIGAFIDTNFQWTSLLLMAILL
+                     TVDALIYMPFIKAYDAELLEQEAAVDAGTATAAATAGASEVTAEADAATAQEFPEPEEV
+                     KQAETAKQEEANQNPAAGKKLDHELKVLVLCAGGGTSEQLANALTEGAKEYHEPIVASA
+                     GAYGSHHDILPNYDLVVLAPQVRTYYSDLKHDTDRLGIKLVATKGQQYIALTRDPEKAL
+                     DFIVENYKDVEKKPQDSSDSK"
+     gene            1851..2718
+                     /locus_tag="BVG98_10120"
+                     /pseudo=""
+     CDS             1851..2718
+                     /locus_tag="BVG98_10120"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_003660216.1"
+                     /note="frameshifted; Derived by automated computational
+                     analysis using gene prediction method: Protein Homology."
+                     /pseudo=""
+                     /protein_id="WP_003660216.1"
+                     /codon_start=1
+                     /transl_table=11
+                     /product="transcriptional regulator"
+     gene            2819..3184
+                     /locus_tag="BVG98_10125"
+     CDS             2819..3184
+                     /locus_tag="BVG98_10125"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_005691321.1"
+                     /note="catalyzes the phosphorylation of incoming sugar
+                     substrates concomitant with their translocation across the
+                     cell membrane; protein IIA transfers a phosphoryl group to
+                     IIB which then transfers the phosphoryl group to the sugar;
+                     IIC forms the translocation channel for the sugar uptake;
+                     Derived by automated computational analysis using gene
+                     prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="gnl|TC-DB|Q045H4|4.A.3.1.3"
+                     /protein_id="ONF99736.1"
+                     /translation="MATKEEISMTGFAIVAYAGDAKTDLIEALNEARKGNFEHARSLVK
+                     EARQSIDDAHNEQTKLLSKEAGGENMDVTFIMVHGQDTLMTTMMLLDTISFTIDEYERL
+                     AAIEKQLGIALPTNDIH"
+     gene            3210..4634
+                     /locus_tag="BVG98_10130"
+     CDS             3210..4634
+                     /locus_tag="BVG98_10130"
+                     /inference="COORDINATES: similar to AA
+                     sequence:RefSeq:WP_005691323.1"
+                     /note="Derived by automated computational analysis using
+                     gene prediction method: Protein Homology."
+                     /codon_start=1
+                     /transl_table=11
+                     /product="GH1"
+                     /protein_id="ONF99737.1"
+                     /translation="MTSLLNRVQSLPKGFVWGGATAAYQVEGATKVDSKGKTMWDDYLK
+                     AQGRFSPDPASDFYHLYPEDIELAKLYGLNAIRVSIAWTRIFPDGYGEPNQAGVAYYHR
+                     LFKCCLDNGITPYVSLHHFDSPKTLFDDGDWLNRKNIDYFVDYVDFCFKEFPEVKNWFT
+                     INELISLAFSQYIQGNFPPNHHFDVTSAIQAQHNELLAHARVVNLFKEKGYQGRIGLIH
+                     VLQPVYPYPDTPANEHAAALEDAFMNRFLLDGTFKGEYTPETMALINELLKANHAKLEI
+                     EPGDMDVLKQASTQNDYFGMNYYQPSFVAAYEGESTNSFNGTGEKGTSSFKFQGVGQHV
+                     KNPDVPTTDWDWNIYPAGMYDMLKRVAREYPNSKTIYITENGLGYKDKYEGIGNLIEDD
+                     KRIDFIDQHVAALLKARSEGVDVQGYFVWSLQDQFSWANGYNKRYGLFYVNFETQAREI
+                     KKSALWFRELGKTLKN"
+ORIGIN
+        1 atgcaagtca ttgttaaacg acttgagaaa catcaggcgt tgtttgaaaa aatctcgcgt
+       61 aatatttacc tgatggccat taaagatggt tttctggcag caatgccgat tattctgttc
+      121 tccagtattt tcattctatt atcaaatatt ccgccactga ttgggattaa ggttccagtt
+      181 gatctcaacg catggttcaa taagatttat aactacacaa tgggttttgt tggtttttat
+      241 gttgccggga cgacagccaa ggccttaact ggatcgatga atcaacgaat taaaggtggg
+      301 cgctttctca acaatacgtc aacgatgatg gcttcaatgg taggattcat gctgttggcg
+      361 attggcacca ccagtaaagg caacttctta ccaacattct ttggcacaca agggattttg
+      421 tctgcctttg ttgcagcgtt tgtgactgtt tgggtctaca aattctgtgt tgaacgtgat
+      481 ttgaccatca agatgcctaa agaagtgcct ggagccattt cccagaactt ccgtgatatt
+      541 attccgttcg gtgctgcaac tttaattttt tcactcattg atgttgcctc acgtgcggcg
+      601 ttgaaagtgc cattcagtgc tattattgcg actgtgcttg cgcctgtctt taaaggtgct
+      661 gagacatatc ctggcatgat gtttatttgg ttcttaatcc cgatgttctg gttcttgggc
+      721 gtacacggac catcagttgt caagccagct cttgaatcag cattgtttgg gaacaccacc
+      781 gccaatttgg acttgtttaa ggccggaaac tttccatatc atgcactgac cgaaaatttt
+      841 ggtaactttg ttggtgaact tggtggtacc ggggcgacct ttattgtccc gtttctattc
+      901 atgtttttca tgaaatcaaa acaattaaaa gcgattggta aagcatcatt tatccccgtt
+      961 atgttcgcgg tcaatgaacc actgctgttc ggtgcaccaa tcatcttgaa tccttacttc
+     1021 ttaattccgt ttgttttggc cccagtcgtt aatgttgtaa ttgggaaggc gtttattgat
+     1081 ttccatatca tgagaggctt tatgtacttc atgtcgtggg cattgcctgg gccgattggt
+     1141 gcattcatcg ataccaattt ccagtggact tctttgctgc ttatggcaat tttgctaact
+     1201 gtggatgcgc tgatctatat gccatttatt aaagcgtacg atgctgaact gcttgaacaa
+     1261 gaagctgctg tcgatgccgg cactgcaacc gctgcagcaa ctgctggtgc aagtgaagtt
+     1321 acagctgaag cagatgcagc aacggcacaa gaattcccag aaccggaaga ggtaaagcag
+     1381 gctgaaacag ctaagcaaga ggaagctaat caaaatccag ctgcaggaaa gaaactcgat
+     1441 catgagttga aagtattagt gctatgtgct ggtggtggta caagcgaaca attagccaat
+     1501 gccttgactg aaggcgctaa agagtatcat gaaccaatcg ttgccagtgc aggtgcatat
+     1561 ggctcacatc atgatatttt gccaaactat gatctggttg ttctggcacc acaagttcga
+     1621 acctactaca gtgacttaaa gcatgatacg gatcgtttgg ggattaaact tgttgcaact
+     1681 aaaggtcaac aatatatagc cttaacgcgt gatcctgaaa aggcattgga ttttattgtt
+     1741 gaaaattata aggatgtcga aaagaaacca caagatagtt cagattcaaa gtaaatatgt
+     1801 tgacttaatt taaaatcaag cgaaaagaaa ggtaaggcgg tgtatcgatg ttgctaaagg
+     1861 tcaagcaagt ctataacaat aatgctgtac ttgtagacgt tggcaacggt aaagaggcga
+     1921 ttcttcaggg gaaaggaatt ggtttcagca agcgtaaagg tgatgacgtt gatccaaaag
+     1981 cgagttcgga aatactttat ctaaatgata cgcaagtcaa aaaatcactt tacatcttta
+     2041 ctcaaagatg taccgattga cattgttgtt gctacatttg gtgtgatcgg aatggcaaaa
+     2101 aagaagtatc actatccggt tttgaactat atttatgtca cacttacgga ccacgtcttt
+     2161 cagatgtata aacgattgac tgccggcaaa tatcaagcta gtccagcgcc tgacatccgt
+     2221 gatcgttacc cgttgcctta ccagatcgca gccgatgcgc gccgacagct taaccatgat
+     2281 cttggcgttc agtttcctga agccgaaatt aagaatattg ccttacattt tattaatgca
+     2341 aagggagtgg atggcgaact ggatccgacc gtgaccctga cggcgcgcgt caatgcaatc
+     2401 gtgacacaag tatttgctaa atatgggtta aatcgcaatt ttgctaatca aaattacttc
+     2461 gatcggctaa tgattcattt gcaatacctt gttgaacgtt taaataccaa tgagcaagac
+     2521 gaggctgacc ttggtccgga aattggtcag gacttcaggc gcctttatcc caaatcgttt
+     2581 acgatcgcaa ctgaaatttg tacggagctg gaaaaagcct tacaaattaa gctcaacgaa
+     2641 aacgagcatg tgtactttat tatccatatt caacggctca tccaagaacc gcaaacactt
+     2701 ccgcctgaat atccatagcc gtgggtggga gtttagaaag taatcttggc ttagagcgat
+     2761 ttaggcttaa gaaatcgctg ctagcgtaga ggattttcaa accaagggag gaattttgat
+     2821 ggcaaccaaa gaagagattt caatgaccgg ttttgcaatt gttgcttatg ccggtgatgc
+     2881 gaaaaccgat ttaattgaag cattgaacga ggctcgtaaa ggcaacttcg aacatgcccg
+     2941 ctcacttgtt aaagaagcgc gtcaaagtat cgatgacgcc cataatgaac aaaccaaact
+     3001 gcttagtaaa gaggcaggcg gcgagaatat ggatgttact ttcatcatgg ttcatggcca
+     3061 agatacgcta atgaccacga tgatgctgct agatacgatt agtttcacga ttgatgagta
+     3121 tgaacgactg gcggcaattg aaaaacaatt aggcattgca ttgccaacaa acgatatcca
+     3181 ttaaagtatc aaacgaaagg agtatcattg tgacaagttt attgaatcgc gttcaatcac
+     3241 tgcctaaagg ttttgtttgg ggtggagcga ctgctgctta tcaggtagaa ggcgccacca
+     3301 aggtagacag taaaggcaaa accatgtggg atgactatct gaaagctcaa ggcagatttt
+     3361 cgcctgaccc agccagtgat ttttatcatc tttatccaga agatattgaa ctcgccaagc
+     3421 tctatgggtt gaatgctatt cgggtttcga ttgcctggac acggatcttc ccagatggtt
+     3481 acggtgaacc taatcaagct ggggtcgcat actatcatcg tttgtttaag tgctgccttg
+     3541 ataacggcat taccccgtat gtttcgctgc atcacttcga ttcacctaaa acgctgttcg
+     3601 atgatgggga ttggctgaac cgtaagaata tagactattt tgtcgattat gtcgattttt
+     3661 gctttaaaga atttccggaa gttaagaact ggttcaccat caatgagctc atctcgttag
+     3721 ccttttcgca atacattcaa ggcaacttcc cgccaaatca tcactttgat gttaccagtg
+     3781 ctattcaagc gcagcacaac gaactgttag cccatgcgcg cgtggtcaac ttgtttaagg
+     3841 aaaaaggcta tcaaggacga atcggattga ttcatgtgct gcagccggta tatccgtacc
+     3901 cggatacacc agctaatgag catgctgcgg cacttgaaga tgccttcatg aatcggttcc
+     3961 tgctggatgg tacgtttaaa ggcgaatata cgcccgaaac gatggcgttg atcaatgaat
+     4021 tgctgaaggc caaccatgcc aagcttgaaa tcgaaccagg cgatatggat gtgttgaagc
+     4081 aagcgtccac gcaaaatgat tactttggca tgaattacta tcaaccttct tttgttgctg
+     4141 cctacgaagg tgaaagcaca aattcgttta atggtaccgg cgaaaaaggg accagttcct
+     4201 ttaagttcca aggggttggc cagcacgtca aaaatccgga tgtgccgacg actgattggg
+     4261 actggaatat ttatccggct ggcatgtacg acatgctcaa acgagtagct cgcgaatatc
+     4321 caaatagcaa gacgatttac attactgaaa atggccttgg ttataaggat aagtatgaag
+     4381 gcattggcaa cctcattgaa gatgacaaac gcatcgattt tattgatcaa catgttgctg
+     4441 cgttactaaa agcccgcagt gaaggcgttg atgtccaagg ttacttcgtt tggtcgctgc
+     4501 aggatcaatt ttcatgggcc aatgggtata acaaacgata tgggttattc tatgtcaact
+     4561 ttgaaaccca agcgcgcgaa attaagaaga gcgcactgtg gtttagagaa ttaggtaaaa
+     4621 ccttaaaaaa ttaa
+//

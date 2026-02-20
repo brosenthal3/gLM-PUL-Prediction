@@ -1,0 +1,20 @@
+##gff-version 3
+##sequence-region L41732 1 3410
+# conversion-by bp_genbank2gff3.pl
+# organism Gluconacetobacter diazotrophicus
+# Note Gluconacetobacter diazotrophicus levansucrase precursor (lsdA), levanase precursor (lsdB), pseudopilin G precursor (lsdG), prepilin peptidase and N-methyltransferase O (gspO), kinase E (lsdE), LsdF (lsdF), pseudopilin H precursor (lsdH), pseudopilin I precursor (lsdI), pseudopilin J precursor (lsdJ), LsdL (lsdL), LsdM (lsdM), and LsdN (lsdN) genes, complete cds; secretin D (lsdD) gene, partial cds; and unknown gene.
+# date 24-JUL-2016
+ABCLSDA	GenBank	region	1	3410	.	+	1	ID=L41732;Dbxref=taxon:33996;Name=L41732;Note=Gluconacetobacter diazotrophicus levansucrase precursor (lsdA)%2C levanase precursor (lsdB)%2C pseudopilin G precursor (lsdG)%2C prepilin peptidase and N-methyltransferase O (gspO)%2C kinase E (lsdE)%2C LsdF (lsdF)%2C pseudopilin H precursor (lsdH)%2C pseudopilin I precursor (lsdI)%2C pseudopilin J precursor (lsdJ)%2C LsdL (lsdL)%2C LsdM (lsdM)%2C and LsdN (lsdN) genes%2C complete cds%3B secretin D (lsdD) gene%2C partial cds%3B and unknown gene.,On Mar 13,2009 this sequence version replaced L41732.4.;clone=pALS10%3B pALS32%3B p21R1%3B pALS119%3B pALS143%3B pALS152;comment1=On Mar 13%2C 2009 this sequence version replaced L41732.4.;date=24-JUL-2016;mol_type=genomic DNA;organism=Gluconacetobacter diazotrophicus;strain=SRT4%3B CBS 550.94
+ABCLSDA	GenBank	gene	1	1797	.	+	1	ID=lsdA;Name=lsdA
+ABCLSDA	GenBank	mRNA	1	1755	.	+	1	ID=lsdA;Parent=lsdA
+ABCLSDA	GenBank	signal_peptide	1	90	.	+	1	Parent=lsdA;Name=lsdA
+ABCLSDA	GenBank	mature_protein_region	91	1752	.	+	1	ID=lsdA;Parent=lsdA;Name=lsdA;product=levansucrase
+ABCLSDA	GenBank	regulatory	1767	1797	.	+	1	Parent=lsdA;Name=lsdA;regulatory_class=terminator
+ABCLSDA	GenBank	CDS	1	1755	.	+	1	ID=lsdA;Parent=lsdA;Alias=lsdA;eC_number=2.4.1.10;Name=lsdA;codon_start=1;experiment=experimental evidence%2C no additional details recorded;product=levansucrase precursor;protein_id=AAB36606.1;transl_table=11;translation=length.584
+ABCLSDA	GenBank	exon	1	1755	.	+	1	Parent=lsdA
+ABCLSDA	GenBank	gene	1806	3410	.	+	1	ID=lsdB;Name=lsdB
+ABCLSDA	GenBank	mRNA	1806	3410	.	+	1	ID=lsdB;Parent=lsdB
+ABCLSDA	GenBank	signal_peptide	1806	1913	.	+	1	Parent=lsdB;Name=lsdB
+ABCLSDA	GenBank	mature_protein_region	1914	3407	.	+	1	ID=lsdB;Parent=lsdB;Name=lsdB;product=levanase
+ABCLSDA	GenBank	CDS	1806	3410	.	+	1	ID=lsdB;Parent=lsdB;Alias=lsdB;eC_number=3.2.1.65;Name=lsdB;codon_start=1;experiment=experimental evidence%2C no additional details recorded;product=levanase precursor;protein_id=AAF16405.1;transl_table=11;translation=length.534
+ABCLSDA	GenBank	exon	1806	3410	.	+	1	Parent=lsdB

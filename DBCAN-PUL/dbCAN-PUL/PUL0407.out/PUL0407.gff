@@ -1,0 +1,29 @@
+##gff-version 3
+##sequence-region EU670680 1 4730
+# conversion-by bp_genbank2gff3.pl
+# organism Lactobacillus casei
+# Note Lactobacillus casei strain ATCC 27139 lac and gal operons, complete sequence.
+# date 21-MAR-2009
+EU670680	GenBank	region	1	4730	.	+	1	ID=EU670680;Dbxref=taxon:1582;Name=EU670680;Note=Lactobacillus casei strain ATCC 27139 lac and gal operons%2C complete sequence.;culture_collection=ATCC:27139;date=21-MAR-2009;mol_type=genomic DNA;organism=Lactobacillus casei;strain=ATCC 27139
+EU670680	GenBank	operon	1	4730	.	+	1	ID=operon:lac;operon=lac
+EU670680	GenBank	gene	1	894	.	+	1	ID=lacT;Name=lacT;operon=lac
+EU670680	GenBank	mRNA	16	894	.	+	1	ID=lacT;Parent=lacT
+EU670680	GenBank	regulatory	1	5	.	+	1	Parent=lacT;Name=lacT;regulatory_class=ribosome_binding_site
+EU670680	GenBank	CDS	16	894	.	+	1	ID=lacT;Parent=lacT;Name=lacT;Note=antiterminator protein;codon_start=1;operon=lac;product=LacT;protein_id=ACG55690.1;transl_table=11;translation=length.292
+EU670680	GenBank	exon	16	894	.	+	1	Parent=lacT
+EU670680	GenBank	gene	1001	2748	.	+	1	ID=lacE;Name=lacE;operon=lac
+EU670680	GenBank	mRNA	1015	2748	.	+	1	ID=lacE;Parent=lacE
+EU670680	GenBank	regulatory	1001	1005	.	+	1	Parent=lacE;Name=lacE;regulatory_class=ribosome_binding_site
+EU670680	GenBank	CDS	1015	2748	.	+	1	ID=lacE;Parent=lacE;Name=lacE;Note=EIIBC lactose PTS;codon_start=1;operon=lac;product=LacE;protein_id=ACG55691.1;transl_table=11;translation=length.577
+EU670680	GenBank	exon	1015	2748	.	+	1	Parent=lacE
+EU670680	GenBank	gene	2760	4199	.	+	1	ID=lacG;Name=lacG;operon=lac
+EU670680	GenBank	mRNA	2775	4199	.	+	1	ID=lacG;Parent=lacG
+EU670680	GenBank	regulatory	2760	2764	.	+	1	Parent=lacG;Name=lacG;regulatory_class=ribosome_binding_site
+EU670680	GenBank	CDS	2775	4199	.	+	1	ID=lacG;Parent=lacG;Name=lacG;Note=phospho-beta-galactosidase;codon_start=1;operon=lac;product=LacG;protein_id=ACG55692.1;transl_table=11;translation=length.474
+EU670680	GenBank	exon	2775	4199	.	+	1	Parent=lacG
+EU670680	GenBank	regulatory	4693	4730	.	+	1	ID=GenBank:regulatory:EU670680:4693:4730;Note=rho-independent;operon=lac;regulatory_class=terminator
+EU670680	GenBank	gene	4236	4583	.	+	1	ID=lacF;Name=lacF;operon=lac
+EU670680	GenBank	mRNA	4245	4583	.	+	1	ID=lacF;Parent=lacF
+EU670680	GenBank	regulatory	4236	4240	.	+	1	Parent=lacF;Name=lacF;regulatory_class=ribosome_binding_site
+EU670680	GenBank	CDS	4245	4583	.	+	1	ID=lacF;Parent=lacF;Name=lacF;Note=EIIA lactose PTS;codon_start=1;operon=lac;product=LacF;protein_id=ACG55693.1;transl_table=11;translation=length.112
+EU670680	GenBank	exon	4245	4583	.	+	1	Parent=lacF

@@ -1,0 +1,43 @@
+##gff-version 3
+##sequence-region M77351 1 10995
+# conversion-by bp_genbank2gff3.pl
+# organism Streptococcus mutans
+# Note Streptococcus mutans regulatory protein (msmR), a-galactosidase (aga), sugar binding protein (msmE), membrane proteins (msmF and msmG),sucrose phosphorylase (gftA), ATP-binding protein (msmK), and dextran glucosidase (dexB) genes, complete cds.
+# date 16-FEB-1994
+STRMSM	GenBank	region	1	10995	.	+	1	ID=M77351;Dbxref=taxon:1309;Name=M77351;Note=Streptococcus mutans regulatory protein (msmR)%2C a-galactosidase (aga)%2C sugar binding protein (msmE)%2C membrane proteins (msmF and msmG)%2Csucrose phosphorylase (gftA)%2C ATP-binding protein (msmK)%2C and dextran glucosidase (dexB) genes%2C complete cds.;date=16-FEB-1994;mol_type=genomic DNA;organism=Streptococcus mutans;strain=Ingbritt
+STRMSM	GenBank	gene	291	1141	.	-	1	ID=msmR;Name=msmR
+STRMSM	GenBank	mRNA	291	1127	.	-	1	ID=msmR;Parent=msmR
+STRMSM	GenBank	regulatory	1136	1141	.	-	1	Parent=msmR;Name=msmR;regulatory_class=ribosome_binding_site
+STRMSM	GenBank	CDS	291	1127	.	-	1	ID=msmR;Parent=msmR;Name=msmR;codon_start=1;product=regulatory protein;protein_id=AAA26932.1;transl_table=11;translation=length.278
+STRMSM	GenBank	exon	291	1127	.	-	1	Parent=msmR
+STRMSM	GenBank	gene	1236	3398	.	+	1	ID=aga;Name=aga
+STRMSM	GenBank	mRNA	1236	3398	.	+	1	ID=aga;Parent=aga
+STRMSM	GenBank	CDS	1236	3398	.	+	1	ID=aga;Parent=aga;eC_number=3.2.1.22;Name=aga;codon_start=1;product=a-galactosidase;protein_id=AAA26933.1;transl_table=11;translation=length.720
+STRMSM	GenBank	exon	1236	3398	.	+	1	Parent=aga
+STRMSM	GenBank	gene	3411	4673	.	+	1	ID=msmE;Name=msmE
+STRMSM	GenBank	mRNA	3411	4673	.	+	1	ID=msmE;Parent=msmE
+STRMSM	GenBank	CDS	3411	4673	.	+	1	ID=msmE;Parent=msmE;Name=msmE;codon_start=1;product=sugar-binding protein;protein_id=AAA26934.1;transl_table=11;translation=length.420
+STRMSM	GenBank	exon	3411	4673	.	+	1	Parent=msmE
+STRMSM	GenBank	gene	4672	5558	.	+	1	ID=msmF;Name=msmF
+STRMSM	GenBank	mRNA	4686	5558	.	+	1	ID=msmF;Parent=msmF
+STRMSM	GenBank	regulatory	4672	4677	.	+	1	Parent=msmF;Name=msmF;regulatory_class=ribosome_binding_site
+STRMSM	GenBank	CDS	4686	5558	.	+	1	ID=msmF;Parent=msmF;Name=msmF;codon_start=1;product=membrane protein;protein_id=AAA26935.1;transl_table=11;translation=length.290
+STRMSM	GenBank	exon	4686	5558	.	+	1	Parent=msmF
+STRMSM	GenBank	gene	5573	6406	.	+	1	ID=msmG;Name=msmG
+STRMSM	GenBank	mRNA	5573	6406	.	+	1	ID=msmG;Parent=msmG
+STRMSM	GenBank	CDS	5573	6406	.	+	1	ID=msmG;Parent=msmG;Name=msmG;codon_start=1;product=membrane protein;protein_id=AAA26936.1;transl_table=11;translation=length.277
+STRMSM	GenBank	exon	5573	6406	.	+	1	Parent=msmG
+STRMSM	GenBank	gene	6602	8047	.	+	1	ID=gftA;Name=gftA
+STRMSM	GenBank	mRNA	6602	8047	.	+	1	ID=gftA;Parent=gftA
+STRMSM	GenBank	CDS	6602	8047	.	+	1	ID=gftA;Parent=gftA;eC_number=2.4.1.7;Name=gftA;codon_start=1;product=sucrose phosphorylase;protein_id=AAA26937.1;transl_table=11;translation=length.481
+STRMSM	GenBank	exon	6602	8047	.	+	1	Parent=gftA
+STRMSM	GenBank	gene	8050	9195	.	+	1	ID=msmK;Name=msmK
+STRMSM	GenBank	mRNA	8062	9195	.	+	1	ID=msmK;Parent=msmK
+STRMSM	GenBank	regulatory	8050	8055	.	+	1	Parent=msmK;Name=msmK;regulatory_class=ribosome_binding_site
+STRMSM	GenBank	CDS	8062	9195	.	+	1	ID=msmK;Parent=msmK;Name=msmK;codon_start=1;product=ATP-binding protein;protein_id=AAA26938.1;transl_table=11;translation=length.377
+STRMSM	GenBank	exon	8062	9195	.	+	1	Parent=msmK
+STRMSM	GenBank	gene	9283	10896	.	+	1	ID=dexB;Name=dexB
+STRMSM	GenBank	mRNA	9286	10896	.	+	1	ID=dexB;Parent=dexB
+STRMSM	GenBank	regulatory	9283	9288	.	+	1	Parent=dexB;Name=dexB;regulatory_class=ribosome_binding_site
+STRMSM	GenBank	CDS	9286	10896	.	+	1	ID=dexB;Parent=dexB;eC_number=3.2.1.70;Name=dexB;codon_start=1;product=dextran glucosidase;protein_id=AAA26939.1;transl_table=11;translation=length.536
+STRMSM	GenBank	exon	9286	10896	.	+	1	Parent=dexB

@@ -1,0 +1,27 @@
+##gff-version 3
+##sequence-region X81461 1 4885
+# conversion-by bp_genbank2gff3.pl
+# organism Escherichia coli
+# Note Escherichia coli vacJ gene, yfdC gene, cscB gene, cscK gene, cscA gene, cscR gene, dsDX gene, tRNA-Arg gene and partial b2345 gene, strain EC3132.
+# date 26-JUL-2016
+X81461	GenBank	region	1	4885	.	+	1	ID=X81461;Dbxref=taxon:562;Name=X81461;Note=Escherichia coli vacJ gene%2C yfdC gene%2C cscB gene%2C cscK gene%2C cscA gene%2C cscR gene%2C dsDX gene%2C tRNA-Arg gene and partial b2345 gene%2C strain EC3132.,On May 4,2002 this sequence version replaced X81461.1.;comment1=On May 4%2C 2002 this sequence version replaced X81461.1.;date=26-JUL-2016;mol_type=genomic DNA;organism=Escherichia coli;strain=EC3132
+X81461	GenBank	gene	1	1248	.	-	1	ID=cscB;Name=cscB
+X81461	GenBank	mRNA	1	1248	.	-	1	ID=cscB;Parent=cscB
+X81461	GenBank	CDS	1	1248	.	-	1	ID=cscB;Parent=cscB;Dbxref=GOA:P30000,InterPro:IPR000576,InterPro:IPR016196,InterPro:IPR018457,InterPro:IPR020846,InterPro:IPR022814,UniProtKB/Swiss-Prot:P30000;Name=cscB;codon_start=1;product=sucrose permease;protein_id=CAA57217.1;transl_table=11;translation=length.415
+X81461	GenBank	exon	1	1248	.	-	1	Parent=cscB
+X81461	GenBank	gene	1310	2233	.	-	1	ID=cscK;Name=cscK
+X81461	GenBank	mRNA	1310	2233	.	-	1	ID=cscK;Parent=cscK
+X81461	GenBank	protein_binding_site	2310	2331	.	+	1	ID=cscK;Parent=cscK;Note=putative;bound_moiety=cAMP-CrpA
+X81461	GenBank	protein_binding_site	2339	2350	.	+	1	ID=cscK.protein_binding_site;Parent=cscK;Alias=cscK;Note=putative%3B cscKo;bound_moiety=CscR
+X81461	GenBank	protein_binding_site	2351	2372	.	+	1	ID=cscK.protein_binding_site.1;Parent=cscK;Alias=cscK;Note=putative;bound_moiety=cAMP-CrpA
+X81461	GenBank	protein_binding_site	2403	2414	.	+	1	ID=cscK.protein_binding_site.2;Parent=cscK;Alias=cscK;Note=putative%3B cscoA;bound_moiety=CscR
+X81461	GenBank	CDS	1310	2233	.	-	1	ID=cscK;Parent=cscK;Alias=cscK;Dbxref=GOA:P40713,InterPro:IPR002139,InterPro:IPR002173,InterPro:IPR011611,UniProtKB/Swiss-Prot:P40713;Name=cscK;codon_start=1;product=D-fructokinase;protein_id=CAA57218.2;transl_table=11;translation=length.307
+X81461	GenBank	exon	1310	2233	.	-	1	Parent=cscK
+X81461	GenBank	gene	2449	3882	.	+	1	ID=cscA;Name=cscA
+X81461	GenBank	mRNA	2449	3882	.	+	1	ID=cscA;Parent=cscA
+X81461	GenBank	CDS	2449	3882	.	+	1	ID=cscA;Parent=cscA;Dbxref=GOA:P40714,InterPro:IPR001362,InterPro:IPR006232,InterPro:IPR008985,InterPro:IPR013148,InterPro:IPR013189,InterPro:IPR018053,UniProtKB/Swiss-Prot:P40714;Name=cscA;codon_start=1;product=sucrose hydrolase;protein_id=CAA57219.1;transl_table=11;translation=length.477
+X81461	GenBank	exon	2449	3882	.	+	1	Parent=cscA
+X81461	GenBank	gene	3890	4885	.	-	1	ID=cscR;Name=cscR
+X81461	GenBank	mRNA	3890	4885	.	-	1	ID=cscR;Parent=cscR
+X81461	GenBank	CDS	3890	4885	.	-	1	ID=cscR;Parent=cscR;Dbxref=GOA:P62604,InterPro:IPR000843,InterPro:IPR001761,InterPro:IPR010982,UniProtKB/Swiss-Prot:P62604;Name=cscR;codon_start=1;product=sucrose specific transcriptional regulator;protein_id=CAA57220.1;transl_table=11;translation=length.331
+X81461	GenBank	exon	3890	4885	.	-	1	Parent=cscR

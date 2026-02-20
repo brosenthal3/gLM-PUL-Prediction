@@ -1,0 +1,22 @@
+##gff-version 3
+##sequence-region AF039487 1 4846
+# conversion-by bp_genbank2gff3.pl
+# organism Thermotoga neapolitana
+# Note Thermotoga neapolitana cellobiose phosphorylase (cbpA) and beta-glucan glucohydrolase (gghA) genes, complete cds; and putative amylase B (amyB) gene, partial cds.
+# date 26-JUL-2016
+AF039487	GenBank	region	1	4846	.	+	1	ID=AF039487;Dbxref=taxon:2337;Name=AF039487;Note=Thermotoga neapolitana cellobiose phosphorylase (cbpA) and beta-glucan glucohydrolase (gghA) genes%2C complete cds%3B and putative amylase B (amyB) gene%2C partial cds.,On Mar 3,2000 this sequence version replaced AF039487.1.;comment1=On Mar 3%2C 2000 this sequence version replaced AF039487.1.;date=26-JUL-2016;mol_type=genomic DNA;organism=Thermotoga neapolitana
+AF039487	GenBank	gene	461	2910	.	+	1	ID=cbpA;Name=cbpA
+AF039487	GenBank	mRNA	472	2910	.	+	1	ID=cbpA;Parent=cbpA
+AF039487	GenBank	regulatory	461	464	.	+	1	Parent=cbpA;Name=cbpA;regulatory_class=ribosome_binding_site
+AF039487	GenBank	CDS	472	2910	.	+	1	ID=cbpA;Parent=cbpA;eC_number=2.4.1.20;Name=cbpA;Note=CbpA;codon_start=1;function=phosphorolysis of cellobiose beta-1%2C4 linkages;product=GH94;protein_id=AAB95491.2;transl_table=11;translation=length.812
+AF039487	GenBank	exon	472	2910	.	+	1	Parent=cbpA
+AF039487	GenBank	gene	3001	4347	.	+	1	ID=gghA;Name=gghA
+AF039487	GenBank	mRNA	3013	4347	.	+	1	ID=gghA;Parent=gghA
+AF039487	GenBank	regulatory	3001	3004	.	+	1	Parent=gghA;Name=gghA;regulatory_class=ribosome_binding_site
+AF039487	GenBank	CDS	3013	4347	.	+	1	ID=gghA;Parent=gghA;eC_number=3.2.1.21;Name=gghA;Note=GghA%3B beta-glucosidase;codon_start=1;function=hydrolysis of cellobiose beta-1%2C4 linkages;product=gnl|TC-DB|Q86Z14|8.A.49.1.2;protein_id=AAB95492.2;transl_table=11;translation=length.444
+AF039487	GenBank	exon	3013	4347	.	+	1	Parent=gghA
+AF039487	GenBank	gene	4558	4846	.	+	1	ID=amyB;Name=amyB
+AF039487	GenBank	mRNA	4571	4846	.	+	1	ID=amyB;Parent=amyB
+AF039487	GenBank	regulatory	4558	4561	.	+	1	Parent=amyB;Name=amyB;regulatory_class=ribosome_binding_site
+AF039487	GenBank	CDS	4571	4846	.	+	1	ID=amyB;Parent=amyB;Name=amyB;Note=AmyB;codon_start=1;product=putative amylase B;protein_id=AAF37330.1;transl_table=11;translation=length.92
+AF039487	GenBank	exon	4571	4846	.	+	1	Parent=amyB

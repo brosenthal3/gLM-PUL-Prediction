@@ -1,0 +1,55 @@
+##gff-version 3
+##sequence-region EU024644 1 11959
+# conversion-by bp_genbank2gff3.pl
+# organism Paenibacillus sp. JDR-2
+# Note Paenibacillus sp. JDR-2 aldouronate-utilization gene cluster, complete sequence; and NADH-dependent flavin oxidoreductase and hypothetical protein genes, complete cds.
+# date 06-FEB-2008
+EU024644	GenBank	region	1	11959	.	+	1	ID=EU024644;Dbxref=taxon:324057;Name=EU024644;Note=Paenibacillus sp. JDR-2 aldouronate-utilization gene cluster%2C complete sequence%3B and NADH-dependent flavin oxidoreductase and hypothetical protein genes%2C complete cds.;date=06-FEB-2008;mol_type=genomic DNA;organism=Paenibacillus sp. JDR-2;strain=JDR-2
+EU024644	GenBank	region	1	11959	.	+	1	ID=GenBank:region:EU024644:1:11959;Note=aldouronate-utilization gene cluster
+EU024644	GenBank	gene	1	1583	.	+	1	ID=yesN;Name=yesN
+EU024644	GenBank	mRNA	15	1583	.	+	1	ID=yesN;Parent=yesN
+EU024644	GenBank	regulatory	1	6	.	+	1	Parent=yesN;Name=yesN;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	15	1583	.	+	1	ID=yesN;Parent=yesN;Name=yesN;Note=two-component response regulator%3B signal transduction protein%3B contains CheY-like receiver domain and AraC-type DNA-binding domain;codon_start=1;product=YesN;protein_id=ABV90480.1;transl_table=11;translation=length.522
+EU024644	GenBank	exon	15	1583	.	+	1	Parent=yesN
+EU024644	GenBank	regulatory	3363	3368	.	+	1	ID=GenBank:regulatory:EU024644:3363:3368;regulatory_class=minus_35_signal
+EU024644	GenBank	regulatory	3391	3399	.	+	1	ID=GenBank:regulatory:EU024644:3391:3399;regulatory_class=minus_10_signal
+EU024644	GenBank	region	3399	3412	.	+	1	ID=GenBank:region:EU024644:3399:3412;Note=catabolite repression element
+EU024644	GenBank	gene	1590	3317	.	+	1	ID=yesM;Name=yesM
+EU024644	GenBank	mRNA	1599	3317	.	+	1	ID=yesM;Parent=yesM
+EU024644	GenBank	regulatory	1590	1594	.	+	1	Parent=yesM;Name=yesM;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	1599	3317	.	+	1	ID=yesM;Parent=yesM;Name=yesM;Note=two-component histidine kinase sensor%3B signal transduction protein;codon_start=1;product=YesM;protein_id=ABV90481.1;transl_table=11;translation=length.572
+EU024644	GenBank	exon	1599	3317	.	+	1	Parent=yesM
+EU024644	GenBank	gene	3432	5163	.	+	1	ID=lplA;Name=lplA
+EU024644	GenBank	gene_component_region	3600	3613	.	+	1	Parent=lplA;Name=lplA;Note=catabolite repression element
+EU024644	GenBank	mRNA	3451	5163	.	+	1	ID=lplA;Parent=lplA
+EU024644	GenBank	regulatory	3432	3439	.	+	1	Parent=lplA;Name=lplA;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	3451	5163	.	+	1	ID=lplA;Parent=lplA;Name=lplA;Note=substrate binding protein%3B ABC-type sugar transport system component;codon_start=1;product=UgpB;protein_id=ABV90482.2;transl_table=11;translation=length.570
+EU024644	GenBank	exon	3451	5163	.	+	1	Parent=lplA
+EU024644	GenBank	gene	5237	6224	.	+	1	ID=lplB;Name=lplB
+EU024644	GenBank	mRNA	5253	6224	.	+	1	ID=lplB;Parent=lplB
+EU024644	GenBank	regulatory	5237	5244	.	+	1	Parent=lplB;Name=lplB;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	5253	6224	.	+	1	ID=lplB;Parent=lplB;Name=lplB;Note=lipoprotein permease%3B ABC-type sugar transport system component;codon_start=1;product=LplB;protein_id=ABV90483.1;transl_table=11;translation=length.323
+EU024644	GenBank	exon	5253	6224	.	+	1	Parent=lplB
+EU024644	GenBank	regulatory	7211	7216	.	+	1	ID=GenBank:regulatory:EU024644:7211:7216;regulatory_class=minus_35_signal
+EU024644	GenBank	regulatory	7231	7239	.	+	1	ID=GenBank:regulatory:EU024644:7231:7239;regulatory_class=minus_10_signal
+EU024644	GenBank	gene	6249	7184	.	+	1	ID=ytcP;Name=ytcP
+EU024644	GenBank	mRNA	6264	7184	.	+	1	ID=ytcP;Parent=ytcP
+EU024644	GenBank	regulatory	6249	6255	.	+	1	Parent=ytcP;Name=ytcP;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	6264	7184	.	+	1	ID=ytcP;Parent=ytcP;Name=ytcP;Note=permease%3B ABC-type sugar transport system component;codon_start=1;product=UgpE;protein_id=ABV90484.1;transl_table=11;translation=length.306
+EU024644	GenBank	exon	6264	7184	.	+	1	Parent=ytcP
+EU024644	GenBank	gene	7268	9344	.	+	1	ID=aguA;Name=aguA
+EU024644	GenBank	gene_component_region	9175	9188	.	+	1	Parent=aguA;Name=aguA;Note=catabolite repression element
+EU024644	GenBank	mRNA	7281	9344	.	+	1	ID=aguA;Parent=aguA
+EU024644	GenBank	regulatory	7268	7274	.	+	1	Parent=aguA;Name=aguA;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	7281	9344	.	+	1	ID=aguA;Parent=aguA;Name=aguA;Note=alpha-glucuronidase A%3B glycosyl hydrolase family 67;codon_start=1;product=AguA;protein_id=ABV90485.1;transl_table=11;translation=length.687
+EU024644	GenBank	exon	7281	9344	.	+	1	Parent=aguA
+EU024644	GenBank	gene	9352	10397	.	+	1	ID=xynA2;Name=xynA2
+EU024644	GenBank	mRNA	9372	10397	.	+	1	ID=xynA2;Parent=xynA2
+EU024644	GenBank	regulatory	9352	9359	.	+	1	Parent=xynA2;Name=xynA2;regulatory_class=ribosome_binding_site
+EU024644	GenBank	regulatory	10376	10382	.	+	1	Parent=xynA2;Name=xynA2;regulatory_class=ribosome_binding_site
+EU024644	GenBank	CDS	9372	10397	.	+	1	ID=xynA2;Parent=xynA2;Name=xynA2;Note=endoxylanase%3B glycosyl hydrolase family 10;codon_start=1;product=XynA2;protein_id=ABV90486.1;transl_table=11;translation=length.341
+EU024644	GenBank	exon	9372	10397	.	+	1	Parent=xynA2
+EU024644	GenBank	gene	10376	11959	.	+	1	ID=xynB;Name=xynB
+EU024644	GenBank	mRNA	10394	11959	.	+	1	ID=xynB;Parent=xynB
+EU024644	GenBank	CDS	10394	11959	.	+	1	ID=xynB;Parent=xynB;Name=xynB;Note=beta-xylosidase%3B glycosyl hydrolase family 43;codon_start=1;product=XynB;protein_id=ABV90487.1;transl_table=11;translation=length.521
+EU024644	GenBank	exon	10394	11959	.	+	1	Parent=xynB

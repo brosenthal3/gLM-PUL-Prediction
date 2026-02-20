@@ -1,0 +1,45 @@
+##gff-version 3
+##sequence-region Z49992 1 6863
+# conversion-by bp_genbank2gff3.pl
+# organism Bacillus subtilis subsp. subtilis str. 168
+# Note B.subtilis celA, celB, celC, celD and ywaA genes.
+# date 18-APR-2005
+Z49992	GenBank	region	1	6863	.	+	1	ID=Z49992;Dbxref=taxon:224308;Name=Z49992;Note=B.subtilis celA%2C celB%2C celC%2C celD and ywaA genes.;date=18-APR-2005;mol_type=genomic DNA;organism=Bacillus subtilis subsp. subtilis str. 168;strain=168;sub_species=subtilis;type_material=type strain of Bacillus subtilis
+Z49992	GenBank	regulatory	10	40	.	+	1	ID=GenBank:regulatory:Z49992:10:40;regulatory_class=terminator
+Z49992	GenBank	stem_loop	2129	2150	.	+	1	ID=GenBank:stem_loop:Z49992:2129:2150
+Z49992	GenBank	stem_loop	2161	2180	.	+	1	ID=GenBank:stem_loop:Z49992:2161:2180
+Z49992	GenBank	gene	173	2112	.	+	1	ID=celR;Name=celR
+Z49992	GenBank	mRNA	187	2112	.	+	1	ID=celR;Parent=celR
+Z49992	GenBank	regulatory	173	179	.	+	1	Parent=celR;Name=celR;regulatory_class=ribosome_binding_site
+Z49992	GenBank	CDS	187	2112	.	+	1	ID=celR;Parent=celR;Dbxref=GOA:P46321,InterPro:IPR002178,InterPro:IPR003501,InterPro:IPR007737,InterPro:IPR011608,InterPro:IPR011991,InterPro:IPR013011,InterPro:IPR013196,InterPro:IPR016152,UniProtKB/Swiss-Prot:P46321;Name=celR;codon_start=1;product=putative cel operon regulator;protein_id=CAA90284.1;transl_table=11;translation=length.641
+Z49992	GenBank	exon	187	2112	.	+	1	Parent=celR
+Z49992	GenBank	gene	2226	2232	.	+	1	ID=celA;Name=celA
+Z49992	GenBank	gene	2240	2548	.	+	1	ID=celA;Name=celA
+Z49992	GenBank	mRNA	2240	2548	.	+	1	ID=celA;Parent=celA
+Z49992	GenBank	regulatory	2226	2232	.	+	1	Parent=celA;Name=celA;regulatory_class=ribosome_binding_site
+Z49992	GenBank	CDS	2240	2548	.	+	1	ID=celA;Parent=celA;Dbxref=GOA:P46318,InterPro:IPR003501,InterPro:IPR013012,InterPro:IPR014350,UniProtKB/Swiss-Prot:P46318;Name=celA;codon_start=1;product=putative cellobiose phosphotransferase enzyme II';protein_id=CAA90285.1;transl_table=11;translation=length.102
+Z49992	GenBank	exon	2240	2548	.	+	1	Parent=celA
+Z49992	GenBank	gene	2548	2555	.	+	1	ID=celB;Name=celB
+Z49992	GenBank	gene	2564	3922	.	+	1	ID=celB;Name=celB
+Z49992	GenBank	mRNA	2564	3922	.	+	1	ID=celB;Parent=celB
+Z49992	GenBank	regulatory	2548	2555	.	+	1	Parent=celB;Name=celB;regulatory_class=ribosome_binding_site
+Z49992	GenBank	CDS	2564	3922	.	+	1	ID=celB;Parent=celB;Dbxref=GOA:P46317,InterPro:IPR003352,InterPro:IPR004501,InterPro:IPR004796,UniProtKB/Swiss-Prot:P46317;Name=celB;Note=gtg start codon;codon_start=1;product=putative cellobiose phosphotransferase enzyme II'';protein_id=CAA90286.1;transl_table=11;translation=length.452
+Z49992	GenBank	exon	2564	3922	.	+	1	Parent=celB
+Z49992	GenBank	gene	3926	3934	.	+	1	ID=celC;Name=celC
+Z49992	GenBank	gene	3941	4273	.	+	1	ID=celC;Name=celC
+Z49992	GenBank	mRNA	3941	4273	.	+	1	ID=celC;Parent=celC
+Z49992	GenBank	regulatory	3926	3934	.	+	1	Parent=celC;Name=celC;regulatory_class=ribosome_binding_site
+Z49992	GenBank	CDS	3941	4273	.	+	1	ID=celC;Parent=celC;Dbxref=GOA:P46319,InterPro:IPR003188,UniProtKB/Swiss-Prot:P46319;Name=celC;Note=gtg start codon;codon_start=1;product=putative cellobiose phosphotransferase enzyme III;protein_id=CAA90287.1;transl_table=11;translation=length.110
+Z49992	GenBank	exon	3941	4273	.	+	1	Parent=celC
+Z49992	GenBank	gene	4255	4262	.	+	1	ID=celD;Name=celD
+Z49992	GenBank	regulatory	4255	4262	.	+	1	Parent=celD;Name=celD;regulatory_class=ribosome_binding_site
+Z49992	GenBank	regulatory	5597	5630	.	+	1	ID=GenBank:regulatory:Z49992:5597:5630;regulatory_class=terminator
+Z49992	GenBank	gene	4270	5598	.	+	1	ID=celD.gene;Alias=celD;Name=celD
+Z49992	GenBank	mRNA	4270	5598	.	+	1	ID=celD;Parent=celD
+Z49992	GenBank	CDS	4270	5598	.	+	1	ID=celD;Parent=celD;Dbxref=GOA:P46320,InterPro:IPR001088,InterPro:IPR015955,InterPro:IPR016040,InterPro:IPR019802,InterPro:IPR022616,UniProtKB/Swiss-Prot:P46320;Name=celD;codon_start=1;product=putative 6-phospho-beta-glucosidase;protein_id=CAA90288.1;transl_table=11;translation=length.442
+Z49992	GenBank	exon	4270	5598	.	+	1	Parent=celD
+Z49992	GenBank	gene	5632	6736	.	-	1	ID=ywaA;Name=ywaA
+Z49992	GenBank	mRNA	5632	6723	.	-	1	ID=ywaA;Parent=ywaA
+Z49992	GenBank	regulatory	6730	6736	.	-	1	Parent=ywaA;Name=ywaA;regulatory_class=ribosome_binding_site
+Z49992	GenBank	CDS	5632	6723	.	-	1	ID=ywaA;Parent=ywaA;Dbxref=GOA:P39576,InterPro:IPR001544,InterPro:IPR005786,InterPro:IPR018300,UniProtKB/Swiss-Prot:P39576;Name=ywaA;codon_start=1;product=Unknown%2C highly similar to yeast TWT1 protein and to Mouse ECA39 protein%2C similar to amino acid aminotransferases;protein_id=CAA90289.1;transl_table=11;translation=length.363
+Z49992	GenBank	exon	5632	6723	.	-	1	Parent=ywaA

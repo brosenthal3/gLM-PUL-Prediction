@@ -1,0 +1,21 @@
+##gff-version 3
+##sequence-region MSTC01000063 1 4634
+# conversion-by bp_genbank2gff3.pl
+# organism Lactobacillus rhamnosus
+# Note Lactobacillus rhamnosus strain AMC010 contig_37, whole genome shotgun sequence.
+# date 01-FEB-2017
+MSTC01000063	GenBank	region	1	4634	.	+	1	ID=MSTC01000063;Dbxref=BioProject:PRJNA357881,taxon:47715;Name=MSTC01000063;Note=Lactobacillus rhamnosus strain AMC010 contig_37%2C whole genome shotgun sequence.,\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7,SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454,IonTorrent\n##Genome-Assembly-Data-END##;collection_date=2011;comment1=\n##Genome-Assembly-Data-START##\nAssembly Method :: Newbler v. 2.7%3B SPAdes v. 3.8\nGenome Representation :: Full\nExpected Final Version :: No\nGenome Coverage :: 30.0x\nSequencing Technology :: 454%3B IonTorrent\n##Genome-Assembly-Data-END##;country=USA;date=01-FEB-2017;host=Homo sapiens;isolation_source=infant stools;mol_type=genomic DNA;organism=Lactobacillus rhamnosus;strain=AMC010;submitter_seqid=contig_37
+MSTC01000063	GenBank	gene	1	1794	.	+	1	ID=BVG98_10115;Name=BVG98_10115
+MSTC01000063	GenBank	mRNA	1	1794	.	+	1	ID=BVG98_10115;Parent=BVG98_10115
+MSTC01000063	GenBank	CDS	1	1794	.	+	1	ID=BVG98_10115;Parent=BVG98_10115;Name=BVG98_10115;Note=phosphoenolpyruvate-dependent sugar phosphotransferase system%3B catalyzes the phosphorylation of incoming sugar substrates concomitant with their translocation across the cell membrane%3B IIB is phosphorylated by IIA and then transfers the phosphoryl group to the sugar%3B IIC forms the translocation channel%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005714409.1;product=gnl|TC-DB|P11162|4.A.3.1.1;protein_id=ONF99735.1;transl_table=11;translation=length.597
+MSTC01000063	GenBank	exon	1	1794	.	+	1	Parent=BVG98_10115
+MSTC01000063	GenBank	pseudogenic_exon	1851	2718	.	+	1	ID=BVG98_10120;Name=BVG98_10120;Note=frameshifted%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003660216.1;product=transcriptional regulator;protein_id=WP_003660216.1;pseudo="";transl_table=11
+MSTC01000063	GenBank	pseudogene	1851	2718	.	+	1	ID=BVG98_10120.pseudogene;Alias=BVG98_10120;Name=BVG98_10120;pseudo=""
+MSTC01000063	GenBank	gene	2819	3184	.	+	1	ID=BVG98_10125;Name=BVG98_10125
+MSTC01000063	GenBank	mRNA	2819	3184	.	+	1	ID=BVG98_10125;Parent=BVG98_10125
+MSTC01000063	GenBank	CDS	2819	3184	.	+	1	ID=BVG98_10125;Parent=BVG98_10125;Name=BVG98_10125;Note=catalyzes the phosphorylation of incoming sugar substrates concomitant with their translocation across the cell membrane%3B protein IIA transfers a phosphoryl group to IIB which then transfers the phosphoryl group to the sugar%3B IIC forms the translocation channel for the sugar uptake%3B Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005691321.1;product=gnl|TC-DB|Q045H4|4.A.3.1.3;protein_id=ONF99736.1;transl_table=11;translation=length.121
+MSTC01000063	GenBank	exon	2819	3184	.	+	1	Parent=BVG98_10125
+MSTC01000063	GenBank	gene	3210	4634	.	+	1	ID=BVG98_10130;Name=BVG98_10130
+MSTC01000063	GenBank	mRNA	3210	4634	.	+	1	ID=BVG98_10130;Parent=BVG98_10130
+MSTC01000063	GenBank	CDS	3210	4634	.	+	1	ID=BVG98_10130;Parent=BVG98_10130;Name=BVG98_10130;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_005691323.1;product=GH1;protein_id=ONF99737.1;transl_table=11;translation=length.474
+MSTC01000063	GenBank	exon	3210	4634	.	+	1	Parent=BVG98_10130

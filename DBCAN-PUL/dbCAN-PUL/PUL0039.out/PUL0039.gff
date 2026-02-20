@@ -1,0 +1,16 @@
+##gff-version 3
+##sequence-region AF135399 1 5311
+# conversion-by bp_genbank2gff3.pl
+# organism Thermus thermophilus
+# Note Thermus thermophilus strain TH125 AidB, alpha-galactosidase (agaT), and galactose-1-phosphate uridylyltransferase (galT) genes, complete cds.
+# date 20-MAR-2000
+AF135399	GenBank	region	1	5311	.	+	1	ID=AF135399;Dbxref=taxon:274;Name=AF135399;Note=Thermus thermophilus strain TH125 AidB%2C alpha-galactosidase (agaT)%2C and galactose-1-phosphate uridylyltransferase (galT) genes%2C complete cds.,HB27 derivative%3B auxotrophic for tryptophan;date=20-MAR-2000;mol_type=genomic DNA;organism=Thermus thermophilus;strain=TH125
+AF135399	GenBank	CDS	771	2114	.	+	1	ID=AidB;Name=AidB;Note=adaptive response gene product%3B similar to AidB of Escherichia coli;codon_start=1;product=AidB;protein_id=AAD32627.1;transl_table=11;translation=length.447
+AF135399	GenBank	gene	2559	3989	.	+	1	ID=agaT;Name=agaT
+AF135399	GenBank	mRNA	2559	3989	.	+	1	ID=agaT;Parent=agaT
+AF135399	GenBank	CDS	2559	3989	.	+	1	ID=agaT;Parent=agaT;Name=agaT;Note=AgaT;codon_start=1;product=GH36;protein_id=AAD32628.1;transl_table=11;translation=length.476
+AF135399	GenBank	exon	2559	3989	.	+	1	Parent=agaT
+AF135399	GenBank	gene	3973	5022	.	+	1	ID=galT;Name=galT
+AF135399	GenBank	mRNA	3973	5022	.	+	1	ID=galT;Parent=galT
+AF135399	GenBank	CDS	3973	5022	.	+	1	ID=galT;Parent=galT;Name=galT;Note=GalT%3B putative;codon_start=1;product=galactose-1-phosphate uridylyltransferase;protein_id=AAD32629.1;transl_table=11;translation=length.349
+AF135399	GenBank	exon	3973	5022	.	+	1	Parent=galT

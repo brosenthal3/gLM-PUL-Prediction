@@ -1,0 +1,20 @@
+##gff-version 3
+##sequence-region AB728624 1 4448
+# conversion-by bp_genbank2gff3.pl
+# organism Serratia marcescens
+# Note Serratia marcescens genomic DNA, ybfMN-ctb operon, strain: 2170.
+# date 17-APR-2013
+AB728624	GenBank	region	1	4448	.	+	1	ID=AB728624;Dbxref=taxon:615;Name=AB728624;Note=Serratia marcescens genomic DNA%2C ybfMN-ctb operon%2C strain: 2170.;date=17-APR-2013;mol_type=genomic DNA;organism=Serratia marcescens;strain=2170
+AB728624	GenBank	operon	1	4448	.	+	1	ID=operon:ybfMN-ctb operon;operon=ybfMN-ctb operon
+AB728624	GenBank	gene	1	1404	.	+	1	ID=ybfM;Name=ybfM;operon=ybfMN-ctb operon
+AB728624	GenBank	mRNA	1	1404	.	+	1	ID=ybfM;Parent=ybfM
+AB728624	GenBank	CDS	1	1404	.	+	1	ID=ybfM;Parent=ybfM;Name=ybfM;codon_start=1;operon=ybfMN-ctb operon;product=gnl|TC-DB|P75733|1.B.25.1.13;protein_id=BAM24399.1;transl_table=11;translation=length.467
+AB728624	GenBank	exon	1	1404	.	+	1	Parent=ybfM
+AB728624	GenBank	gene	1451	1777	.	+	1	ID=ybfN;Name=ybfN;operon=ybfMN-ctb operon
+AB728624	GenBank	mRNA	1451	1777	.	+	1	ID=ybfN;Parent=ybfN
+AB728624	GenBank	CDS	1451	1777	.	+	1	ID=ybfN;Parent=ybfN;Name=ybfN;codon_start=1;operon=ybfMN-ctb operon;product=putative lipoprotein;protein_id=BAM24400.1;transl_table=11;translation=length.108
+AB728624	GenBank	exon	1451	1777	.	+	1	Parent=ybfN
+AB728624	GenBank	gene	1791	4448	.	+	1	ID=ctb;Name=ctb;gene_synonym=chb;operon=ybfMN-ctb operon
+AB728624	GenBank	mRNA	1791	4448	.	+	1	ID=ctb;Parent=ctb
+AB728624	GenBank	CDS	1791	4448	.	+	1	ID=ctb;Parent=ctb;Name=ctb;codon_start=1;gene_synonym=chb;operon=ybfMN-ctb operon;product=GH20;protein_id=BAM24401.1;transl_table=11;translation=length.885
+AB728624	GenBank	exon	1791	4448	.	+	1	Parent=ctb

@@ -1,0 +1,35 @@
+##gff-version 3
+##sequence-region NZ_AP022379 1 11900
+# conversion-by bp_genbank2gff3.pl
+# organism Bifidobacterium longum subsp. longum
+# Note Bifidobacterium longum subsp. longum strain JCM 7052 chromosome, complete genome.
+# date 08-MAY-2023
+NZ_AP022379	GenBank	region	1	11900	.	+	1	ID=NZ_AP022379;Dbxref=BioProject:PRJNA224116,taxon:1679;Name=NZ_AP022379;Note=Bifidobacterium longum subsp. longum strain JCM 7052 chromosome%2C complete genome.,REFSEQ INFORMATION: The reference sequence is identical to AP022379.1.  Annotated at DFAST https://dfast.nig.ac.jp/    The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/    \n##Genome-Assembly-Data-START##\nAssembly Method :: Velvet v. 1.2.10,Gapcloser v. 1.10\nGenome Coverage :: 2,500X\nSequencing Technology :: Illumina HiSeq2000\n##Genome-Assembly-Data-END##;collection_date=1987;comment1=REFSEQ INFORMATION: The reference sequence is identical to AP022379.1.  Annotated at DFAST https://dfast.nig.ac.jp/    The annotation was added by the NCBI Prokaryotic Genome Annotation  Pipeline (PGAP). Information about PGAP can be found here:  https://www.ncbi.nlm.nih.gov/genome/annotation_prok/    \n##Genome-Assembly-Data-START##\nAssembly Method :: Velvet v. 1.2.10%3B Gapcloser v. 1.10\nGenome Coverage :: 2%2C500X\nSequencing Technology :: Illumina HiSeq2000\n##Genome-Assembly-Data-END##;country=Japan;date=08-MAY-2023;host=Homo sapiens;isolation_source=human feces;mol_type=genomic DNA;organism=Bifidobacterium longum subsp. longum;strain=JCM 7052;sub_species=longum
+NZ_AP022379	GenBank	gene	1	1014	.	-	1	ID=BLGA_RS00155;Name=BLGA_RS00155;old_locus_tag=BLGA_00290
+NZ_AP022379	GenBank	mRNA	1	1014	.	-	1	ID=BLGA_RS00155.t01;Parent=BLGA_RS00155
+NZ_AP022379	GenBank	CDS	1	1014	.	-	1	ID=BLGA_RS00155;Parent=BLGA_RS00155.t01;gO_function=GO:0003700 - DNA-binding transcription factor activity [Evidence IEA]%3B GO:0043565 - sequence-specific DNA binding [Evidence IEA]%3B GO:0000976 - transcription cis-regulatory region binding [Evidence IEA];gO_process=GO:0006351 - DNA-templated transcription [Evidence IEA]%3B GO:0045892 - negative regulation of DNA-templated transcription [Evidence IEA]%3B GO:0006355 - regulation of DNA-templated transcription [Evidence IEA];Name=BLGA_RS00155;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_015021098.1;old_locus_tag=BLGA_00290;product=LacI family DNA-binding transcriptional regulator;protein_id=WP_101014018.1;transl_table=11;translation=length.337
+NZ_AP022379	GenBank	exon	1	1014	.	-	1	Parent=BLGA_RS00155.t01
+NZ_AP022379	GenBank	gene	1353	2612	.	+	1	ID=BLGA_RS00160;Name=BLGA_RS00160;old_locus_tag=BLGA_00300
+NZ_AP022379	GenBank	mRNA	1353	2612	.	+	1	ID=BLGA_RS00160.t01;Parent=BLGA_RS00160
+NZ_AP022379	GenBank	CDS	1353	2612	.	+	1	ID=BLGA_RS00160;Parent=BLGA_RS00160.t01;Name=BLGA_RS00160;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003807220.1;old_locus_tag=BLGA_00300;product=extracellular solute-binding protein;protein_id=WP_077381867.1;transl_table=11;translation=length.419
+NZ_AP022379	GenBank	exon	1353	2612	.	+	1	Parent=BLGA_RS00160.t01
+NZ_AP022379	GenBank	gene	2791	3717	.	+	1	ID=BLGA_RS00165;Name=BLGA_RS00165;old_locus_tag=BLGA_00310
+NZ_AP022379	GenBank	mRNA	2791	3717	.	+	1	ID=BLGA_RS00165.t01;Parent=BLGA_RS00165
+NZ_AP022379	GenBank	CDS	2791	3717	.	+	1	ID=BLGA_RS00165;Parent=BLGA_RS00165.t01;gO_function=GO:0140359 - ABC-type transporter activity [Evidence IEA]%3B GO:0042626 - ATPase-coupled transmembrane transporter activity [Evidence IEA];Name=BLGA_RS00165;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_015021100.1;old_locus_tag=BLGA_00310;product=sugar ABC transporter permease;protein_id=WP_077381933.1;transl_table=11;translation=length.308
+NZ_AP022379	GenBank	exon	2791	3717	.	+	1	Parent=BLGA_RS00165.t01
+NZ_AP022379	GenBank	gene	3719	4582	.	+	1	ID=BLGA_RS00170;Name=BLGA_RS00170;old_locus_tag=BLGA_00320
+NZ_AP022379	GenBank	mRNA	3719	4582	.	+	1	ID=BLGA_RS00170.t01;Parent=BLGA_RS00170
+NZ_AP022379	GenBank	CDS	3719	4582	.	+	1	ID=BLGA_RS00170;Parent=BLGA_RS00170.t01;gO_process=GO:0008643 - carbohydrate transport [Evidence IEA]%3B GO:0055085 - transmembrane transport [Evidence IEA];Name=BLGA_RS00170;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003807223.1;old_locus_tag=BLGA_00320;product=carbohydrate ABC transporter permease;protein_id=WP_077381865.1;transl_table=11;translation=length.287
+NZ_AP022379	GenBank	exon	3719	4582	.	+	1	Parent=BLGA_RS00170.t01
+NZ_AP022379	GenBank	gene	4613	6763	.	+	1	ID=BLGA_RS00175;Name=BLGA_RS00175;old_locus_tag=BLGA_00330
+NZ_AP022379	GenBank	mRNA	4613	6763	.	+	1	ID=BLGA_RS00175.t01;Parent=BLGA_RS00175
+NZ_AP022379	GenBank	CDS	4613	6763	.	+	1	ID=BLGA_RS00175;Parent=BLGA_RS00175.t01;eC_number=3.2.1.22;Name=BLGA_RS00175;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_003807225.1;old_locus_tag=BLGA_00330;product=alpha-galactosidase;protein_id=WP_077381863.1;transl_table=11;translation=length.716
+NZ_AP022379	GenBank	exon	4613	6763	.	+	1	Parent=BLGA_RS00175.t01
+NZ_AP022379	GenBank	gene	7101	10388	.	+	1	ID=BLGA_RS00180;Name=BLGA_RS00180;old_locus_tag=BLGA_00340
+NZ_AP022379	GenBank	mRNA	7101	10388	.	+	1	ID=BLGA_RS00180.t01;Parent=BLGA_RS00180
+NZ_AP022379	GenBank	CDS	7101	10388	.	+	1	ID=BLGA_RS00180;Parent=BLGA_RS00180.t01;Name=BLGA_RS00180;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: protein motif:HMM:NF014427.2;old_locus_tag=BLGA_00340;product=Ig-like domain-containing protein;protein_id=WP_157821655.1;transl_table=11;translation=length.1095
+NZ_AP022379	GenBank	exon	7101	10388	.	+	1	Parent=BLGA_RS00180.t01
+NZ_AP022379	GenBank	gene	10611	11900	.	+	1	ID=BLGA_RS00185;Name=BLGA_RS00185;old_locus_tag=BLGA_00350
+NZ_AP022379	GenBank	mRNA	10611	11900	.	+	1	ID=BLGA_RS00185.t01;Parent=BLGA_RS00185
+NZ_AP022379	GenBank	CDS	10611	11900	.	+	1	ID=BLGA_RS00185;Parent=BLGA_RS00185.t01;Name=BLGA_RS00185;Note=Derived by automated computational analysis using gene prediction method: Protein Homology.;codon_start=1;inference=COORDINATES: similar to AA sequence:RefSeq:WP_007055811.1;old_locus_tag=BLGA_00350;product=ATP-binding protein;protein_id=WP_229033781.1;transl_table=11;translation=length.429
+NZ_AP022379	GenBank	exon	10611	11900	.	+	1	Parent=BLGA_RS00185.t01

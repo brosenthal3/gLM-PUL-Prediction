@@ -1,0 +1,27 @@
+##gff-version 3
+##sequence-region AF027499 1 5591
+# conversion-by bp_genbank2gff3.pl
+# organism Azotobacter vinelandii
+# Note Azotobacter vinelandii mannuronan C-5-epimerase (algG) gene, partial cds; and AlgX, alginate lyase (algL), AlgI, and AlgV genes, complete cds.
+# date 25-JUL-2016
+AF027499	GenBank	region	1	5591	.	+	1	ID=AF027499;Dbxref=ATCC:9046,taxon:354;Name=AF027499;Note=Azotobacter vinelandii mannuronan C-5-epimerase (algG) gene%2C partial cds%3B and AlgX%2C alginate lyase (algL)%2C AlgI%2C and AlgV genes%2C complete cds.;date=25-JUL-2016;mol_type=genomic DNA;organism=Azotobacter vinelandii;strain=ATCC 9046
+AF027499	GenBank	gene	1	99	.	+	1	ID=algG;Name=algG
+AF027499	GenBank	mRNA	1	99	.	+	1	ID=algG;Parent=algG
+AF027499	GenBank	CDS	1	99	.	+	1	ID=algG;Parent=algG;Name=algG;Note=AlgG;codon_start=1;product=mannuronan C-5-epimerase;protein_id=AAC04565.1;transl_table=11;translation=length.32
+AF027499	GenBank	exon	1	99	.	+	1	Parent=algG
+AF027499	GenBank	gene	120	1571	.	+	1	ID=algX;Name=algX
+AF027499	GenBank	mRNA	120	1571	.	+	1	ID=algX;Parent=algX
+AF027499	GenBank	CDS	120	1571	.	+	1	ID=algX;Parent=algX;Name=algX;Note=similar to Pseudomonas aeruginosa AlgX;codon_start=1;product=AlgX;protein_id=AAC04566.1;transl_table=11;translation=length.483
+AF027499	GenBank	exon	120	1571	.	+	1	Parent=algX
+AF027499	GenBank	gene	1580	2704	.	+	1	ID=algL;Name=algL
+AF027499	GenBank	mRNA	1580	2704	.	+	1	ID=algL;Parent=algL
+AF027499	GenBank	CDS	1580	2704	.	+	1	ID=algL;Parent=algL;Name=algL;Note=AlgL%3B similar to Pseudomonas aeruginosa AlgL;codon_start=1;product=alginate lyase;protein_id=AAC04567.1;transl_table=11;translation=length.374
+AF027499	GenBank	exon	1580	2704	.	+	1	Parent=algL
+AF027499	GenBank	gene	2897	4396	.	+	1	ID=algI;Name=algI
+AF027499	GenBank	mRNA	2897	4396	.	+	1	ID=algI;Parent=algI
+AF027499	GenBank	CDS	2897	4396	.	+	1	ID=algI;Parent=algI;Name=algI;Note=similar to Pseudomonas aeruginosa AlgI;codon_start=1;product=AlgI;protein_id=AAC04568.1;transl_table=11;translation=length.499
+AF027499	GenBank	exon	2897	4396	.	+	1	Parent=algI
+AF027499	GenBank	gene	4409	5575	.	+	1	ID=algV;Name=algV
+AF027499	GenBank	mRNA	4409	5575	.	+	1	ID=algV;Parent=algV
+AF027499	GenBank	CDS	4409	5575	.	+	1	ID=algV;Parent=algV;Name=algV;Note=similar to Pseudomonas aeruginosa AlgJ;codon_start=1;product=AlgV;protein_id=AAC04569.1;transl_table=11;translation=length.388
+AF027499	GenBank	exon	4409	5575	.	+	1	Parent=algV

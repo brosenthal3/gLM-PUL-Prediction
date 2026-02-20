@@ -1,0 +1,20 @@
+##gff-version 3
+##sequence-region AB669415 1 4645
+# conversion-by bp_genbank2gff3.pl
+# organism Microbulbifer sp. JAM-3301
+# Note Microbulbifer sp. JAM-3301 DNA, inulin operon, sacA, pfk, inu genes for beta-fructofranosidase, frucrokinase-like protein, endo-inulinase, complete cds.
+# date 28-MAR-2012
+AB669415	GenBank	region	1	4645	.	+	1	ID=AB669415;Dbxref=taxon:1081041;Name=AB669415;Note=Microbulbifer sp. JAM-3301 DNA%2C inulin operon%2C sacA%2C pfk%2C inu genes for beta-fructofranosidase%2C frucrokinase-like protein%2C endo-inulinase%2C complete cds.;country=Japan:Kanagawa%2C Sagami Bay%2Cwater depth of 900 m;date=28-MAR-2012;lat_lon=35.08 N 139.21 E;mol_type=genomic DNA;organism=Microbulbifer sp. JAM-3301;strain=JAM-3301
+AB669415	GenBank	operon	1	4645	.	+	1	ID=operon:inulin;operon=inulin
+AB669415	GenBank	gene	1	1458	.	+	1	ID=sacA;Name=sacA;operon=inulin
+AB669415	GenBank	mRNA	1	1458	.	+	1	ID=sacA;Parent=sacA
+AB669415	GenBank	CDS	1	1458	.	+	1	ID=sacA;Parent=sacA;Name=sacA;codon_start=1;operon=inulin;product=GH32|CBM38;protein_id=BAL70276.1;transl_table=11;translation=length.485
+AB669415	GenBank	exon	1	1458	.	+	1	Parent=sacA
+AB669415	GenBank	gene	1469	2422	.	+	1	ID=pfk;Name=pfk;operon=inulin
+AB669415	GenBank	mRNA	1469	2422	.	+	1	ID=pfk;Parent=pfk
+AB669415	GenBank	CDS	1469	2422	.	+	1	ID=pfk;Parent=pfk;eC_number=2.7.1.11;Name=pfk;codon_start=1;operon=inulin;product=STP|PfkB;protein_id=BAL70277.1;transl_table=11;translation=length.317
+AB669415	GenBank	exon	1469	2422	.	+	1	Parent=pfk
+AB669415	GenBank	gene	2426	4645	.	+	1	ID=inu;Name=inu;operon=inulin
+AB669415	GenBank	mRNA	2426	4645	.	+	1	ID=inu;Parent=inu
+AB669415	GenBank	CDS	2426	4645	.	+	1	ID=inu;Parent=inu;eC_number=3.2.1.7;Name=inu;codon_start=1;operon=inulin;product=GH32;protein_id=BAL70278.1;transl_table=11;translation=length.739
+AB669415	GenBank	exon	2426	4645	.	+	1	Parent=inu

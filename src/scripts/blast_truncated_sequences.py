@@ -1,11 +1,11 @@
-import polars
 import subprocess
 import tempfile
 import time
-from Bio import Entrez, SeqIO
-from Bio.Blast import NCBIWWW, NCBIXML
 from pathlib import Path
 import argparse
+import polars
+from Bio import Entrez, SeqIO
+from Bio.Blast import NCBIWWW, NCBIXML
 
 
 def fetch_subsequence(accession, start, end):
@@ -70,6 +70,10 @@ def fetch_subsequence(accession, start, end):
 
 
 def run_biopython_blast(fasta_path, taxid):
+    print(f"Running BLAST for {fasta_path.name}.")
+    fasta_string = fasta_path.read_text()
+    entrez_query = f"txid{taxid}[Organism]" if taxid is not None else None
+
     result_handle = NCBIWWW.qblast(
         "blastn",
         "nt",
@@ -80,8 +84,8 @@ def run_biopython_blast(fasta_path, taxid):
     )
 
     blast_record = NCBIXML.read(result_handle)
+    result = []
     for alignment in blast_record.alignments:
-        result = []
         for hsp in alignment.hsps:
             sacc = alignment.accession
             sstart = hsp.sbjct_start
@@ -95,7 +99,8 @@ def run_biopython_blast(fasta_path, taxid):
                 new_pul_range = (int(sstart), int(send)) # account for complementary strand hits
                 result.append((sacc, min(new_pul_range), max(new_pul_range), float(evalue), float(pident)))
 
-    return result if result else None
+    print(f"Found {len(result)} valid hits.")
+    return result[0] if result else None
 
 
 def get_pul_info(output, accession, cluster_id, start, end):
@@ -137,6 +142,7 @@ def get_blast_results(truncated_df):
     # iterate over sequences
     output = []
     tried_accessions = set()
+    unsuccessful_accessions = []
 
     for row in truncated_df.iter_rows(named=True):
         accession = row["sequence_id"]
@@ -145,12 +151,12 @@ def get_blast_results(truncated_df):
         end = int(row["end"])
         taxid = row["tax_id"]
 
-        # handle cases where we already tried to fetch this accession
-        if accession in tried_accessions:
-            print(f"Already tried {accession}, adding PUL info based on previous attempt")
-            output_dict = get_pul_info(output, accession, cluster_id, start, end)
-            output.append(output_dict)
-            continue
+        # # handle cases where we already tried to fetch this accession
+        # if accession in tried_accessions:
+        #     print(f"Already tried {accession}, adding PUL info based on previous attempt")
+        #     output_dict = get_pul_info(output, accession, cluster_id, start, end)
+        #     output.append(output_dict)
+        #     continue
 
         print(f"Processing {accession}:{start}-{end} (taxid {taxid})")
         # fetch subsequence
@@ -170,7 +176,8 @@ def get_blast_results(truncated_df):
         if result:
             sacc, sstart, send, evalue, pident = result
         else:
-            sacc, sstart, send, evalue, pident = "NO_HIT", "NA", "NA", "NA", "NA" 
+            sacc, sstart, send, evalue, pident = "NO_HIT", "NA", "NA", "NA", "NA"
+            unsuccessful_accessions.append(accession)
 
         output.append({
             "cluster_id": cluster_id,
@@ -186,7 +193,8 @@ def get_blast_results(truncated_df):
         })
         time.sleep(5) # being nice to NCBI
         tried_accessions.add(accession)
-
+    
+    print(f"Finished processing. Unsuccessful accessions: {len(unsuccessful_accessions)}")
     return output
 
 
@@ -215,8 +223,7 @@ def main():
     )
     args = parser.parse_args()
     Entrez.email = args.email
-    Blast.email = args.email
-
+    NCBIWWW.email = args.email
     truncated_df = polars.read_csv(args.input, separator="\t")
     output = get_blast_results(truncated_df)
     # save results

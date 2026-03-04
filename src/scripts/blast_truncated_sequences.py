@@ -171,6 +171,7 @@ def get_blast_results(truncated_df):
         # blast_output = run_blast(fasta_path, taxid)
         # result = parse_filter_blast_output(blast_output)
         result = run_biopython_blast(fasta_path, taxid)
+        fasta_path.unlink()
 
         # save result, save NA if no hit found
         if result:

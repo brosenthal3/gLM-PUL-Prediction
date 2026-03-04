@@ -58,42 +58,20 @@ def parse_filter_blast_output(blast_file):
 
             line = line.strip('\n')
             s_accession, s_start, s_end, evalue, staxid, pident, qacc = line.split() # Output: "sacc sstart send evalue staxid pident",
-            if float(pident) >= 95.0 and qacc != s_accession: # filter for high identity and exclude self-hits
-                results.append((s_accession, int(s_start), int(s_end), float(evalue), float(staxid), float(pident)))
+
+            # filter for high identity and exclude self-hits
+            query_accession = qacc.split('.')[0]
+            if float(pident) >= 95.0 and query_accession != s_accession:
+                print(f"Found hit: {s_accession} for query {qacc}")    
+                new_pul_range = (int(s_start), int(s_end)) # account for complementary strand hits
+                results.append((s_accession, min(new_pul_range), max(new_pul_range), float(evalue), float(staxid), float(pident)))
 
     return results[0] if results else None
 
 
-def main():
-    # parse arguments
-    parser = argparse.ArgumentParser(description="Fetch GenBank records from a TSV containing NCBI IDs.")
-    parser.add_argument(
-        "-i",
-        "--input",
-        type=str,
-        default="../data/truncated_genomes_test.tsv",
-        help="Input TSV file",
-    )
-    parser.add_argument(
-        "-o", 
-        "--output", 
-        type=str, 
-        default="../data/blast_full_sequences.tsv",
-        help="Output file"
-    )
-    parser.add_argument(
-        "--email",
-        type=str,
-        default="b.rosenthal@lumc.nl",
-        help="Email address required by NCBI Entrez",
-    )
-    args = parser.parse_args()
-    Entrez.email = args.email
-
-    truncated_df = polars.read_csv(args.input, separator="\t")
-    output = []
-
+def get_blast_results(truncated_df):
     # iterate over sequences
+    output = []
     for row in truncated_df.iter_rows(named=True):
         accession = row["sequence_id"]
         cluster_id = row["cluster_id"]
@@ -135,6 +113,37 @@ def main():
         })
         time.sleep(5) # being nice to NCBI
 
+    return output
+
+
+def main():
+    # parse arguments
+    parser = argparse.ArgumentParser(description="Fetch GenBank records from a TSV containing NCBI IDs.")
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        default="../data/truncated_genomes_test.tsv",
+        help="Input TSV file",
+    )
+    parser.add_argument(
+        "-o", 
+        "--output", 
+        type=str, 
+        default="../data/blast_full_sequences.tsv",
+        help="Output file"
+    )
+    parser.add_argument(
+        "--email",
+        type=str,
+        default="b.rosenthal@lumc.nl",
+        help="Email address required by NCBI Entrez",
+    )
+    args = parser.parse_args()
+    Entrez.email = args.email
+
+    truncated_df = polars.read_csv(args.input, separator="\t")
+    output = get_blast_results(truncated_df)
     # save results
     output_df = polars.DataFrame(output)
     output_df.write_csv(args.output, separator="\t")

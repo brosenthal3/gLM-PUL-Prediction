@@ -93,6 +93,38 @@ def clean_puldb_data(puldb_path: str) -> polars.DataFrame:
     return puldb_data_literature
     
 
+def merge_overlapping_puls(df):
+    merged_puls = polars.DataFrame(schema=df.schema)
+
+    for sequence_id, group in df.group_by('sequence_id'):
+        if group.shape[0] == 1:
+            merged_puls = merged_puls.vstack(group[0])
+            continue
+
+        # sort by start position
+        group = group.sort('start')
+        current_pul = None
+        for row in group.iter_rows(named=True):
+            if current_pul is None:
+                current_pul = row
+            else:
+                # check if there is an overlap with the current PUL
+                if row['start'] <= current_pul['end']:
+                    # merge the PULs by updating the end position to the maximum end position
+                    current_pul['end'] = max(current_pul['end'], row['end'])
+                    # merge cluster_id by concatenating with an underscore
+                    current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
+                else:
+                    merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+                    current_pul = row
+
+        # add the last PUL after processing all rows for this sequence_id
+        if current_pul is not None:
+            merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+            
+    return polars.DataFrame(merged_puls)
+
+
 def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     lengths = []
     errors = []
@@ -152,6 +184,8 @@ if __name__ == "__main__":
         dbcan_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("dbcan").alias("database")),
         puldb_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("puldb").alias("database"))
     ], how='vertical').sort('cluster_id')
+    combined_clusters = merge_overlapping_puls(combined_clusters)
+    combined_clusters.write_csv('../data/combined_clusters.tsv', separator='\t')
 
     # first look for percentage_bp_in_puls file
     try:

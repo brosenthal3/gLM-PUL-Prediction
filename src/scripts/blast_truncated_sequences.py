@@ -6,8 +6,8 @@ from Bio import Entrez, SeqIO
 from pathlib import Path
 Entrez.email = "b.rosenthal@LUMC.nl"
 
-INPUT_FILE = "truncated_sequences.tsv"
-OUTPUT_FILE = "blast_full_sequences.tsv"
+INPUT_FILE = "../data/truncated_genomes_test.tsv"
+OUTPUT_FILE = "../data/blast_full_sequences.tsv"
 
 def fetch_subsequence(accession, start, end):
     """ Fetch full sequence in fasta format """
@@ -30,12 +30,15 @@ def run_blast(fasta_path, taxid):
         "-query", str(fasta_path),
         "-db", "nt",
         "-remote",
-        "-entrez_query", f"txid{taxid}[Organism:exp]",
         "-outfmt", "6 sacc sstart send evalue bitscore",
         "-max_target_seqs", "1",
         "-out", str(output_file)
     ]
+    if taxid is not None:
+        commmand.extend(["-entrez_query", f"txid{taxid}[Organism]"])
+
     subprocess.run(commmand, check=True)
+    print("BLAST search completed for", fasta_path.name)
 
     return output_file
 
@@ -57,7 +60,7 @@ if __name__ == "__main__":
         "query_accession",
         "query_start",
         "query_end",
-        "taxid",
+        "tax_id",
         "subject_accession",
         "subject_start",
         "subject_end",
@@ -67,11 +70,11 @@ if __name__ == "__main__":
     
     # iterate over sequences
     for row in truncated_df.iter_rows(named=True):
-        accession = row["accession"]
+        accession = row["sequence_id"]
         cluster_id = row["cluster_id"]
         start = int(row["start"])
         end = int(row["end"])
-        taxid = row["taxid"]
+        taxid = row["tax_id"]
 
         print(f"Processing {accession}:{start}-{end} (taxid {taxid})")
         # fetch subsequence
@@ -97,7 +100,7 @@ if __name__ == "__main__":
                 "query_accession": [accession],
                 "query_start": [start],
                 "query_end": [end],
-                "taxid": [taxid],
+                "tax_id": [taxid],
                 "subject_accession": [sacc],
                 "subject_start": [sstart],
                 "subject_end": [send],

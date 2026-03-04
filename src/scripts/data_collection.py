@@ -118,6 +118,24 @@ def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     return lengths
 
 
+def get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions):
+    # get length of all genomes
+    lengths = get_sequence_lengths(unique_accessions)
+
+    # merge lengths with cluster table
+    lengths_df = polars.DataFrame(lengths, schema={'sequence_id': polars.Utf8, 'length': polars.Int64}) 
+    cluster_table_with_length = cluster_table.join(lengths_df, on='sequence_id', how='left')
+
+    # get total length of PULs per genome
+    pul_lengths = cluster_table_with_length.group_by('sequence_id').agg(
+        (polars.col('end') - polars.col('start')).sum().alias('pul_length')).join(length_df, on='sequence_id', how='left')
+    pul_lengths = pul_lengths.with_columns(
+        (polars.col('pul_length') / polars.col('length') * 100).alias('percentage_in_puls')
+    )
+
+    return pul_lengths
+
+
 if __name__ == "__main__":
     download_data_files()
     # clean dbCAN data
@@ -134,28 +152,17 @@ if __name__ == "__main__":
         dbcan_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("dbcan").alias("database")),
         puldb_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("puldb").alias("database"))
     ], how='vertical').sort('cluster_id')
-    display(combined_clusters)
 
-    # get sequence lengths for all unique accessions in cluster table using Entrez esummary
-    unique_accessions = combined_clusters.select('sequence_id').unique()
-    lengths = get_sequence_lengths(unique_accessions)
+    # first look for percentage_bp_in_puls file
+    try:
+        percentage_in_puls = polars.read_csv('../data/percentage_bp_in_puls.tsv', separator='\t')
+    except FileNotFoundError:
+        unique_accessions = combined_clusters.select('sequence_id').unique()
+        percentage_in_puls = get_percentage_bp_in_puls(combined_clusters, unique_accessions)
+        percentage_in_puls.write_csv('../data/percentage_bp_in_puls.tsv', separator='\t')
 
-    # merge lengths with cluster table
-    lengths_df = polars.DataFrame(lengths, schema={'sequence_id': polars.Utf8, 'length': polars.Int64}) 
-    cluster_table_with_length = combined_clusters.join(lengths_df, on='sequence_id', how='left')
-
-
-    def get_percentage_bp_in_puls(cluster_table, length_df):
-        # get total length of PULs per genome
-        pul_lengths = cluster_table.group_by('sequence_id').agg(
-            (polars.col('end') - polars.col('start')).sum().alias('pul_length')).join(length_df, on='sequence_id', how='left')
-        pul_lengths = pul_lengths.with_columns(
-            (polars.col('pul_length') / polars.col('length') * 100).alias('percentage_in_puls')
-        )
-        return pul_lengths
-
-    percentage_in_puls = get_percentage_bp_in_puls(combined_clusters, lengths_df)
-    percentage_in_puls.write_csv('../data/percentage_bp_in_puls.tsv', separator='\t')
-
+    # find which genomes are likely to be truncated
     truncated_genomes = percentage_in_puls.filter(polars.col('percentage_in_puls') > 20, polars.col('length')<1000000)
+    # get all puls that are in these truncated genomes
     truncated_genomes_puls = combined_clusters.filter(polars.col('sequence_id').is_in(truncated_genomes['sequence_id']))
+    truncated_genomes_puls.write_csv('../data/truncated_genomes.tsv', separator='\t')

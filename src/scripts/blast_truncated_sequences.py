@@ -4,13 +4,13 @@ import tempfile
 import time
 from Bio import Entrez, SeqIO
 from pathlib import Path
-Entrez.email = "b.rosenthal@LUMC.nl"
+import argparse
 
-INPUT_FILE = "../data/truncated_genomes_test.tsv"
-OUTPUT_FILE = "../data/blast_full_sequences.tsv"
 
 def fetch_subsequence(accession, start, end):
     """ Fetch full sequence in fasta format """
+
+    print(f"Fetching {accession} from NCBI")
     handle = Entrez.efetch(db="nucleotide", id=accession, rettype="fasta", retmode="text")
     record = SeqIO.read(handle, "fasta")
     handle.close()
@@ -37,43 +37,62 @@ def run_blast(fasta_path, taxid):
     if taxid is not None:
         commmand.extend(["-entrez_query", f"txid{taxid}[Organism]"])
 
+    print(f"Running BLAST for {fasta_path.name}")
     subprocess.run(commmand, check=True)
-    print("BLAST search completed for", fasta_path.name)
 
     return output_file
 
 
 def parse_filter_blast_output(blast_file):
     """ parses blast output from file """ 
+
+    print("Parsing BLAST output")
     results = []
     with open(blast_file) as f:
-        lines = f.readlines().strip()
-        if not line: 
+        lines = f.readlines()
+        if not lines:
             return None
-        for line in lines.splitlines():
-            # Output: "sacc sstart send evalue staxid pident",
-            s_accession, s_start, s_end, evalue, staxid, pident, qacc = line.split()
+        for line in lines:
+            if not line:
+                continue
+
+            line = line.strip('\n')
+            s_accession, s_start, s_end, evalue, staxid, pident, qacc = line.split() # Output: "sacc sstart send evalue staxid pident",
             if float(pident) >= 95.0 and qacc != s_accession: # filter for high identity and exclude self-hits
                 results.append((s_accession, int(s_start), int(s_end), float(evalue), float(staxid), float(pident)))
 
     return results[0] if results else None
 
 
-if __name__ == "__main__":
-    truncated_df = polars.read_csv(INPUT_FILE, separator="\t")
-    output_df = polars.DataFrame(schema=[
-        "cluster_id",
-        "query_accession",
-        "query_start",
-        "query_end",
-        "tax_id",
-        "subject_accession",
-        "subject_start",
-        "subject_end",
-        "evalue",
-        "bitscore"
-    ])
-    
+def main():
+    # parse arguments
+    parser = argparse.ArgumentParser(description="Fetch GenBank records from a TSV containing NCBI IDs.")
+    parser.add_argument(
+        "-i",
+        "--input",
+        type=str,
+        default="../data/truncated_genomes_test.tsv",
+        help="Input TSV file",
+    )
+    parser.add_argument(
+        "-o", 
+        "--output", 
+        type=str, 
+        default="../data/blast_full_sequences.tsv",
+        help="Output file"
+    )
+    parser.add_argument(
+        "--email",
+        type=str,
+        default="b.rosenthal@lumc.nl",
+        help="Email address required by NCBI Entrez",
+    )
+    args = parser.parse_args()
+    Entrez.email = args.email
+
+    truncated_df = polars.read_csv(args.input, separator="\t")
+    output = []
+
     # iterate over sequences
     for row in truncated_df.iter_rows(named=True):
         accession = row["sequence_id"]
@@ -101,21 +120,25 @@ if __name__ == "__main__":
         else:
             sacc, sstart, send, evalue, staxid, pident = "NO_HIT", "NA", "NA", "NA", "NA", "NA" 
 
-        output_df = output_df.vstack(polars.DataFrame({
-                "cluster_id": [cluster_id],
-                "query_accession": [accession],
-                "query_start": [start],
-                "query_end": [end],
-                "tax_id": [taxid],
-                "subject_accession": [sacc],
-                "subject_start": [sstart],
-                "subject_end": [send],
-                "evalue": [evalue],
-                "subject_tax_id": [staxid],
-                "pident": [pident]
-            }))
-
+        output.append({
+            "cluster_id": cluster_id,
+            "query_accession": accession,
+            "query_start": start,
+            "query_end": end,
+            "tax_id": taxid,
+            "subject_accession": sacc,
+            "subject_start": sstart,
+            "subject_end": send,
+            "evalue": evalue,
+            "subject_tax_id": staxid,
+            "pident": pident
+        })
         time.sleep(5) # being nice to NCBI
 
     # save results
-    output_df.write_csv(OUTPUT_FILE, separator="\t")
+    output_df = polars.DataFrame(output)
+    output_df.write_csv(args.output, separator="\t")
+
+
+if __name__ == "__main__":
+    main()

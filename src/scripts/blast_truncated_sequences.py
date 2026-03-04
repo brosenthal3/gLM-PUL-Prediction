@@ -30,8 +30,8 @@ def run_blast(fasta_path, taxid):
         "-query", str(fasta_path),
         "-db", "nt",
         "-remote",
-        "-outfmt", "6 sacc sstart send evalue bitscore",
-        "-max_target_seqs", "1",
+        "-outfmt", "6 sacc sstart send evalue staxid pident qacc",
+        "-max_target_seqs", "5",
         "-out", str(output_file)
     ]
     if taxid is not None:
@@ -43,14 +43,20 @@ def run_blast(fasta_path, taxid):
     return output_file
 
 
-def parse_blast_output(blast_file):
+def parse_filter_blast_output(blast_file):
     """ parses blast output from file """ 
+    results = []
     with open(blast_file) as f:
-        line = f.readline().strip()
+        lines = f.readlines().strip()
         if not line: 
             return None
-        s_accession, s_start, s_end, evalue, bitscore = line.split()
-        return s_accession, int(s_start), int(s_end), float(evalue), float(bitscore)
+        for line in lines.splitlines():
+            # Output: "sacc sstart send evalue staxid pident",
+            s_accession, s_start, s_end, evalue, staxid, pident, qacc = line.split()
+            if float(pident) >= 95.0 and qacc != s_accession: # filter for high identity and exclude self-hits
+                results.append((s_accession, int(s_start), int(s_end), float(evalue), float(staxid), float(pident)))
+
+    return results[0] if results else None
 
 
 if __name__ == "__main__":
@@ -87,13 +93,13 @@ if __name__ == "__main__":
 
         # run blast and parse output
         blast_output = run_blast(fasta_path, taxid)
-        result = parse_blast_output(blast_output)
+        result = parse_filter_blast_output(blast_output)
 
         # save result, save NA if no hit found
         if result:
-            sacc, sstart, send, evalue, bitscore = result
+            sacc, sstart, send, evalue, staxid, pident = result
         else:
-            sacc, sstart, send, evalue, bitscore = "NO_HIT", "NA", "NA", "NA", "NA" 
+            sacc, sstart, send, evalue, staxid, pident = "NO_HIT", "NA", "NA", "NA", "NA", "NA" 
 
         output_df = output_df.vstack(polars.DataFrame({
                 "cluster_id": [cluster_id],
@@ -105,7 +111,8 @@ if __name__ == "__main__":
                 "subject_start": [sstart],
                 "subject_end": [send],
                 "evalue": [evalue],
-                "bitscore": [bitscore]
+                "subject_tax_id": [staxid],
+                "pident": [pident]
             }))
 
         time.sleep(5) # being nice to NCBI

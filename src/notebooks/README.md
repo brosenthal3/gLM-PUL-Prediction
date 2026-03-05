@@ -10,7 +10,7 @@ All data is obtained from two main sources: dbCAN-PUL, and PULDB.
 
 ### dbCAN-PUL
 Accession IDs are processed by splitting on the first dot and removing the version number afterwards. 
-One genome is downloaded manually from JGI (`Ga0139390_150`, link: https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109). One PUL spans over two accession ids (`ADWO01000021.1, ADWO01000020.1`).
+One genome is downloaded manually from JGI (`Ga0139390_150`, link: https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109). One PUL spans over two accession ids (`ADWO01000021.1, ADWO01000020.1`). Using BLAST on NCBI, the PUL can be found in the full genome with accession ID CP091800. However, this seems to be two separate PULs, where `ADWO01000021` maps to `811569-817528` and `ADWO01000020` maps to `49194-67389`. These are manually added to the dataframe as two PULs.
 
 Then there is a total of: 370 genomes, 633 PULs. 
 
@@ -29,3 +29,11 @@ Three are from separate papers, with no provided data. These are manually remove
 
 Then there are 358 PULs from 44 unique accession IDs.
 
+## Preprocessing
+Cluster tables from dbCAN and PULDB were merged to a single table, and any PULs that shared the same parent sequence ID and overlapped were merged into a single PUL, this resulted in 873 PULs in total. 
+
+After observing that some parent sequences are very short, and consist mainly of the desired PUL, the dataset was filtered such that the percentage of base-pairs of the full sequence that are in PULs is less than 50%, and that the sequence is larger than 100kbp:
+```
+percentage_in_pul > 50 & sequence_length > 100000
+```
+This resulted in 94 sequences (and 98 PULs) being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>95%) and sequence length (such that no shorter sequences are found). 28 BLAST searches failed, and another 26 were filtered out because the subject PUL was more than 85% shorter than the query PUL.

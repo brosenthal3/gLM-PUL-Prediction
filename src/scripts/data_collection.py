@@ -146,9 +146,13 @@ def get_length(acc):
 
 def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     lengths = []
-    errors = []
     for acc in list(unique_accessions['sequence_id']):
-        length = get_length(acc)
+        try:
+            length = get_length(acc)
+        except RemoteDisconnected:
+            print(f"Error fetching length for {acc}, skipping.")
+            length = None
+
         lengths.append({'sequence_id': acc, 'length': length})
         time.sleep(0.1)
 
@@ -184,12 +188,12 @@ def replace_puls_with_blast_hits(combined_clusters_adapted, blast_output):
         new_accession = row["subject_accession"]
         new_pul_range = (int(row["subject_start"]), int(row["subject_end"]))
         old_pul_range = (int(row["query_start"]), int(row["query_end"]))
-        new_genome_length = get_length(new_accession)
+        # new_genome_length = get_length(new_accession)
 
-        if not (new_pul_range[1] - new_pul_range[0]) >= (old_pul_range[1] - old_pul_range[0]) * 0.9 :
-            continue
-        if not new_genome_length is not None and (new_pul_range[1] - new_pul_range[0]) / new_genome_length < 0.25:
-            continue
+        # if not (new_pul_range[1] - new_pul_range[0]) >= (old_pul_range[1] - old_pul_range[0]) * 0.7 :
+        #     continue
+        # if not new_genome_length is not None and (new_pul_range[1] - new_pul_range[0]) / new_genome_length < 0.25:
+        #     continue
 
         # replace all necessary values 
         combined_clusters_adapted = combined_clusters_adapted.with_columns(
@@ -252,14 +256,16 @@ def get_puldb_clusters(data_dir):
     return puldb_clusters
 
 
-def get_percentage_bp_in_puls_df(cluster_table, data_dir):
-    percentage_in_puls_path = f"{data_dir}/percentage_bp_in_puls.tsv"
+def get_percentage_bp_in_puls_df(cluster_table, data_dir, path):
+    percentage_in_puls_path = path
     if Path(percentage_in_puls_path).exists():
         print(f"Percentage of genome in PULs file already exists at {percentage_in_puls_path}, loading from file.")
         return polars.read_csv(percentage_in_puls_path, separator='\t')
     else:
+        print(f"Calculating percentage of genome in PULs, this may take a few minutes...")
         unique_accessions = cluster_table.select('sequence_id').unique()
-        percentage_in_puls = get_percentage_bp_in_puls(cluster_table, unique_accessions)
+        length_df = polars.DataFrame(get_sequence_lengths(unique_accessions), schema={'sequence_id': polars.Utf8, 'length': polars.Int64})
+        percentage_in_puls = get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions)
         percentage_in_puls.write_csv(percentage_in_puls_path, separator='\t')
         return percentage_in_puls
 
@@ -280,7 +286,7 @@ def main(data_dir):
     combined_clusters.write_csv(f"{data_dir}/combined_clusters.tsv", separator='\t')
 
     # get percentage of genome in PULs
-    percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters, data_dir)
+    percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters, data_dir, path=f"{data_dir}/percentage_bp_in_puls.tsv")
 
     # find which genomes are likely to be truncated
     truncated_genomes = percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
@@ -301,8 +307,17 @@ def main(data_dir):
     combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output).sort('cluster_id')
     combined_clusters_blasted.write_csv(f"{data_dir}/combined_clusters_blasted.tsv", separator='\t')
 
+    blasted_percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters_blasted, data_dir, path=f"{data_dir}/percentage_in_puls_blasted.tsv")
+    blasted_percentage_in_puls.write_csv(f"{data_dir}/percentage_in_puls_blasted.tsv", separator='\t')
+
+    blasted_truncated_genomes = blasted_percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
+    blasted_truncated_genomes_puls = combined_clusters_blasted.filter(polars.col('sequence_id').is_in(blasted_truncated_genomes['sequence_id']))
+    # filter out truncated genomes
+    combined_clusters_filtered = combined_clusters_blasted.filter(~polars.col('sequence_id').is_in(blasted_truncated_genomes['sequence_id']))
+    combined_clusters_filtered.write_csv(f"{data_dir}/combined_clusters_filtered.tsv", separator='\t')
+
     # create file of unique accession ids from cluster tables
-    unique_accessions = combined_clusters_blasted['sequence_id'].unique().to_frame(name='sequence_id')
+    unique_accessions = combined_clusters_filtered['sequence_id'].unique().to_frame(name='sequence_id')
     unique_accessions.write_csv(f'{data_dir}/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {len(unique_accessions)} unique sequence ids in the cluster table, fetching genomes.")
 

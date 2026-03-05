@@ -36,4 +36,6 @@ After observing that some parent sequences are very short, and consist mainly of
 ```
 percentage_in_pul > 50 & sequence_length > 100000
 ```
-This resulted in 94 sequences (and 98 PULs) being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>95%) and sequence length (such that no shorter sequences are found). 28 BLAST searches failed, and another 26 were filtered out because the subject PUL was more than 85% shorter than the query PUL.
+This resulted in 94 sequences (and 98 PULs) being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99.5%) and sequence length (max taken). 
+
+Current total: 336 genomes

@@ -95,13 +95,18 @@ def run_biopython_blast(fasta_path, taxid):
             pident = 100.0 * hsp.identities / hsp.align_length
             qacc = blast_record.query.split('.')[0]
 
-            if float(pident) >= 95.0 and qacc != sacc:
+            if float(pident) >= 99.5 and qacc != sacc:
                 print(f"Found hit: {sacc} for query {qacc}")    
                 new_pul_range = (int(sstart), int(send)) # account for complementary strand hits
                 result.append((sacc, min(new_pul_range), max(new_pul_range), float(evalue), float(pident)))
 
-    print(f"Found {len(result)} valid hits.")
-    return result[0] if result else None
+    print(f"Found {len(result)} valid hits above 99.5% identity.")
+    # return hit with longest alignment
+    if result:
+        longest_result = max(result, key=lambda x: x[2] - x[1])
+        return longest_result
+    else:
+        return None
 
 
 def get_pul_info(output, accession, cluster_id, start, end):

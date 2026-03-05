@@ -22,54 +22,6 @@ def fetch_subsequence(accession, start, end):
     return record.id, pul_subsequence
 
 
-# def run_blast(fasta_path, taxid):
-#     """ Set up command and run using subprocess """
-#     output_file = fasta_path.with_suffix(".blast")
-
-#     commmand = [
-#         "blastn",
-#         "-task", "megablast",
-#         "-query", str(fasta_path),
-#         "-db", "nt",
-#         "-remote",
-#         "-outfmt", "6 sacc sstart send evalue staxid pident qacc",
-#         "-max_target_seqs", "5",
-#         "-out", str(output_file)
-#     ]
-#     if taxid is not None:
-#         commmand.extend(["-entrez_query", f"txid{taxid}[Organism]"])
-
-#     print(f"Running BLAST for {fasta_path.name}")
-#     subprocess.run(commmand, check=True)
-
-#     return output_file
-
-# def parse_filter_blast_output(blast_file):
-#     """ parses blast output from file """ 
-
-#     print("Parsing BLAST output")
-#     results = []
-#     with open(blast_file) as f:
-#         lines = f.readlines()
-#         if not lines:
-#             return None
-#         for line in lines:
-#             if not line:
-#                 continue
-
-#             line = line.strip('\n')
-#             s_accession, s_start, s_end, evalue, staxid, pident, qacc = line.split() # Output: "sacc sstart send evalue staxid pident",
-
-#             # filter for high identity and exclude self-hits
-#             query_accession = qacc.split('.')[0]
-#             if float(pident) >= 95.0 and query_accession != s_accession:
-#                 print(f"Found hit: {s_accession} for query {qacc}")    
-#                 new_pul_range = (int(s_start), int(s_end)) # account for complementary strand hits
-#                 results.append((s_accession, min(new_pul_range), max(new_pul_range), float(evalue), float(pident)))
-
-#     return results[0] if results else None
-
-
 def run_biopython_blast(fasta_path, taxid):
     print(f"Running BLAST for {fasta_path.name}.")
     fasta_string = fasta_path.read_text()

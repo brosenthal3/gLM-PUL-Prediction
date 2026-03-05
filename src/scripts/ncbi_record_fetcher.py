@@ -3,9 +3,9 @@
 import argparse
 from pathlib import Path
 from typing import List, Literal
-
 import polars
 from Bio import Entrez
+import time
 
 
 def fetch_ncbi_records(
@@ -28,45 +28,6 @@ def fetch_ncbi_records(
             f"Unknown record type {type}. Please select `fasta` or `genbank`"
         )
 
-    with open(output_path, "w") as out_handle:
-        for acc in ids:
-            print(f"Fetching {acc}")
-            handle = Entrez.efetch(
-                db="nuccore",
-                id=acc,
-                retmode="text",
-                rettype=rettype,
-                complexity=1,
-            )
-            record = handle.read()
-            out_handle.write(record)
-            out_handle.write("\n")
-            handle.close()
-
-
-def fetch_ncbi_records_individual(
-    ids: List[str],
-    output_dir: Path,
-    email: str,
-    type: Literal["fasta", "genbank"],
-):
-    """
-    Writes one file per record into output_dir.
-    """
-    Entrez.email = email
-
-    if type == "genbank":
-        rettype = "gbwithparts"
-    elif type == "fasta":
-        rettype = "fasta"
-    else:
-        raise NotImplementedError(
-            f"Unknown record type {type}. Please select `fasta` or `genbank`"
-        )
-
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     for acc in ids:
         print(f"Fetching {acc}")
         handle = Entrez.efetch(
@@ -77,10 +38,22 @@ def fetch_ncbi_records_individual(
             complexity=1,
         )
         record = handle.read()
-        out_path = output_dir / f"{acc}.gb"
-        with open(out_path, "w") as out_handle:
+
+        with open(output_path, "a") as out_handle:
             out_handle.write(record)
+            out_handle.write("\n")
+
+        with open(output_path.with_suffix(".ids.txt"), "a") as id_handle:
+            id_handle.write(acc)
+            id_handle.write("\n")
+
         handle.close()
+
+def get_remaining_ids(output_path: Path, ids: List[str]) -> List[str]:
+    with open(output_path.with_suffix(".ids.txt"), "r") as id_handle:
+        fetched_ids = set(id_handle.read().splitlines())
+    remaining_ids = [acc for acc in ids if acc not in fetched_ids]
+    return remaining_ids
 
 
 def main():
@@ -114,11 +87,6 @@ def main():
         default="fasta",
         help="Which NCBI record type should be fetched. Default fasta",
     )
-    parser.add_argument(
-        "--split",
-        action="store_true",
-        help="Write individual GenBank files instead of one combined file (default: off)",
-    )
 
     args = parser.parse_args()
 
@@ -133,11 +101,18 @@ def main():
         .drop_nulls()
         .to_list()
     )
+    # to avoid refetching if script crashes
+    remaining_ids = get_remaining_ids(args.output, ids)
 
-    if args.split:
-        fetch_ncbi_records_individual(ids, args.output, args.email, type=args.type)
-    else:
+    try:
         fetch_ncbi_records(ids, args.output, args.email, args.type)
+    except Exception as e:
+        print(f"Error fetching records: {e}")
+        print(f"Attempting again with saved progress")
+        time.sleep(3)
+        remaining_ids = get_remaining_ids(args.output, ids)
+        print(f"Remaining IDs to fetch: {len(remaining_ids)}")
+        fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
 
 
 if __name__ == "__main__":

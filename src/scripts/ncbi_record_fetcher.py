@@ -50,9 +50,13 @@ def fetch_ncbi_records(
         handle.close()
 
 def get_remaining_ids(output_path: Path, ids: List[str]) -> List[str]:
-    with open(output_path.with_suffix(".ids.txt"), "r") as id_handle:
-        fetched_ids = set(id_handle.read().splitlines())
-    remaining_ids = [acc for acc in ids if acc not in fetched_ids]
+    if output_path.with_suffix(".ids.txt").exists():
+        with open(output_path.with_suffix(".ids.txt"), "r") as id_handle:
+            fetched_ids = set(id_handle.read().splitlines())
+        remaining_ids = [acc for acc in ids if acc not in fetched_ids]
+    else:
+        remaining_ids = ids
+
     return remaining_ids
 
 
@@ -105,12 +109,12 @@ def main():
     remaining_ids = get_remaining_ids(args.output, ids)
 
     try:
-        fetch_ncbi_records(ids, args.output, args.email, args.type)
+        fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
     except Exception as e:
         print(f"Error fetching records: {e}")
         print(f"Attempting again with saved progress")
         time.sleep(3)
-        remaining_ids = get_remaining_ids(args.output, ids)
+        remaining_ids = get_remaining_ids(args.output, ids) # get again since some records might have been fetched before error
         print(f"Remaining IDs to fetch: {len(remaining_ids)}")
         fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
 

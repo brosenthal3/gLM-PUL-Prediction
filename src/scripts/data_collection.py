@@ -281,7 +281,8 @@ def get_genomes(data_dir, ids):
         if missing_ids:
             print("File exists but some IDs are missing, fetching missing records...")
             run_genomes_fetcher(data_dir, output_path)
-        print(f"GenBank records file already exists at {output_path}, skipping fetching step.")
+        else:
+            print(f"GenBank records file already exists at {output_path} with no missing IDs, skipping fetching step.")
         return
     else:
         run_genomes_fetcher(data_dir, output_path)
@@ -355,9 +356,10 @@ def main(data_dir):
     else:
         print("Ga0139390_150 is not in the .gb file, adding it now.")
         non_genbank_genome_path = get_non_genbank_genome()
-        cmd = f"!cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
+        cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
         subprocess.run(cmd, shell=True, check=True)
 
+    print(f"Data collection and cleaning complete! Full genomes file in {data_dir}/genomes/combined_genomes.gb")
 
 if __name__ == "__main__":
     # TODO set path for genecat

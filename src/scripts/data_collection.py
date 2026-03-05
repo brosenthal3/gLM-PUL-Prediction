@@ -150,7 +150,7 @@ def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     for acc in tqdm(list(unique_accessions['sequence_id']), desc="Fetching sequence lengths"):
         try:
             length = get_length(acc)
-        except RemoteDisconnected:
+        except Exception as e:
             print(f"Error fetching length for {acc}, skipping.")
             length = None
 
@@ -160,7 +160,7 @@ def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     return lengths
 
 
-def get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions):
+def get_percentage_bp_in_puls(cluster_table, unique_accessions):
     # get length of all genomes
     lengths = get_sequence_lengths(unique_accessions)
 
@@ -170,7 +170,7 @@ def get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions):
 
     # get total length of PULs per genome
     pul_lengths = cluster_table_with_length.group_by('sequence_id').agg(
-        (polars.col('end') - polars.col('start')).sum().alias('pul_length')).join(length_df, on='sequence_id', how='left')
+        (polars.col('end') - polars.col('start')).sum().alias('pul_length')).join(lengths_df, on='sequence_id', how='left')
     pul_lengths = pul_lengths.with_columns(
         (polars.col('pul_length') / polars.col('length') * 100).alias('percentage_in_puls')
     )
@@ -265,8 +265,7 @@ def get_percentage_bp_in_puls_df(cluster_table, data_dir, path):
     else:
         print(f"Calculating percentage of genome in PULs, this may take a few minutes...\n")
         unique_accessions = cluster_table.select('sequence_id').unique()
-        length_df = polars.DataFrame(get_sequence_lengths(unique_accessions), schema={'sequence_id': polars.Utf8, 'length': polars.Int64})
-        percentage_in_puls = get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions)
+        percentage_in_puls = get_percentage_bp_in_puls(cluster_table, unique_accessions)
         percentage_in_puls.write_csv(percentage_in_puls_path, separator='\t')
         return percentage_in_puls
 
@@ -279,7 +278,7 @@ def get_genomes(data_dir, ids):
             fetched_ids = set(id_handle.read().splitlines())
         missing_ids = [acc for acc in ids if acc not in fetched_ids]
         if missing_ids:
-            print("File exists but some IDs are missing, fetching missing records...")
+            print(f"File exists but some IDs are missing, fetching {len(missing_ids)} missing records...")
             run_genomes_fetcher(data_dir, output_path)
         else:
             print(f"GenBank records file already exists at {output_path} with no missing IDs, skipping fetching step.")
@@ -292,7 +291,7 @@ def run_genomes_fetcher(data_dir, output_path):
     subprocess.run(cmd, shell=True, check=True)
 
 
-def main(data_dir):
+def main(data_dir, filter_truncated):
     download_data_files(data_dir)
 
     # get cluster tables
@@ -327,17 +326,24 @@ def main(data_dir):
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output).sort('cluster_id')
+    # merge again
+    len_before = combined_clusters_blasted.shape[0]
+    combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted)
+    print(f"Merging again after reduced PULs from {len_before} to {combined_clusters_blasted.shape[0]}.")
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
 
-    blasted_percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters_blasted, data_dir, path=f"{data_dir}/results/percentage_in_puls_blasted.tsv")
-    blasted_percentage_in_puls.write_csv(f"{data_dir}/results/percentage_in_puls_blasted.tsv", separator='\t')
+    if filter_truncated:
+        blasted_percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters_blasted, data_dir, path=f"{data_dir}/results/percentage_in_puls_blasted.tsv")
+        blasted_percentage_in_puls.write_csv(f"{data_dir}/results/percentage_in_puls_blasted.tsv", separator='\t')
 
-    blasted_truncated_genomes = blasted_percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
-    print(f"\nAfter blasting, there are {blasted_truncated_genomes.shape[0]} truncated genomes left, down from {truncated_genomes.shape[0]} before blasting.")
-    blasted_truncated_genomes_puls = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
-    # filter out truncated genomes
-    combined_clusters_filtered = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='anti')
-    combined_clusters_filtered.write_csv(f"{data_dir}/results/combined_clusters_filtered.tsv", separator='\t')
+        blasted_truncated_genomes = blasted_percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
+        print(f"\nAfter blasting, there are {blasted_truncated_genomes.shape[0]} truncated genomes left, down from {truncated_genomes.shape[0]} before blasting.")
+        blasted_truncated_genomes_puls = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
+        # filter out truncated genomes
+        combined_clusters_filtered = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='anti')
+        combined_clusters_filtered.write_csv(f"{data_dir}/results/combined_clusters_filtered.tsv", separator='\t')
+    else:
+        combined_clusters_filtered = combined_clusters_blasted
 
     # create file of unique accession ids from cluster tables
     unique_accessions = combined_clusters_filtered['sequence_id'].unique().to_frame(name='sequence_id')
@@ -365,4 +371,5 @@ if __name__ == "__main__":
     # TODO set path for genecat
 
     data_dir = "src/data"
-    main(data_dir)
+    filter_truncated = True
+    main(data_dir, filter_truncated)

@@ -11,28 +11,28 @@ import gb_io
 EMAIL = 'b.rosenthal@lumc.com'
 Entrez.email = EMAIL
 
-# set path for genecat
-
-def download_data_files():
+def download_data_files(data_dir: str):
     # check if required data files are present, if not download them
-    data_files = os.listdir("../data")
+    data_files = os.listdir(data_dir)
+    genome_files = os.listdir(f"{data_dir}/genomes")
 
-    dbCAN_file = "data/dbCAN-PUL_Feb-2025.xlsx"
-    img_genome_file = "data/IMG_2703719109.download.zip"
-    puldb_scraped_file = "data/PULdb_data.parquet"
+    dbCAN_file = f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx"
+    img_genome_file_zip = f"{data_dir}/genomes/IMG_2703719109.download.zip"
+    img_genome_file = f"{data_dir}/genomes/Ga0139390_150.gb"
+    puldb_scraped_file = f"{data_dir}/puldb_data.parquet"
 
     if dbCAN_file not in data_files:
-        cmd = "wget -O ../data/dbCAN-PUL_Feb-2025.xlsx https://pro.unl.edu/static/DBCAN-PUL/dbCAN-PUL_Feb-2025.xlsx"
+        cmd = f"wget -O {dbCAN_file} https://pro.unl.edu/static/DBCAN-PUL/dbCAN-PUL_Feb-2025.xlsx"
         subprocess.run(cmd, shell=True, check=True)
-
-    if img_genome_file not in data_files:
-        print("IMG genome file for one PUL without genbank ID not found, cannot be downloaded automatically (I don't have an OrchidID)")
-        # download at https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109
 
     if puldb_scraped_file not in data_files:
         # run scraping script, might take a while
-        cmd = "python src/scripts/scrape_puldb.py"
+        cmd = f"python src/scripts/scrape_puldb.py"
         subprocess.run(cmd, shell=True, check=True)
+
+    if img_genome_file not in genome_files or not img_genome_file_zip in genome_files:
+        print("IMG genome file for one PUL without genbank ID not found, cannot be downloaded automatically (I don't have an OrchidID)")
+        # download at https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109
 
     return
 
@@ -125,27 +125,33 @@ def merge_overlapping_puls(df):
     return polars.DataFrame(merged_puls)
 
 
+def get_length(accession):
+    # get esummary from ncbi
+    record = request_summary(acc)
+
+    if 'error' in record.keys():
+        # try getting full sequence and parsing length from there
+        record = request_sequence(acc)
+        length = record.split('\n')[0].split()[2]
+    else:
+        uid = record['result']['uids'][0]
+        length = record['result'][uid]['slen']
+
+    try:
+        length = int(length) 
+    except ValueError:
+        length = None
+
+    return length
+
+
 def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     lengths = []
     errors = []
     for acc in list(unique_accessions['sequence_id']):
-        record = request_summary(acc)
-        if 'error' in record.keys():
-            # try getting full sequence and parsing length from there
-            record = request_sequence(acc)
-            length = record.split('\n')[0].split()[2]
-        else:
-            uid = record['result']['uids'][0]
-            length = record['result'][uid]['slen']
+        length = get_length(acc)
         lengths.append({'sequence_id': acc, 'length': length})
         time.sleep(0.1)
-
-    # Transform to int, handle string errors
-    for row in lengths:
-        try:
-            row['length'] = int(row['length'])
-        except ValueError:
-            row['length'] = None
 
     return lengths
 
@@ -168,16 +174,57 @@ def get_percentage_bp_in_puls(cluster_table, length_df, unique_accessions):
     return pul_lengths
 
 
-if __name__ == "__main__":
+def replace_puls_with_blast_hits(combined_clusters_adapted, blast_output):
+    # filter for valid hits
+    blast_output_valid = blast_output.filter(~polars.col('subject_accession').eq('NO_HIT'))
+
+    total_replaced = 0
+    # replace accessions in combined cluster table with blast hits where available
+    for row in blast_output_valid.iter_rows(named=True):
+        pul = row["cluster_id"]
+        new_accession = row["subject_accession"]
+        new_pul_range = (int(row["subject_start"]), int(row["subject_end"]))
+        old_pul_range = (int(row["query_start"]), int(row["query_end"]))
+        new_genome_length = get_length(new_accession)
+
+        if not (new_pul_range[1] - new_pul_range[0]) >= (old_pul_range[1] - old_pul_range[0]) * 0.9 :
+            continue
+        if not new_genome_length is not None and (new_pul_range[1] - new_pul_range[0]) / new_genome_length < 0.25:
+            continue
+
+        # replace all necessary values 
+        combined_clusters_adapted = combined_clusters_adapted.with_columns(
+            polars.when(polars.col("cluster_id") == pul)
+            .then(polars.lit(new_accession))
+            .otherwise(polars.col("sequence_id"))
+            .alias("sequence_id"),
+
+            polars.when(polars.col("cluster_id") == pul)
+            .then(polars.lit(new_pul_range[0]))
+            .otherwise(polars.col("start"))
+            .alias("start"),
+
+            polars.when(polars.col("cluster_id") == pul)
+            .then(polars.lit(new_pul_range[1]))
+            .otherwise(polars.col("end"))
+            .alias("end"),
+        )
+        total_replaced += 1
+    
+    print(f"Replaced {total_replaced} PULs with blast hits.")
+    return combined_clusters_adapted
+
+
+def main(data_dir):
     download_data_files()
     # clean dbCAN data
-    dbcan_clusters = clean_dbcan("../data/dbCAN-PUL_Feb-2025.xlsx")
+    dbcan_clusters = clean_dbcan(f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx")
     # save intermediate cleaned data
-    dbcan_clusters.write_csv('../data/dbcan_clusters.tsv', separator='\t')
+    dbcan_clusters.write_csv(f"{data_dir}/dbcan_clusters.tsv", separator='\t')
 
     # save intermediate cleaned data
-    puldb_clusters = clean_puldb_data("../data/PULdb_data.parquet")
-    puldb_clusters.write_csv('../data/puldb_clusters.tsv', separator='\t')
+    puldb_clusters = clean_puldb_data(f"{data_dir}/PULdb_data.parquet")
+    puldb_clusters.write_csv(f"{data_dir}/puldb_clusters.tsv", separator='\t')
 
     # combine dbcan and puldb to one cluster table, with column of database origin (dbcan or puldb)
     combined_clusters = polars.concat([
@@ -185,18 +232,36 @@ if __name__ == "__main__":
         puldb_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("puldb").alias("database"))
     ], how='vertical').sort('cluster_id')
     combined_clusters = merge_overlapping_puls(combined_clusters)
-    combined_clusters.write_csv('../data/combined_clusters.tsv', separator='\t')
+    combined_clusters.write_csv(f"{data_dir}/combined_clusters.tsv", separator='\t')
 
     # first look for percentage_bp_in_puls file
     try:
-        percentage_in_puls = polars.read_csv('../data/percentage_bp_in_puls.tsv', separator='\t')
+        percentage_in_puls = polars.read_csv(f"{data_dir}/percentage_bp_in_puls.tsv", separator='\t')
     except FileNotFoundError:
         unique_accessions = combined_clusters.select('sequence_id').unique()
         percentage_in_puls = get_percentage_bp_in_puls(combined_clusters, unique_accessions)
-        percentage_in_puls.write_csv('../data/percentage_bp_in_puls.tsv', separator='\t')
+        percentage_in_puls.write_csv(f"{data_dir}/percentage_bp_in_puls.tsv", separator='\t')
 
     # find which genomes are likely to be truncated
     truncated_genomes = percentage_in_puls.filter(polars.col('percentage_in_puls') > 20, polars.col('length')<1000000)
     # get all puls that are in these truncated genomes
     truncated_genomes_puls = combined_clusters.filter(polars.col('sequence_id').is_in(truncated_genomes['sequence_id']))
-    truncated_genomes_puls.write_csv('../data/truncated_genomes.tsv', separator='\t')
+    truncated_genomes_puls.write_csv(f"{data_dir}/truncated_genomes.tsv", separator='\t')
+
+    # check if blast results for truncated genomes already exist, if not run blast for all truncated genomes
+    if not Path(f"{data_dir}/blast_results.tsv").exists():
+        cmd = f"python src/scripts/blast_truncated_sequences.py -i {data_dir}/truncated_genomes.tsv -o {data_dir}/blast_results.tsv --email {EMAIL}"
+        subprocess.run(cmd, shell=True, check=True)
+    
+    # open blast results
+    blast_output = polars.read_csv(f"{data_dir}/blast_full_sequences.tsv", separator='\t')
+    # replace short PULs with blast hits where possible
+    combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output)
+    combined_clusters_blasted.write_csv(f"{data_dir}/combined_clusters_blasted.tsv", separator='\t')
+
+
+if __name__ == "__main__":
+    # TODO set path for genecat
+
+    data_dir = "src/data"
+    main(data_dir)

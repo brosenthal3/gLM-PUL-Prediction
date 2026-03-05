@@ -147,4 +147,4 @@ for pul_id in track(
     )
 
 df = polars.DataFrame(rows)
-df.write_parquet("puldb_data.parquet")
+df.write_parquet("src/data/puldb_data.parquet")

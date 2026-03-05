@@ -298,7 +298,7 @@ def main(data_dir):
     # open blast results
     blast_output = polars.read_csv(f"{data_dir}/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
-    combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output)
+    combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output).sort('cluster_id')
     combined_clusters_blasted.write_csv(f"{data_dir}/combined_clusters_blasted.tsv", separator='\t')
 
     # create file of unique accession ids from cluster tables

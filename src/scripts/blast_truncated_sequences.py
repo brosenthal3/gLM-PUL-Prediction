@@ -237,9 +237,17 @@ def main():
     NCBIWWW.email = args.email
     truncated_df = polars.read_csv(args.input, separator="\t")
 
-    # create output file and write header
-    with open(args.output, "w") as f:
-        f.write("cluster_id\tquery_accession\tquery_start\tquery_end\ttax_id\tsubject_accession\tsubject_start\tsubject_end\tevalue\tpident\n")
+    # try checking output file first to avoid unnecessary blast runs
+    if Path(args.output).exists():
+        existing_output = polars.read_csv(args.output, separator='\t')
+        print(f"Existing output file found with {existing_output.shape[0]} entries. Filtering out already processed sequences.")
+        # filter out sequences with results
+        truncated_df = truncated_df.join(existing_output.select("query_accession"), left_on="sequence_id", right_on="query_accession", how="anti")
+    else:
+        # create output file and write header
+        with open(args.output, "w") as f:
+            f.write("cluster_id\tquery_accession\tquery_start\tquery_end\ttax_id\tsubject_accession\tsubject_start\tsubject_end\tevalue\tpident\n")
+
     # get blast results for each sequence
     output = get_blast_results(truncated_df, args.output)
 

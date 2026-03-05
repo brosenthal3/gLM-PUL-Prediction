@@ -6,6 +6,7 @@ from typing import List, Literal
 import polars
 from Bio import Entrez
 import time
+from tqdm import tqdm
 
 
 def fetch_ncbi_records(
@@ -28,8 +29,7 @@ def fetch_ncbi_records(
             f"Unknown record type {type}. Please select `fasta` or `genbank`"
         )
 
-    for acc in ids:
-        print(f"Fetching {acc}")
+    for acc in tqdm(ids, desc="Fetching NCBI records"):
         handle = Entrez.efetch(
             db="nuccore",
             id=acc,

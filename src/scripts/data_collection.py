@@ -8,6 +8,7 @@ from Bio import Entrez, SeqIO
 import numpy as np
 import gb_io
 from utility_scripts import request_summary, request_sequence
+from tqdm import tqdm
 
 EMAIL = 'b.rosenthal@lumc.com'
 Entrez.email = EMAIL
@@ -146,7 +147,7 @@ def get_length(acc):
 
 def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     lengths = []
-    for acc in list(unique_accessions['sequence_id']):
+    for acc in tqdm(list(unique_accessions['sequence_id']), desc="Fetching sequence lengths"):
         try:
             length = get_length(acc)
         except RemoteDisconnected:

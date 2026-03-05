@@ -7,30 +7,29 @@ import polars
 from Bio import Entrez, SeqIO
 import numpy as np
 import gb_io
+from utility_scripts import request_summary, request_sequence
 
 EMAIL = 'b.rosenthal@lumc.com'
 Entrez.email = EMAIL
 
 def download_data_files(data_dir: str):
-    # check if required data files are present, if not download them
-    data_files = os.listdir(data_dir)
-    genome_files = os.listdir(f"{data_dir}/genomes")
-
     dbCAN_file = f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx"
     img_genome_file_zip = f"{data_dir}/genomes/IMG_2703719109.download.zip"
     img_genome_file = f"{data_dir}/genomes/Ga0139390_150.gb"
     puldb_scraped_file = f"{data_dir}/puldb_data.parquet"
 
-    if dbCAN_file not in data_files:
+    if not Path(dbCAN_file).exists():
+        print("dbCAN PUL cluster file not found, downloading...")
         cmd = f"wget -O {dbCAN_file} https://pro.unl.edu/static/DBCAN-PUL/dbCAN-PUL_Feb-2025.xlsx"
         subprocess.run(cmd, shell=True, check=True)
 
-    if puldb_scraped_file not in data_files:
+    if not Path(puldb_scraped_file).exists():
+        print("PULdb scraped data file not found, scraping...")
         # run scraping script, might take a while
         cmd = f"python src/scripts/scrape_puldb.py"
         subprocess.run(cmd, shell=True, check=True)
 
-    if img_genome_file not in genome_files or not img_genome_file_zip in genome_files:
+    if not Path(img_genome_file).exists() and not Path(img_genome_file_zip).exists():
         print("IMG genome file for one PUL without genbank ID not found, cannot be downloaded automatically (I don't have an OrchidID)")
         # download at https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109
 
@@ -125,7 +124,7 @@ def merge_overlapping_puls(df):
     return polars.DataFrame(merged_puls)
 
 
-def get_length(accession):
+def get_length(acc):
     # get esummary from ncbi
     record = request_summary(acc)
 
@@ -215,16 +214,62 @@ def replace_puls_with_blast_hits(combined_clusters_adapted, blast_output):
     return combined_clusters_adapted
 
 
-def main(data_dir):
-    download_data_files()
-    # clean dbCAN data
-    dbcan_clusters = clean_dbcan(f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx")
-    # save intermediate cleaned data
-    dbcan_clusters.write_csv(f"{data_dir}/dbcan_clusters.tsv", separator='\t')
+def get_non_genbank_genome():
+    # check if exists
+    path = f"{data_dir}/genomes/Ga0139390_150.gb"
+    if Path(path).exists():
+        return path
 
-    # save intermediate cleaned data
-    puldb_clusters = clean_puldb_data(f"{data_dir}/PULdb_data.parquet")
-    puldb_clusters.write_csv(f"{data_dir}/puldb_clusters.tsv", separator='\t')
+    # get the one non-genbank genome into a single genbank file
+    jgi_genome = f"{data_dir}genomes/IMG_2703719109/IMG Data/99440.assembled.gbk"
+    contig_id = "Ga0139390_150 Ga0139390_150"
+    # save contig as genbank file
+    for record in gb_io.iter(jgi_genome):
+        if record.definition == contig_id:
+            gb_io.dump(record, path)
+
+
+def get_dbcan_clusters(data_dir):
+    dbcan_clusters_path = f"{data_dir}/dbcan_clusters.tsv"
+    if Path(dbcan_clusters_path).exists():
+        print(f"dbCAN clusters file already exists at {dbcan_clusters_path}, loading from file.")
+        return polars.read_csv(dbcan_clusters_path, separator='\t')
+    else:
+        dbcan_clusters = clean_dbcan(f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx")
+        dbcan_clusters.write_csv(dbcan_clusters_path, separator='\t')
+
+
+def get_puldb_clusters(data_dir):
+    puldb_clusters_path = f"{data_dir}/puldb_clusters.tsv"
+    if Path(puldb_clusters_path).exists():
+        print(f"PULdb clusters file already exists at {puldb_clusters_path}, loading from file.")
+        puldb_clusters = polars.read_csv(puldb_clusters_path, separator='\t')
+    else:
+        puldb_clusters = clean_puldb_data(f"{data_dir}/puldb_data.parquet")
+        puldb_clusters.write_csv(puldb_clusters_path, separator='\t')
+
+    puldb_clusters = puldb_clusters.with_columns(polars.col("tax_id").cast(polars.Int64), polars.col("cluster_id").cast(polars.Utf8))
+    return puldb_clusters
+
+
+def get_percentage_bp_in_puls_df(cluster_table, data_dir):
+    percentage_in_puls_path = f"{data_dir}/percentage_bp_in_puls.tsv"
+    if Path(percentage_in_puls_path).exists():
+        print(f"Percentage of genome in PULs file already exists at {percentage_in_puls_path}, loading from file.")
+        return polars.read_csv(percentage_in_puls_path, separator='\t')
+    else:
+        unique_accessions = cluster_table.select('sequence_id').unique()
+        percentage_in_puls = get_percentage_bp_in_puls(cluster_table, unique_accessions)
+        percentage_in_puls.write_csv(percentage_in_puls_path, separator='\t')
+        return percentage_in_puls
+
+
+def main(data_dir):
+    download_data_files(data_dir)
+
+    # get cluster tables
+    dbcan_clusters = get_dbcan_clusters(data_dir)
+    puldb_clusters = get_puldb_clusters(data_dir)
 
     # combine dbcan and puldb to one cluster table, with column of database origin (dbcan or puldb)
     combined_clusters = polars.concat([
@@ -234,16 +279,11 @@ def main(data_dir):
     combined_clusters = merge_overlapping_puls(combined_clusters)
     combined_clusters.write_csv(f"{data_dir}/combined_clusters.tsv", separator='\t')
 
-    # first look for percentage_bp_in_puls file
-    try:
-        percentage_in_puls = polars.read_csv(f"{data_dir}/percentage_bp_in_puls.tsv", separator='\t')
-    except FileNotFoundError:
-        unique_accessions = combined_clusters.select('sequence_id').unique()
-        percentage_in_puls = get_percentage_bp_in_puls(combined_clusters, unique_accessions)
-        percentage_in_puls.write_csv(f"{data_dir}/percentage_bp_in_puls.tsv", separator='\t')
+    # get percentage of genome in PULs
+    percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters, data_dir)
 
     # find which genomes are likely to be truncated
-    truncated_genomes = percentage_in_puls.filter(polars.col('percentage_in_puls') > 20, polars.col('length')<1000000)
+    truncated_genomes = percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
     # get all puls that are in these truncated genomes
     truncated_genomes_puls = combined_clusters.filter(polars.col('sequence_id').is_in(truncated_genomes['sequence_id']))
     truncated_genomes_puls.write_csv(f"{data_dir}/truncated_genomes.tsv", separator='\t')
@@ -252,13 +292,26 @@ def main(data_dir):
     if not Path(f"{data_dir}/blast_results.tsv").exists():
         cmd = f"python src/scripts/blast_truncated_sequences.py -i {data_dir}/truncated_genomes.tsv -o {data_dir}/blast_results.tsv --email {EMAIL}"
         subprocess.run(cmd, shell=True, check=True)
+    else:
+        print(f"Blast results file already exists at {data_dir}/blast_results.tsv, skipping blast step.")
     
     # open blast results
-    blast_output = polars.read_csv(f"{data_dir}/blast_full_sequences.tsv", separator='\t')
+    blast_output = polars.read_csv(f"{data_dir}/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = replace_puls_with_blast_hits(combined_clusters, blast_output)
     combined_clusters_blasted.write_csv(f"{data_dir}/combined_clusters_blasted.tsv", separator='\t')
 
+    # create file of unique accession ids from cluster tables
+    unique_accessions = combined_clusters_blasted['sequence_id'].unique().to_frame(name='sequence_id')
+    unique_accessions.write_csv(f'{data_dir}/unique_sequence_ids.tsv', separator='\t')
+    print(f"There are {len(unique_accessions)} unique sequence ids in the cluster table, fetching genomes.")
+
+    return
+
+    # TODO: run genecat script for fetching ncbi genomes.
+    # TODO: add some checking, then add new genome to the genbank file with the other dbCAN genomes
+    # non_genbank_genome_path = get_non_genbank_genome()
+    # !cat ../data/Ga0139390_150.gb >> ../data/dbCAN-PUL_genomes_unique.gb 
 
 if __name__ == "__main__":
     # TODO set path for genecat

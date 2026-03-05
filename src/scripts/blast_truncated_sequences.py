@@ -6,6 +6,7 @@ import argparse
 import polars
 from Bio import Entrez, SeqIO
 from Bio.Blast import NCBIWWW, NCBIXML
+from tqdm import tqdm
 
 
 def fetch_subsequence(accession, start, end):
@@ -138,13 +139,13 @@ def get_pul_info(output, accession, cluster_id, start, end):
     }
 
 
-def get_blast_results(truncated_df):
+def get_blast_results(truncated_df, output_file):
     # iterate over sequences
     output = []
     tried_accessions = set()
     unsuccessful_accessions = []
 
-    for row in truncated_df.iter_rows(named=True):
+    for row in tqdm(truncated_df.iter_rows(named=True), total=truncated_df.shape[0]):
         accession = row["sequence_id"]
         cluster_id = row["cluster_id"]
         start = int(row["start"])
@@ -170,7 +171,12 @@ def get_blast_results(truncated_df):
         # run blast and parse output
         # blast_output = run_blast(fasta_path, taxid)
         # result = parse_filter_blast_output(blast_output)
-        result = run_biopython_blast(fasta_path, taxid)
+        try:
+            result = run_biopython_blast(fasta_path, taxid)
+        except Exception as e:
+            print(f"Error running BLAST for {accession}: {e}")
+            result = None
+
         fasta_path.unlink()
 
         # save result, save NA if no hit found
@@ -192,6 +198,10 @@ def get_blast_results(truncated_df):
             "evalue": evalue,
             "pident": pident
         })
+        # write to file immediately to avoid losing results if script crashes and to keep track of progress
+        with open(output_file, "a") as f:
+            f.write(f"{cluster_id}\t{accession}\t{start}\t{end}\t{taxid}\t{sacc}\t{sstart}\t{send}\t{evalue}\t{pident}\n")
+
         time.sleep(5) # being nice to NCBI
         tried_accessions.add(accession)
     
@@ -226,10 +236,12 @@ def main():
     Entrez.email = args.email
     NCBIWWW.email = args.email
     truncated_df = polars.read_csv(args.input, separator="\t")
-    output = get_blast_results(truncated_df)
-    # save results
-    output_df = polars.DataFrame(output)
-    output_df.write_csv(args.output, separator="\t")
+
+    # create output file and write header
+    with open(args.output, "w") as f:
+        f.write("cluster_id\tquery_accession\tquery_start\tquery_end\ttax_id\tsubject_accession\tsubject_start\tsubject_end\tevalue\tpident\n")
+    # get blast results for each sequence
+    output = get_blast_results(truncated_df, args.output)
 
 
 if __name__ == "__main__":

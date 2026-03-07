@@ -378,8 +378,6 @@ def main(data_dir, filter_truncated):
     unique_accessions = polars.DataFrame(unique_ids_total)
     print(f"There are {len(unique_ids_total)} unique sequence ids in the cluster table.")
     unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
-    
-    raise NotImplementedError
 
     # run genecat script for fetching ncbi genomes.
     print("Fetching GenBank records, might take a while...")

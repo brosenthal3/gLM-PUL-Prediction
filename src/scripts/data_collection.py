@@ -326,6 +326,7 @@ def get_genomes(data_dir, ids):
             print(f"GenBank records file already exists at {output_path} with no missing IDs, skipping fetching step.")
         return
     else:
+        print("Fetching GenBank records, this might take a few minutes...")
         run_genomes_fetcher(data_dir, output_path)
 
 
@@ -368,19 +369,16 @@ def main(data_dir, filter_truncated):
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
-
-    # TODO: fix merging function to account for blast results
-    #combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted, group_col="new_sequence_id", start_col="new_start", end_col="new_end")
+    # TODO: fix PUL merging function to account for blast results
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
 
     # create file of unique accession ids from cluster tables
     unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()
-    unique_accessions = polars.DataFrame(unique_ids_total)
-    print(f"There are {len(unique_ids_total)} unique sequence ids in the cluster table.")
+    unique_accessions = polars.DataFrame(unique_ids_total).sort('sequence_id').filter(polars.col('sequence_id').is_not_null())
+    print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")
     unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
 
     # run genecat script for fetching ncbi genomes.
-    print("Fetching GenBank records, might take a while...")
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list())
 
     # check if need to add the one non-genbank genome

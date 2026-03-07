@@ -48,6 +48,7 @@ def fetch_ncbi_records(
             id_handle.write("\n")
 
         handle.close()
+        time.sleep(5)
 
 def get_remaining_ids(output_path: Path, ids: List[str]) -> List[str]:
     if output_path.with_suffix(".ids.txt").exists():
@@ -105,18 +106,22 @@ def main():
         .drop_nulls()
         .to_list()
     )
-    # to avoid refetching if script crashes
-    remaining_ids = get_remaining_ids(args.output, ids)
 
-    try:
-        fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
-    except Exception as e:
-        print(f"Error fetching records: {e}")
-        print(f"Attempting again with saved progress")
-        time.sleep(3)
-        remaining_ids = get_remaining_ids(args.output, ids) # get again since some records might have been fetched before error
-        print(f"Remaining IDs to fetch: {len(remaining_ids)}")
-        fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
+    # to avoid refetching if script crashes, don't repeat more than 5 times so we don't end up in an infinite loop
+    error_count = 0
+    remaining_ids = get_remaining_ids(args.output, ids)
+    while remaining_ids and error_count < 5:
+        try:
+            remaining_ids = get_remaining_ids(args.output, ids)
+            fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
+        
+        except Exception as e:
+            print(f"Error fetching records: {e}")
+            print(f"Attempting again with saved progress")
+            time.sleep(3)
+            remaining_ids = get_remaining_ids(args.output, ids) # get again since some records might have been fetched before error
+            print(f"Remaining IDs to fetch: {len(remaining_ids)}")
+            error_count += 1
 
 
 if __name__ == "__main__":

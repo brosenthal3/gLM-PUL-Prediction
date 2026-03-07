@@ -93,31 +93,33 @@ def clean_puldb_data(puldb_path: str) -> polars.DataFrame:
     return puldb_data_literature
     
 
-def merge_overlapping_puls(df):
+def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end'):
     merged_puls = polars.DataFrame(schema=df.schema)
+    merged_ids = []
 
-    for sequence_id, group in df.group_by('sequence_id'):
-        if group.shape[0] == 1:
-            merged_puls = merged_puls.vstack(group[0])
+    for sequence_id, group in df.group_by(group_col):
+        if group.shape[0] == 1 or sequence_id[0] is None:
+            merged_puls = merged_puls.vstack(polars.DataFrame(group))
             continue
 
         # sort by start position
-        group = group.sort('start')
+        group = group.sort(start_col)
         current_pul = None
         for row in group.iter_rows(named=True):
             if current_pul is None:
                 current_pul = row
             else:
                 # check if there is an overlap with the current PUL
-                if row['start'] <= current_pul['end']:
+                if row[start_col] <= current_pul[end_col]:
                     # merge the PULs by updating the end position to the maximum end position
-                    current_pul['end'] = max(current_pul['end'], row['end'])
+                    current_pul[end_col] = max(current_pul[end_col], row[end_col])
                     # merge cluster_id by concatenating with an underscore
                     current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
                     # add taxonomic id if exists
                     current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
                     # merge database column by concatenating with an underscore if different
                     current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
+                    merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged"})
                 else:
                     merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
                     current_pul = row
@@ -125,8 +127,23 @@ def merge_overlapping_puls(df):
         # add the last PUL after processing all rows for this sequence_id
         if current_pul is not None:
             merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
-            
-    return polars.DataFrame(merged_puls)
+
+    # add all puls from original table that were originally unmerged
+    previously_merged = {"cluster_id": [item for sublist in [cluster_id['cluster_id'].split("_") for cluster_id in merged_ids] for item in sublist]}
+    # add column for which puls are merged
+    merged_puls = (
+        merged_puls
+        .join(polars.DataFrame(merged_ids), on="cluster_id", how="left")
+#        .with_columns(polars.lit(None).cast(polars.Utf8).alias('merged'))
+        .vstack(
+            df
+            .join(polars.DataFrame(previously_merged).unique(), on='cluster_id', how='semi')
+            .with_columns(polars.lit("original").alias('merged'))
+        )
+        .sort('cluster_id').sort('merged')
+    )
+
+    return merged_puls
 
 
 def get_length(acc):
@@ -329,9 +346,9 @@ def main(data_dir, filter_truncated):
         dbcan_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("dbcan").alias("database")),
         puldb_clusters.select(['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']).with_columns(polars.lit("puldb").alias("database"))
     ], how='vertical')
-    combined_clusters = merge_overlapping_puls(combined_clusters).sort('cluster_id')
+    combined_clusters = merge_overlapping_puls(combined_clusters)
     # get length and percentage of genome in PULs
-    combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/results/sequence_lengths.tsv")
+    combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/results/sequence_lengths.tsv").sort('cluster_id').sort('merged')
     combined_clusters.write_csv(f"{data_dir}/results/combined_clusters.tsv", separator='\t')
 
     # find which genomes are likely to be truncated
@@ -350,12 +367,10 @@ def main(data_dir, filter_truncated):
     # open blast results
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
-    combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id')
+    combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
 
     # TODO: fix merging function to account for blast results
-    # len_before = combined_clusters_blasted.shape[0]
-    # combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted)
-    # print(f"Merging again after blasting reduced PULs from {len_before} to {combined_clusters_blasted.shape[0]}.")
+    #combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted, group_col="new_sequence_id", start_col="new_start", end_col="new_end")
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
 
     # create file of unique accession ids from cluster tables

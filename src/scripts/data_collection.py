@@ -114,6 +114,10 @@ def merge_overlapping_puls(df):
                     current_pul['end'] = max(current_pul['end'], row['end'])
                     # merge cluster_id by concatenating with an underscore
                     current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
+                    # add taxonomic id if exists
+                    current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
+                    # merge database column by concatenating with an underscore if different
+                    current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
                 else:
                     merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
                     current_pul = row
@@ -177,7 +181,7 @@ def merge_blast_hits(combined_clusters, blast_output):
         .select('cluster_id', 'sequence_id', 'start', 'end')
     )
     # get lengths and percentage in PULs for blast hits
-    blast_output_with_lengths = merge_with_lengths(blast_output_valid, data_dir, lengths_path=f"{data_dir}/results/blast_sequence_lengths")
+    blast_output_with_lengths = merge_with_lengths(blast_output_valid, data_dir, lengths_path=f"{data_dir}/results/blast_sequence_lengths.tsv")
     # rename again to prepare for merging
     blast_output_with_lengths = blast_output_with_lengths.rename({
         'sequence_id': 'new_sequence_id', 
@@ -347,31 +351,20 @@ def main(data_dir, filter_truncated):
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id')
-    # merge again
-    len_before = combined_clusters_blasted.shape[0]
-    combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted)
-    print(f"Merging again after blasting reduced PULs from {len_before} to {combined_clusters_blasted.shape[0]}.")
+
+    # TODO: fix merging function to account for blast results
+    # len_before = combined_clusters_blasted.shape[0]
+    # combined_clusters_blasted = merge_overlapping_puls(combined_clusters_blasted)
+    # print(f"Merging again after blasting reduced PULs from {len_before} to {combined_clusters_blasted.shape[0]}.")
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
 
-    # if filter_truncated:
-    #     blasted_percentage_in_puls = get_percentage_bp_in_puls_df(combined_clusters_blasted, data_dir, path=f"{data_dir}/results/percentage_in_puls_blasted.tsv")
-    #     blasted_percentage_in_puls.write_csv(f"{data_dir}/results/percentage_in_puls_blasted.tsv", separator='\t')
-
-    #     blasted_truncated_genomes = blasted_percentage_in_puls.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
-    #     print(f"\nAfter blasting, there are {blasted_truncated_genomes.shape[0]} truncated genomes left, down from {truncated_genomes.shape[0]} before blasting.")
-    #     blasted_truncated_genomes_puls = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
-    #     # filter out truncated genomes
-    #     combined_clusters_filtered = combined_clusters_blasted.join(blasted_truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='anti')
-    #     combined_clusters_filtered.write_csv(f"{data_dir}/results/combined_clusters_filtered.tsv", separator='\t')
-    # else:
-    #     combined_clusters_filtered = combined_clusters_blasted
-
-    raise NotImplementedError
-
     # create file of unique accession ids from cluster tables
-    unique_accessions = combined_clusters_filtered['sequence_id'].unique().to_frame(name='sequence_id')
+    unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()
+    unique_accessions = polars.DataFrame(unique_ids_total)
+    print(f"There are {len(unique_ids_total)} unique sequence ids in the cluster table.")
     unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
-    print(f"There are {len(unique_accessions)} unique sequence ids in the cluster table.")
+    
+    raise NotImplementedError
 
     # run genecat script for fetching ncbi genomes.
     print("Fetching GenBank records, might take a while...")

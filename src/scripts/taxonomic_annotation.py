@@ -21,6 +21,8 @@ def main():
         .rename({'user_genome': 'sequence_id'})
         .drop("classification")
     )
+    null_count = taxonomic_annotation.select(polars.col("domain").is_null()).to_series().sum()
+    print(f"There are {null_count}/{taxonomic_annotation.shape[0]} genomes that did not get annotated.")
     taxonomic_annotation.write_csv("src/data/results/taxonomic_annotation.tsv", separator="\t")
 
     # merge into clusters table
@@ -31,7 +33,7 @@ def main():
         .join(taxonomic_annotation, on="sequence_id", how="left")
         .join(taxonomic_annotation, left_on="new_sequence_id", right_on="sequence_id", how="left", suffix="_new")
     )
-    print(clusters_table.filter(polars.col('domain').is_not_null()))
+    clusters_table.write_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator="\t")
 
 
 if __name__ == "__main__":

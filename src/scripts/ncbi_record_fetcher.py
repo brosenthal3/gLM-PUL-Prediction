@@ -14,6 +14,7 @@ def fetch_ncbi_records(
     output_path: Path,
     email: str,
     type: Literal["fasta", "genbank"],
+    separate: bool = False,
 ):
     """
     Writes a single file containing all fetched records.
@@ -22,12 +23,18 @@ def fetch_ncbi_records(
 
     if type == "genbank":
         rettype = "gbwithparts"
+        type_suffix = "gb"
     elif type == "fasta":
         rettype = "fasta"
+        type_suffix = "fa"
     else:
         raise NotImplementedError(
             f"Unknown record type {type}. Please select `fasta` or `genbank`"
         )
+
+    # create output directory if it doesn't exist
+    if separate and not output_path.is_dir():
+        output_path.mkdir(parents=True, exist_ok=True)
 
     for acc in tqdm(ids, desc="Fetching NCBI records"):
         handle = Entrez.efetch(
@@ -39,9 +46,14 @@ def fetch_ncbi_records(
         )
         record = handle.read()
 
-        with open(output_path, "a") as out_handle:
-            out_handle.write(record)
-            out_handle.write("\n")
+        if separate:
+            record_path = output_path / f"{acc}.{type_suffix}"
+            with open(record_path, "w") as out_handle:
+                out_handle.write(record)
+        else:
+            with open(output_path, "a") as out_handle:
+                out_handle.write(record)
+                out_handle.write("\n")
 
         with open(output_path.with_suffix(".ids.txt"), "a") as id_handle:
             id_handle.write(acc)
@@ -80,7 +92,7 @@ def main():
     parser.add_argument(
         "--email",
         type=str,
-        default="r.e.hackett@lumc.nl",
+        default="b.rosenthal@lumc.nl",
         help="Email address required by NCBI Entrez",
     )
     parser.add_argument(
@@ -91,6 +103,11 @@ def main():
         choices=["fasta", "genbank"],
         default="fasta",
         help="Which NCBI record type should be fetched. Default fasta",
+    )
+    parser.add_argument(
+        "--separate",
+        action="store_true",
+        help="Whether to save each record in a separate file (named <ID>.<type>) in the output directory, or to save all records in a single file. Default False",
     )
 
     args = parser.parse_args()
@@ -113,7 +130,7 @@ def main():
     while remaining_ids and error_count < 5:
         try:
             remaining_ids = get_remaining_ids(args.output, ids)
-            fetch_ncbi_records(remaining_ids, args.output, args.email, args.type)
+            fetch_ncbi_records(remaining_ids, args.output, args.email, args.type, args.separate)
         
         except Exception as e:
             print(f"Error fetching records: {e}")

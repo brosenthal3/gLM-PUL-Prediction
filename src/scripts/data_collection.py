@@ -32,6 +32,7 @@ def download_data_files(data_dir: str):
 
     if not Path(img_genome_file).exists() and not Path(img_genome_file_zip).exists():
         print("IMG genome file for one PUL without genbank ID not found, cannot be downloaded automatically (I don't have an OrchidID)")
+        print("This folder has to be unzipped and present in src/data/genomes/")
         # download at https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=IMG_2703719109
 
     return
@@ -312,26 +313,32 @@ def merge_with_lengths(cluster_table, data_dir, lengths_path):
     return cluster_table_With_length
 
 
-def get_genomes(data_dir, ids):
+def get_genomes(data_dir, ids, fasta=False, output_path="genomes/combined_genomes.gb"):
     output_path = f"{data_dir}/genomes/combined_genomes.gb"
-    output_ids_path = f"{data_dir}/genomes/combined_genomes.ids.txt"
+    output_ids_path = Path(output_path).with_suffix(".ids.txt")
+    # check path
     if Path(output_path).exists() and Path(output_ids_path).exists():
+        # check if missing any ids
         with open(output_ids_path, "r") as id_handle:
             fetched_ids = set(id_handle.read().splitlines())
         missing_ids = [acc for acc in ids if acc not in fetched_ids]
         if missing_ids:
             print(f"File exists but some IDs are missing, fetching {len(missing_ids)} missing records...")
-            run_genomes_fetcher(data_dir, output_path)
+            run_genomes_fetcher(data_dir, output_path, fasta)
         else:
             print(f"GenBank records file already exists at {output_path} with no missing IDs, skipping fetching step.")
         return
     else:
         print("Fetching GenBank records, this might take a few minutes...")
-        run_genomes_fetcher(data_dir, output_path)
+        run_genomes_fetcher(data_dir, output_path, fasta)
 
 
-def run_genomes_fetcher(data_dir, output_path):
-    cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/results/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type genbank"
+def run_genomes_fetcher(data_dir, output_path, fasta):
+    if fasta:
+        cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/results/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type fasta --separate"
+    else:
+        cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/results/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type genbank"
+
     subprocess.run(cmd, shell=True, check=True)
 
 
@@ -392,7 +399,17 @@ def main(data_dir, filter_truncated):
         cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
         subprocess.run(cmd, shell=True, check=True)
 
-    print(f"Data collection and cleaning complete! Full genomes file in {data_dir}/genomes/combined_genomes.gb")
+    # get genomes in fasta as well for GTDB-Tk classification
+    get_genomes_fasta(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", fasta=True)
+
+    # again, check Ga0139390_150
+    non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
+    if os.path.getsize(non_genbank_genome_path) < 1000: # if file contains only error output, based on size
+        os.path.remove(non_genbank_genome_path)
+        # copy fasta file from downloaded files, and rename
+        cmd = f"cp {data_dir}/genomes/IMG_2703719109/IMG Assembled Data/2703719109.fna {data_dir}/genomes/gtdb_genomes/; mv {data_dir}/genomes/gtdb_genomes/2703719109.fna {data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
+        subprocess.run(cmd, shell=True)
+
 
 if __name__ == "__main__":
     # TODO set path for genecat

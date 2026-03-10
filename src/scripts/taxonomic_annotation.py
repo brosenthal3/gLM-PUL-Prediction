@@ -17,6 +17,7 @@ def main():
             separate_classification(polars.col("classification"), 3).alias("order"),
             separate_classification(polars.col("classification"), 4).alias("family"),
             separate_classification(polars.col("classification"), 5).alias("genus"),
+            separate_classification(polars.col("classification"), 6).alias("species"),
         )
         .rename({'user_genome': 'sequence_id'})
         .drop("classification")

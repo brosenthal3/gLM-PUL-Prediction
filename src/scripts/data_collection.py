@@ -214,36 +214,6 @@ def merge_blast_hits(combined_clusters, blast_output):
 
     return clusters_with_blast
 
-    # total_replaced = 0
-    # # replace accessions in combined cluster table with blast hits where available
-    # for row in blast_output_valid.iter_rows(named=True):
-    #     pul = row["cluster_id"]
-    #     new_accession = row["subject_accession"]
-    #     new_pul_range = (int(row["subject_start"]), int(row["subject_end"]))
-    #     old_pul_range = (int(row["query_start"]), int(row["query_end"]))
-    #     new_genome_length = get_length(new_accession)
-
-    #     # replace all necessary values 
-    #     combined_clusters_adapted = combined_clusters_adapted.with_columns(
-    #         polars.when(polars.col("cluster_id") == pul)
-    #         .then(polars.lit(new_accession))
-    #         .otherwise(polars.col("sequence_id"))
-    #         .alias("sequence_id"),
-
-    #         polars.when(polars.col("cluster_id") == pul)
-    #         .then(polars.lit(new_pul_range[0]))
-    #         .otherwise(polars.col("start"))
-    #         .alias("start"),
-
-    #         polars.when(polars.col("cluster_id") == pul)
-    #         .then(polars.lit(new_pul_range[1]))
-    #         .otherwise(polars.col("end"))
-    #         .alias("end"),
-    #     )
-    #     total_replaced += 1
-    
-    # print(f"Replaced {total_replaced} PULs with blast hits.")
-
 
 def get_non_genbank_genome():
     # check if exists
@@ -314,7 +284,7 @@ def merge_with_lengths(cluster_table, data_dir, lengths_path):
 
 
 def get_genomes(data_dir, ids, fasta=False, output_path="genomes/combined_genomes.gb"):
-    output_path = f"{data_dir}/genomes/combined_genomes.gb"
+    output_path = f"{data_dir}/{output_path}"
     output_ids_path = Path(output_path).with_suffix(".ids.txt")
     # check path
     if Path(output_path).exists() and Path(output_ids_path).exists():
@@ -360,10 +330,11 @@ def main(data_dir, filter_truncated):
     combined_clusters.write_csv(f"{data_dir}/results/combined_clusters.tsv", separator='\t')
 
     # find which genomes are likely to be truncated
-    truncated_genomes = combined_clusters.filter(polars.col('percentage_in_puls') > 50, polars.col('length')<1000000)
+    truncated_genomes = combined_clusters.filter(polars.col('length')<100000)
     # get all puls that are in these truncated genomes
     truncated_genomes_puls = combined_clusters.join(truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
     truncated_genomes_puls.write_csv(f"{data_dir}/results/truncated_genomes.tsv", separator='\t')
+    print(f"Found {truncated_genomes.shape[0]} sequences shorter than 100kb")
 
     # check if blast results for truncated genomes already exist, if not run blast for all truncated genomes
     if not Path(f"{data_dir}/results/blast_results.tsv").exists():
@@ -400,7 +371,7 @@ def main(data_dir, filter_truncated):
         subprocess.run(cmd, shell=True, check=True)
 
     # get genomes in fasta as well for GTDB-Tk classification
-    get_genomes_fasta(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", fasta=True)
+    get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", fasta=True)
 
     # again, check Ga0139390_150
     non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
@@ -412,8 +383,6 @@ def main(data_dir, filter_truncated):
 
 
 if __name__ == "__main__":
-    # TODO set path for genecat
-
     data_dir = "src/data"
     filter_truncated = True
     main(data_dir, filter_truncated)

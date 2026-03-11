@@ -1,4 +1,5 @@
 import polars
+from sklearn.model_selection import GroupKFold
 
 def filter_clusters_table():
     clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
@@ -52,12 +53,28 @@ def filter_clusters_table():
         .join(pul_lengths, on='sequence_id', how='left')
         .sort("cluster_id")
         .select(original_cols)
-        .filter(polars.col("percentage_in_puls")<50)
-        .filter(polars.col("length")>50000)
+        .filter(polars.col("length")>100000)
     )
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     return clusters_table_filtered
 
 
+def split_dataset(clusters_table, k):
+    group_kfold = GroupKFold(n_splits=k)
+    X = clusters_table.select("cluster_id").to_series()
+    clusters_table = clusters_table.with_columns(polars.col("class").fill_null("unknown"))
+    groups = (
+        clusters_table
+        .with_columns(polars.col("class").cast(polars.Categorical).alias("class_cat"))
+        .select(polars.col("class_cat").to_physical())
+        .to_series()
+    )
+    for i, (train_index, test_index) in enumerate(group_kfold.split(X, groups=groups)):
+        print(f"Fold {i}:")
+        print(f"  Train groups={groups[train_index].unique()}")
+        print(f"  Test groups={groups[test_index].unique()}")
+
 if __name__ == "__main__":
-    filter_clusters_table()
+    clusters_table = polars.read_csv("src/data/depr/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
+    k = 5 # later as argument
+    split_dataset(clusters_table, k)

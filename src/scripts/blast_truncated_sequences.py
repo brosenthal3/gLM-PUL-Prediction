@@ -22,10 +22,10 @@ def fetch_subsequence(accession, start, end):
     return record.id, pul_subsequence
 
 
-def run_biopython_blast(fasta_path, taxid):
+def run_biopython_blast(fasta_path, taxid, ignore_taxonomy=False):
     print(f"Running BLAST for {fasta_path.name}.")
     fasta_string = fasta_path.read_text()
-    entrez_query = f"txid{taxid}[Organism]" if taxid is not None else None
+    entrez_query = f"txid{taxid}[Organism]" if taxid is not None or ignore_taxonomy else None
 
     result_handle = NCBIWWW.qblast(
         "blastn",
@@ -47,12 +47,12 @@ def run_biopython_blast(fasta_path, taxid):
             pident = 100.0 * hsp.identities / hsp.align_length
             qacc = blast_record.query.split('.')[0]
 
-            if float(pident) >= 99.5 and qacc != sacc:
-                print(f"Found hit: {sacc} for query {qacc}")    
+            if float(pident) >= 99 and qacc != sacc:
                 new_pul_range = (int(sstart), int(send)) # account for complementary strand hits
+                print(f"Found hit: {sacc} for query {qacc}, pident={pident}, length={int(send)-int(sstart)}")
                 result.append((sacc, min(new_pul_range), max(new_pul_range), float(evalue), float(pident)))
 
-    print(f"Found {len(result)} valid hits above 99.5% identity.")
+    print(f"Found {len(result)} valid hits above 99% identity.")
     # return hit with longest alignment
     if result:
         longest_result = max(result, key=lambda x: x[2] - x[1])
@@ -96,11 +96,13 @@ def get_pul_info(output, accession, cluster_id, start, end):
     }
 
 
-def get_blast_results(truncated_df, output_file):
+def get_blast_results(truncated_df, output_file, ignore_taxonomy):
     # iterate over sequences
     output = []
     tried_accessions = set()
     unsuccessful_accessions = []
+    if ignore_taxonomy:
+        print("Not taking taxid into account for query")
 
     for row in tqdm(truncated_df.iter_rows(named=True), total=truncated_df.shape[0]):
         accession = row["sequence_id"]
@@ -129,7 +131,7 @@ def get_blast_results(truncated_df, output_file):
         # blast_output = run_blast(fasta_path, taxid)
         # result = parse_filter_blast_output(blast_output)
         try:
-            result = run_biopython_blast(fasta_path, taxid)
+            result = run_biopython_blast(fasta_path, taxid, ignore_taxonomy)
         except Exception as e:
             print(f"Error running BLAST for {accession}: {e}")
             result = None
@@ -189,6 +191,10 @@ def main():
         default="b.rosenthal@lumc.nl",
         help="Email address required by NCBI Entrez",
     )
+    parser.add_argument(
+        "--ignore_taxonomy",
+        action="store_true"        
+    )
     args = parser.parse_args()
     Entrez.email = args.email
     NCBIWWW.email = args.email
@@ -206,7 +212,7 @@ def main():
             f.write("cluster_id\tquery_accession\tquery_start\tquery_end\ttax_id\tsubject_accession\tsubject_start\tsubject_end\tevalue\tpident\n")
 
     # get blast results for each sequence
-    output = get_blast_results(truncated_df, args.output)
+    output = get_blast_results(truncated_df, args.output, args.ignore_taxonomy)
 
 
 if __name__ == "__main__":

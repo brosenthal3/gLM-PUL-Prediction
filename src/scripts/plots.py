@@ -34,7 +34,7 @@ def get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=10):
     )
 
 def plot_taxonomic_distributions(clusters_table_filtered):
-    phylum_counts = get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=10)
+    phylum_counts = get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=5)
     class_counts = get_taxonomic_counts(clusters_table_filtered, rank="class", cutoff=5)
     order_counts = get_taxonomic_counts(clusters_table_filtered, rank="order", cutoff=5)
     family_counts = get_taxonomic_counts(clusters_table_filtered, rank="family", cutoff=5)

@@ -1,7 +1,6 @@
 from pathlib import Path
 import polars
 
-
 def separate_classification(classification: polars.Expr, index) -> polars.Expr:
     return classification.str.split(by=";").list.get(index, null_on_oob=True).str.split(by="__").list.get(1, null_on_oob=True)
 
@@ -22,8 +21,8 @@ def main():
         .rename({'user_genome': 'sequence_id'})
         .drop("classification")
     )
-    null_count = taxonomic_annotation.select(polars.col("domain").is_null()).to_series().sum()
-    print(f"There are {null_count}/{taxonomic_annotation.shape[0]} genomes that did not get annotated.")
+    null_count = taxonomic_annotation.filter(polars.col("domain").is_null()).select("sequence_id").to_series()
+    print(f"There are {null_count.shape[0]}/{taxonomic_annotation.shape[0]} genomes that did not get annotated.")
     taxonomic_annotation.write_csv("src/data/results/taxonomic_annotation.tsv", separator="\t")
 
     # merge into clusters table

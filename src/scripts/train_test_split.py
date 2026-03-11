@@ -1,3 +1,5 @@
+import polars
+
 def filter_clusters_table():
     clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
     clusters_table = (
@@ -51,6 +53,11 @@ def filter_clusters_table():
         .sort("cluster_id")
         .select(original_cols)
         .filter(polars.col("percentage_in_puls")<50)
+        .filter(polars.col("length")>50000)
     )
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     return clusters_table_filtered
+
+
+if __name__ == "__main__":
+    filter_clusters_table()

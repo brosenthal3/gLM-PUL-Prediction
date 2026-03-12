@@ -38,7 +38,7 @@ def get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=10, save
         .sort("count", descending=True)
     )
 
-def plot_taxonomic_distributions(clusters_table_filtered):
+def plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/temp.png"):
     phylum_counts = get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=5)
     class_counts = get_taxonomic_counts(clusters_table_filtered, rank="class", cutoff=5)
     order_counts = get_taxonomic_counts(clusters_table_filtered, rank="order", cutoff=5)
@@ -71,6 +71,6 @@ if __name__ == "__main__":
     clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     clusters_table = polars.read_csv("src/data/results/combined_clusters.tsv", separator='\t', infer_schema_length=600).filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
 
-    #plot_taxonomic_distributions(clusters_table_filtered)
+    plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
     plot_percentage_in_puls_over_genome_length(clusters_table_filtered, save="src/data/plots/scatter_post_blast.png", blast=True)
     plot_percentage_in_puls_over_genome_length(clusters_table, save="src/data/plots/scatter_pre_blast.png")

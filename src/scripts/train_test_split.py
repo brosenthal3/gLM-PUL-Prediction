@@ -7,9 +7,11 @@ def filter_clusters_table():
     clusters_table = (
         # add whether to select blast results or original data
         clusters_table
-        .with_columns((polars.col("new_length").gt(polars.col("length")) & polars.col("new_percentage_in_puls").lt(polars.col("percentage_in_puls"))).alias("blast_status"))
+        .with_columns((polars.col("new_length").gt(polars.col("length")+1000)).alias("blast_status"))
         .filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
     )
+    clusters_table_grouped = clusters_table.group_by("sequence_id").agg(polars.col("blast_status").any().alias("sequence_blast_status"))
+    print(f"Selected {clusters_table_grouped.filter(polars.col('sequence_blast_status') == True).shape[0]} sequences with blast results")
 
     original_cols = [col for col in clusters_table.columns if not "new" in col]
     fixed_cols = ["cluster_id", "tax_id", "database", "merged", "blast_status"]
@@ -58,8 +60,8 @@ def filter_clusters_table():
     )
 
 #    print(f"After filtering, there are {clusters_table_filtered.shape[0]}")
-    print(f"{clusters_table_filtered.filter(polars.col("class").is_null()).shape[0]} rows with no taxonomic, compared to {clusters_table.filter(polars.col("domain").is_null()).shape[0]} before filtering.")
-
+    print(f"{clusters_table_filtered.filter(polars.col("class").is_null()).shape[0]} rows with no taxonomic information from GTDB")
+    print(f"Total of {clusters_table_filtered.select('sequence_id').unique().shape[0]} unique sequences in the filtered table")
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     return clusters_table_filtered
 
@@ -80,13 +82,13 @@ def split_dataset(clusters_table, k):
         print(f"  Test groups={groups[test_index].unique()}")
 
 if __name__ == "__main__":
-    clusters_table_path = "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv"
-    if Path(clusters_table_path).exists():
-        clusters_table = polars.read_csv(clusters_table_path, separator='\t')
-    else:
-        clusters_table = filter_clusters_table()
+    # clusters_table_path = "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv"
+    # if Path(clusters_table_path).exists():
+    #     clusters_table = polars.read_csv(clusters_table_path, separator='\t')
+    # else:
+    clusters_table = filter_clusters_table()
     k = 5 # later as argument
-    split_dataset(clusters_table, k)
+#    split_dataset(clusters_table, k)
 
     
 # def report_stats_on_gene_table(

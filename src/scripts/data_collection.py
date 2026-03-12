@@ -253,6 +253,17 @@ def get_puldb_clusters(data_dir):
     return puldb_clusters
 
 
+def combine_clusters_with_length(cluster_table, lengths_df):
+    return (
+        cluster_table
+        .group_by('sequence_id')
+        .agg((polars.col('end') - polars.col('start')).sum().alias('pul_length_sum')) # length of all puls in sequence
+        .join(lengths_df, on='sequence_id', how='left') # add length of genome
+        .with_columns((100 * polars.col('pul_length_sum') / polars.col('length')).alias('percentage_in_puls')) # % of puls in genome
+        .select('sequence_id', 'length', 'pul_length_sum', 'percentage_in_puls') # select only relevant columns
+    )
+
+
 def merge_with_lengths(cluster_table, data_dir, lengths_path):
     # merge lengths with cluster table
     if Path(lengths_path).exists():
@@ -267,20 +278,24 @@ def merge_with_lengths(cluster_table, data_dir, lengths_path):
         # save intermediate lengths
         lengths_df.write_csv(lengths_path, separator='\t')
 
-    # get total length of PULs per genome and calculate percentage of genome in PULs
-    pul_lengths = (
-        cluster_table
-        .group_by('sequence_id')
-        .agg((polars.col('end') - polars.col('start')).sum().alias('pul_length_sum')) # length of all puls in sequence
-        .join(lengths_df, on='sequence_id', how='left') # add length of genome
-        .with_columns((100 * polars.col('pul_length_sum') / polars.col('length')).alias('percentage_in_puls')) # % of puls in genome
-        .select('sequence_id', 'length', 'pul_length_sum', 'percentage_in_puls') # select only relevant columns
-    )
-    # merge back with cluster table
-    cluster_table_With_length = cluster_table.join(pul_lengths, on='sequence_id', how='left').sort("cluster_id")
+    if "merged" in cluster_table.columns:
+        # get total length of PULs per genome and calculate percentage of genome in PULs (separately for merged and original puls)
+        cluster_table_merged = cluster_table.filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
+        cluster_table_original = cluster_table.filter(polars.col("merged").eq("original"))
 
-    assert cluster_table.shape[0] == cluster_table_With_length.shape[0], "Length table has different number of rows than cluster table, something went wrong."
-    return cluster_table_With_length
+        pul_lengths_merged = combine_clusters_with_length(cluster_table_merged, lengths_df)
+        pul_lengths_original = combine_clusters_with_length(cluster_table_original, lengths_df)
+        
+        # merge back with cluster table
+        cluster_table_merged_with_length = cluster_table_merged.join(pul_lengths_merged, on='sequence_id', how='left').sort("cluster_id")
+        cluster_table_original_with_length = cluster_table_original.join(pul_lengths_original, on='sequence_id', how='left').sort("cluster_id")
+        cluster_table_with_length = polars.concat([cluster_table_merged_with_length, cluster_table_original_with_length], how='vertical').sort("cluster_id").sort("merged")
+    else:
+        pul_lengths = combine_clusters_with_length(cluster_table, lengths_df)
+        cluster_table_with_length = cluster_table.join(pul_lengths, on='sequence_id', how='left').sort("cluster_id")
+
+    assert cluster_table.shape[0] == cluster_table_with_length.shape[0], "Length table has different number of rows than cluster table, something went wrong."
+    return cluster_table_with_length
 
 
 def get_genomes(data_dir, ids, fasta=False, output_path="genomes/combined_genomes.gb"):
@@ -296,7 +311,7 @@ def get_genomes(data_dir, ids, fasta=False, output_path="genomes/combined_genome
             print(f"File exists but some IDs are missing, fetching {len(missing_ids)} missing records...")
             run_genomes_fetcher(data_dir, output_path, fasta)
         else:
-            print(f"GenBank records file already exists at {output_path} with no missing IDs, skipping fetching step.")
+            print(f"GenBank records already exist at {output_path} with no missing IDs, skipping fetching step.")
         return
     else:
         print("Fetching GenBank records, this might take a few minutes...")
@@ -327,6 +342,7 @@ def main(data_dir, filter_truncated):
     combined_clusters = merge_overlapping_puls(combined_clusters)
     # get length and percentage of genome in PULs
     combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/results/sequence_lengths.tsv").sort('cluster_id').sort('merged')
+    print(f"Found {combined_clusters.select('sequence_id').unique().shape[0]} unique sequences.")
     combined_clusters.write_csv(f"{data_dir}/results/combined_clusters.tsv", separator='\t')
 
     # find which genomes are likely to be truncated
@@ -345,10 +361,15 @@ def main(data_dir, filter_truncated):
     
     # open blast results
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
+    blast_sequences = blast_output.group_by('query_accession').agg(polars.col('subject_accession').first()).select('subject_accession').to_series()
+    print(f"{blast_sequences.filter(blast_sequences.eq('NO_HIT')).shape[0]} sequences had no blast hit")
+    print(f"Blast identified {blast_output.select('subject_accession').unique().shape[0]-1} new unique sequences.\n\n")
+    
+
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
-    # TODO: fix PUL merging function to account for blast results
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
+    # TODO: fix PUL merging function to account for blast results
 
     # create file of unique accession ids from cluster tables
     unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()

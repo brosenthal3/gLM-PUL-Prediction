@@ -1,12 +1,15 @@
 import polars
 import matplotlib.pyplot as plt
 
-def plot_percentage_in_puls_over_genome_length(clusters_table_filtered, save="src/data/plots/temp.png", blast=False):
+def plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_sequences, save="src/data/plots/temp.png", blast=False):
     figure, axs = plt.subplots(1, figsize=(8, 6))
     
     axs.scatter(x=clusters_table_filtered.select('length'), y=clusters_table_filtered.select('percentage_in_puls'))
     if blast:
-        axs.scatter(x=clusters_table_filtered.filter(polars.col("blast_status") == True).select('length'), y=clusters_table_filtered.filter(polars.col("blast_status") == True).select('percentage_in_puls'), color="orange", label="Blasted sequences")
+        color = "orange"
+    else:
+        color = "red"
+    axs.scatter(x=replaced_sequences.select('length'), y=replaced_sequences.select('percentage_in_puls'), color=color, label="Replaced by BLAST hit")
 
     axs.set_xscale("log")
     axs.set_xlim(1e4, 1e7)
@@ -70,7 +73,9 @@ def plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/t
 if __name__ == "__main__":
     clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     clusters_table = polars.read_csv("src/data/results/combined_clusters.tsv", separator='\t', infer_schema_length=600).filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
+    replaced_PULs = clusters_table_filtered.filter(polars.col("blast_status") == True)
+    replaced_PULs_original = clusters_table.join(replaced_PULs, on="cluster_id", how="semi")
 
     plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
-    plot_percentage_in_puls_over_genome_length(clusters_table_filtered, save="src/data/plots/scatter_post_blast.png", blast=True)
-    plot_percentage_in_puls_over_genome_length(clusters_table, save="src/data/plots/scatter_pre_blast.png")
+    plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_PULs, save="src/data/plots/scatter_post_blast.png", blast=True)
+    plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")

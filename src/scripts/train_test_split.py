@@ -1,8 +1,58 @@
 import polars
 from sklearn.model_selection import GroupKFold
 from pathlib import Path
-from data_collection import merge_overlapping_puls
+#from data_collection import merge_overlapping_puls
 
+def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end', blast=False, keep_original=True):
+    merged_puls = polars.DataFrame(schema=df.schema)
+    merged_ids = []
+
+    for sequence_id, group in df.group_by(group_col):
+        if group.shape[0] == 1 or sequence_id[0] is None:
+            merged_puls = merged_puls.vstack(polars.DataFrame(group))
+            continue
+
+        # sort by start position
+        group = group.sort(start_col)
+        current_pul = None
+        for row in group.iter_rows(named=True):
+            if current_pul is None:
+                current_pul = row
+            else:
+                # check if there is an overlap with the current PUL
+                if row[start_col] <= current_pul[end_col]:
+                    # merge the PULs by updating the end position to the maximum end position
+                    current_pul[end_col] = max(current_pul[end_col], row[end_col])
+                    # merge cluster_id by concatenating with an underscore
+                    current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
+                    # add taxonomic id if exists
+                    current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
+                    # merge database column by concatenating with an underscore if different
+                    current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
+                    merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged_blast" if blast else "merged"})                        
+                else:
+                    merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+                    current_pul = row
+
+        # add the last PUL after processing all rows for this sequence_id
+        if current_pul is not None:
+            merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+
+    # add column for which puls are merged
+    merged_puls = (
+        merged_puls
+        .join(polars.DataFrame(merged_ids), on="cluster_id", how="left")
+    )
+    if keep_original:
+        # add all puls from original table that were originally unmerged
+        previously_merged = {"cluster_id": [item for sublist in [cluster_id['cluster_id'].split("_") for cluster_id in merged_ids] for item in sublist]}
+        merged_puls = merged_puls.vstack(
+            df
+            .join(polars.DataFrame(previously_merged).unique(), on='cluster_id', how='semi')
+            .with_columns(polars.lit("original").alias('merged'))
+        )
+
+    return merged_puls.sort('cluster_id').sort('merged')
 def filter_clusters_table():
     clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
     clusters_table = (
@@ -11,8 +61,13 @@ def filter_clusters_table():
         .with_columns((polars.col("new_length").gt(polars.col("length")+1000)).alias("blast_status"))
         .filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
     )
-    clusters_table_grouped = clusters_table.group_by("sequence_id").agg(polars.col("blast_status").any().alias("sequence_blast_status"))
-    print(f"Selected {clusters_table_grouped.filter(polars.col('sequence_blast_status') == True).shape[0]} sequences with blast results")
+
+    # check that annotations are the same
+    for rank in ["genus", "species"]:
+        mismatch = clusters_table.filter(polars.col(rank) != polars.col(f"{rank}_new"), (polars.col("blast_status") == True))
+        print(f"There are {mismatch.shape[0]} mismatches between original and new sequence annotations on {rank} level.")
+        print(mismatch.select("sequence_id", "length", "new_sequence_id", "new_length", rank, rank+"_new"))
+
 
     original_cols = [col for col in clusters_table.columns if not "new" in col]
     fixed_cols = ["cluster_id", "tax_id", "database", "merged", "blast_status"]
@@ -39,8 +94,7 @@ def filter_clusters_table():
         .select(original_cols)
     )
     clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
-    clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged_right')
-
+    clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged')
 
     pul_lengths = (
         clusters_table_full
@@ -58,11 +112,15 @@ def filter_clusters_table():
         .drop(['length', 'pul_length_sum', 'percentage_in_puls'])
         .join(pul_lengths, on='sequence_id', how='left')
         .sort("cluster_id")
+        .sort("blast_status")
+        .sort("merged")
         .select(original_cols)
-#        .filter(polars.col("length")>100000)
     )
 
-#    print(f"After filtering, there are {clusters_table_filtered.shape[0]}")
+    clusters_table_grouped = clusters_table_filtered.select("sequence_id", "blast_status").filter(polars.col('blast_status') == True)
+    print(f"Selected {clusters_table_grouped['sequence_id'].unique().shape[0]} sequences with blast results")
+
+
     print(f"{clusters_table_filtered.filter(polars.col("class").is_null()).shape[0]} rows with no taxonomic information from GTDB")
     print(f"Total of {clusters_table_filtered.select('sequence_id').unique().shape[0]} unique sequences in the filtered table")
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')

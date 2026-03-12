@@ -117,11 +117,10 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
                     # merge cluster_id by concatenating with an underscore
                     current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
                     # add taxonomic id if exists
-                    if not blast:
-                        current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
-                        # merge database column by concatenating with an underscore if different
-                        current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
-                    merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged"})
+                    current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
+                    # merge database column by concatenating with an underscore if different
+                    current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
+                    merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged_blast" if blast else "merged"})                        
                 else:
                     merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
                     current_pul = row

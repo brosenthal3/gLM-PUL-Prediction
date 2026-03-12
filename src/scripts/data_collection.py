@@ -94,7 +94,7 @@ def clean_puldb_data(puldb_path: str) -> polars.DataFrame:
     return puldb_data_literature
     
 
-def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end'):
+def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end', blast=False, keep_original=True):
     merged_puls = polars.DataFrame(schema=df.schema)
     merged_ids = []
 
@@ -117,9 +117,10 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
                     # merge cluster_id by concatenating with an underscore
                     current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
                     # add taxonomic id if exists
-                    current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
-                    # merge database column by concatenating with an underscore if different
-                    current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
+                    if not blast:
+                        current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
+                        # merge database column by concatenating with an underscore if different
+                        current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
                     merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged"})
                 else:
                     merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
@@ -129,22 +130,21 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
         if current_pul is not None:
             merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
 
-    # add all puls from original table that were originally unmerged
-    previously_merged = {"cluster_id": [item for sublist in [cluster_id['cluster_id'].split("_") for cluster_id in merged_ids] for item in sublist]}
     # add column for which puls are merged
     merged_puls = (
         merged_puls
         .join(polars.DataFrame(merged_ids), on="cluster_id", how="left")
-#        .with_columns(polars.lit(None).cast(polars.Utf8).alias('merged'))
-        .vstack(
+    )
+    if keep_original:
+        # add all puls from original table that were originally unmerged
+        previously_merged = {"cluster_id": [item for sublist in [cluster_id['cluster_id'].split("_") for cluster_id in merged_ids] for item in sublist]}
+        merged_puls = merged_puls.vstack(
             df
             .join(polars.DataFrame(previously_merged).unique(), on='cluster_id', how='semi')
             .with_columns(polars.lit("original").alias('merged'))
         )
-        .sort('cluster_id').sort('merged')
-    )
 
-    return merged_puls
+    return merged_puls.sort('cluster_id').sort('merged')
 
 
 def get_length(acc):
@@ -368,9 +368,12 @@ def main(data_dir, filter_truncated):
 
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
+    raise NotImplementedError
+
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
     # TODO: fix PUL merging function to account for blast results
 
+    
     # create file of unique accession ids from cluster tables
     unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()
     unique_accessions = polars.DataFrame(unique_ids_total).sort('sequence_id').filter(polars.col('sequence_id').is_not_null())

@@ -1,6 +1,7 @@
 import polars
 from sklearn.model_selection import GroupKFold
 from pathlib import Path
+from data_collection import merge_overlapping_puls
 
 def filter_clusters_table():
     clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
@@ -38,6 +39,8 @@ def filter_clusters_table():
         .select(original_cols)
     )
     clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
+    clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged_right')
+
 
     pul_lengths = (
         clusters_table_full

@@ -1,5 +1,6 @@
 import polars
 import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
 
 def plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_sequences, save="src/data/plots/temp.png", blast=False):
     figure, axs = plt.subplots(1, figsize=(8, 6))
@@ -69,13 +70,45 @@ def plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/t
     # plt.tight_layout()
     # plt.savefig("src/data/plots/temp.png")
 
+def plot_venn_diagram_database(save="src/data/plots/temp.png"):
+    plt.figure(figsize=(5, 5))
+
+    dbcan = polars.read_csv("src/data/results/dbcan_clusters.tsv", separator='\t', infer_schema_length=600)
+    puldb = polars.read_csv("src/data/results/puldb_clusters.tsv", separator='\t', infer_schema_length=600)
+    dbcan_sequences = set(dbcan.select("sequence_id").to_series())
+    puldb_sequences = set(puldb.select("sequence_id").to_series())
+    venn2([dbcan_sequences, puldb_sequences], set_labels = ('DBCAN', 'PULDB'))
+    plt.title("Overlap between PULDB and DBCAN sequences")
+    plt.savefig(save, dpi=300)
+
+def plot_venn_diagram_blast(save="src/data/plots/temp.png"):
+    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted.tsv", separator='\t', infer_schema_length=600)
+    old_sequences = set(clusters_table.select("sequence_id").to_series())
+    new_sequences = set(clusters_table.select("new_sequence_id").to_series())
+
+    venn2([old_sequences, new_sequences], set_labels = ('Original', 'BLASTed'))
+    plt.title("Overlap between original and BLASTed sequences")
+    plt.savefig(save, dpi=300)
+
+
+def plot_venn_diagram_blast_filtered(save="src/data/plots/temp.png"):
+    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=600)
+    from_blast = set(clusters_table.filter(polars.col("blast_status") == True).select("sequence_id").to_series())
+    original = set(clusters_table.filter(polars.col("blast_status") == False | polars.col("blast_status").is_null()).select("sequence_id").to_series())
+
+    venn2([original, from_blast], set_labels = ('Original', 'BLASTed'))
+    plt.title("Overlap between original and sequences replaced by BLAST hits")
+    plt.savefig(save, dpi=300)
+
+
 
 if __name__ == "__main__":
-    clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
-    clusters_table = polars.read_csv("src/data/results/combined_clusters.tsv", separator='\t', infer_schema_length=600).filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
-    replaced_PULs = clusters_table_filtered.filter(polars.col("blast_status") == True)
-    replaced_PULs_original = clusters_table.join(replaced_PULs, on="cluster_id", how="semi")
+    # clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
+    # clusters_table = polars.read_csv("src/data/results/combined_clusters.tsv", separator='\t', infer_schema_length=600).filter((polars.col("merged") == "merged") | polars.col("merged").is_null())
+    # replaced_PULs = clusters_table_filtered.filter(polars.col("blast_status") == True)
+    # replaced_PULs_original = clusters_table.join(replaced_PULs, on="cluster_id", how="semi")
 
-    plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
-    plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_PULs, save="src/data/plots/scatter_post_blast.png", blast=True)
-    plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")
+    # plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
+    # plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_PULs, save="src/data/plots/scatter_post_blast.png", blast=True)
+    # plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")
+    plot_venn_diagram_blast_filtered()

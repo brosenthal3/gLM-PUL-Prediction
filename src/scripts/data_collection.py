@@ -120,7 +120,11 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
                     current_pul['tax_id'] = current_pul['tax_id'] if current_pul['tax_id'] is not None else row['tax_id']
                     # merge database column by concatenating with an underscore if different
                     current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
-                    merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged_blast" if blast else "merged"})                        
+                    if blast:
+                        current_pul['blast_status'] = current_pul['blast_status'] or row['blast_status']
+                        merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged_blast"})                        
+                    else:
+                        merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged"})                        
                 else:
                     merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
                     current_pul = row
@@ -132,8 +136,12 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
     # add column for which puls are merged
     merged_puls = (
         merged_puls
-        .join(polars.DataFrame(merged_ids), on="cluster_id", how="left")
+        .join(polars.DataFrame(merged_ids), on="cluster_id", how="left", suffix="_new")
+        .with_columns(polars.coalesce(polars.col("merged_new"), polars.col("merged")).alias("merged"))
+        .drop("merged_new")
     )
+    print(merged_puls.head(5))
+
     if keep_original:
         # add all puls from original table that were originally unmerged
         previously_merged = {"cluster_id": [item for sublist in [cluster_id['cluster_id'].split("_") for cluster_id in merged_ids] for item in sublist]}

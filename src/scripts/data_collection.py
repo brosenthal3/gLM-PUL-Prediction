@@ -221,7 +221,6 @@ def merge_blast_hits(combined_clusters, blast_output):
         'pul_length_sum': 'new_pul_length_sum',
         'percentage_in_puls': 'new_percentage_in_puls'
     })
-
     clusters_with_blast = combined_clusters.join(blast_output_with_lengths, on='cluster_id', how='left')
 
     return clusters_with_blast
@@ -385,11 +384,13 @@ def main(data_dir, filter_truncated):
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
     # add whether to select blast results or original data
+    print(f"{combined_clusters_blasted.select("new_sequence_id").n_unique()}")
     combined_clusters_blasted = (
         combined_clusters_blasted
-        .with_columns((polars.col("new_length").gt(polars.col("length")+1000)).alias("blast_status").cast(polars.Boolean))
+        .with_columns((polars.col("new_length").gt(polars.col("length"))).alias("blast_status").cast(polars.Boolean))
         .with_columns(polars.col("blast_status").fill_null(False))
     )
+    print(f"{combined_clusters_blasted.select("new_sequence_id").n_unique()}")
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
     
     # create file of unique accession ids from cluster tables

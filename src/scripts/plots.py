@@ -82,9 +82,10 @@ def plot_venn_diagram_database(save="src/data/plots/temp.png"):
     plt.savefig(save, dpi=300)
 
 def plot_venn_diagram_blast(save="src/data/plots/temp.png"):
-    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted.tsv", separator='\t', infer_schema_length=600)
-    old_sequences = set(clusters_table.select("sequence_id").to_series())
-    new_sequences = set(clusters_table.select("new_sequence_id").to_series())
+    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
+    old_sequences = set(clusters_table.select("sequence_id").unique().drop_nulls().to_series())
+    new_sequences = set(clusters_table.select("new_sequence_id").unique().drop_nulls().to_series())
+    print(len(new_sequences))
 
     venn2([old_sequences, new_sequences], set_labels = ('Original', 'BLASTed'))
     plt.title("Overlap between original and BLASTed sequences")
@@ -111,4 +112,4 @@ if __name__ == "__main__":
     # plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
     # plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_PULs, save="src/data/plots/scatter_post_blast.png", blast=True)
     # plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")
-    plot_venn_diagram_blast_filtered()
+    plot_venn_diagram_blast()

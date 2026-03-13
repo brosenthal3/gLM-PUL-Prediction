@@ -6,7 +6,7 @@ def filter_clusters_table():
     clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
     # remove original sequences that were later merged
     clusters_table = (clusters_table.filter((polars.col("merged") == "merged") | polars.col("merged").is_null()))
-
+    print(f"Before stuff: {clusters_table.select("sequence_id").n_unique()}")
     # check that annotations are the same for all species
     for rank in ["species"]:
         mismatch = clusters_table.filter(polars.col(rank) != polars.col(f"{rank}_new"), (polars.col("blast_status") == True))
@@ -24,6 +24,7 @@ def filter_clusters_table():
         .filter(polars.col("blast_status") == False)
         .select(original_cols)
     )
+    not_replace = (clusters_table_original.select('sequence_id').unique().to_series().to_list())
     print(f"To not replace: {clusters_table_original.select('sequence_id').n_unique()} unique sequences.")
 
     # get rows to replace by blast results, replace with new columns
@@ -34,9 +35,12 @@ def filter_clusters_table():
         .rename(rename_map)
         .select(original_cols)
     )
+    replace_left = set(clusters_table.filter(polars.col("blast_status") == True).select('sequence_id').unique().to_series().to_list())
+    replace_right = set(clusters_table_blasted.select('sequence_id').unique().to_series().to_list())
+    print(f"Overlapping sequence ids between replace and keep: {replace_left.intersection(not_replace)}\n")
+    print(f"Overlapping sequence ids between replacemenet and kept: {replace_right.intersection(not_replace)}\n")
     print(f"To replace left: {clusters_table.filter(polars.col("blast_status") == True).select('sequence_id').n_unique()} unique sequences.")
     print(f"To replace right: {clusters_table_blasted.select('sequence_id').n_unique()} unique sequences.\n\n")
-
 
     clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
     clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged')
@@ -63,10 +67,9 @@ def filter_clusters_table():
     )
 
     clusters_table_grouped = clusters_table_filtered.select("sequence_id", "blast_status").filter(polars.col('blast_status') == True)
-    print(f"Selected {clusters_table_grouped['sequence_id'].unique().shape[0]} sequences with blast results")
-
-
     print(f"{clusters_table_filtered.filter(polars.col("class").is_null()).shape[0]} rows with no taxonomic information from GTDB")
+
+    print(f"Selected {clusters_table_grouped['sequence_id'].unique().shape[0]} sequences with blast results")
     print(f"Total of {clusters_table_filtered.select('sequence_id').unique().shape[0]} unique sequences in the filtered table")
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     return clusters_table_filtered
@@ -104,6 +107,7 @@ def main():
         .join(taxonomic_annotation, on="sequence_id", how="left")
         .join(taxonomic_annotation, left_on="new_sequence_id", right_on="sequence_id", how="left", suffix="_new")
     )
+
     clusters_table.write_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator="\t")
     filter_clusters_table()
 

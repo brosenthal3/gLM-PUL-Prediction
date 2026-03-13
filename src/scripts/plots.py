@@ -92,9 +92,9 @@ def plot_venn_diagram_blast(save="src/data/plots/temp.png"):
 
 
 def plot_venn_diagram_blast_filtered(save="src/data/plots/temp.png"):
-    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=600)
-    from_blast = set(clusters_table.filter(polars.col("blast_status") == True).select("sequence_id").to_series())
-    original = set(clusters_table.filter(polars.col("blast_status") == False | polars.col("blast_status").is_null()).select("sequence_id").to_series())
+    clusters_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t', infer_schema_length=600)
+    from_blast = set(clusters_table.filter(polars.col("blast_status") == True).select("new_sequence_id").to_series())
+    original = set(clusters_table.filter(polars.col("blast_status") == False).select("sequence_id").to_series())
 
     venn2([original, from_blast], set_labels = ('Original', 'BLASTed'))
     plt.title("Overlap between original and sequences replaced by BLAST hits")

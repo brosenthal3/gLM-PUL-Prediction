@@ -137,10 +137,14 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
     merged_puls = (
         merged_puls
         .join(polars.DataFrame(merged_ids), on="cluster_id", how="left", suffix="_new")
-        .with_columns(polars.coalesce(polars.col("merged_new"), polars.col("merged")).alias("merged"))
-        .drop("merged_new")
     )
-    print(merged_puls.head(5))
+    # handle when merged col already exists
+    merged_puls = (
+        merged_puls.with_columns(polars.coalesce(polars.col("merged_new"), polars.col("merged")).alias("merged"))
+        .drop("merged_new") 
+        if "merged_new" in merged_puls.columns 
+        else merged_puls
+    )
 
     if keep_original:
         # add all puls from original table that were originally unmerged
@@ -205,6 +209,7 @@ def merge_blast_hits(combined_clusters, blast_output):
         })
         .select('cluster_id', 'sequence_id', 'start', 'end')
     )
+
     # get lengths and percentage in PULs for blast hits
     blast_output_with_lengths = merge_with_lengths(blast_output_valid, data_dir, lengths_path=f"{data_dir}/results/blast_sequence_lengths.tsv")
     # rename again to prepare for merging
@@ -216,8 +221,8 @@ def merge_blast_hits(combined_clusters, blast_output):
         'pul_length_sum': 'new_pul_length_sum',
         'percentage_in_puls': 'new_percentage_in_puls'
     })
+
     clusters_with_blast = combined_clusters.join(blast_output_with_lengths, on='cluster_id', how='left')
-    print(f"Found {blast_output_with_lengths.shape[0]} valid blast hits")
 
     return clusters_with_blast
 
@@ -357,7 +362,8 @@ def main(data_dir, filter_truncated):
     # get all puls that are in these truncated genomes
     truncated_genomes_puls = combined_clusters.join(truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
     truncated_genomes_puls.write_csv(f"{data_dir}/results/truncated_genomes.tsv", separator='\t')
-    print(f"Found {truncated_genomes.shape[0]} sequences shorter than 100kb")
+    print(f"Found {truncated_genomes_puls.shape[0]} PULs with sequences shorter than 100kb")
+    print(f"Found {truncated_genomes.select('sequence_id').n_unique()} sequences shorter than 100kb")
 
     # check if blast results for truncated genomes already exist, if not run blast for all truncated genomes
     if not Path(f"{data_dir}/results/blast_results.tsv").exists():
@@ -368,18 +374,23 @@ def main(data_dir, filter_truncated):
     
     # open blast results
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
-    blast_sequences = blast_output.group_by('query_accession').agg(polars.col('subject_accession').first()).select('subject_accession').to_series()
-    print(f"{blast_sequences.filter(blast_sequences.eq('NO_HIT')).shape[0]} sequences had no blast hit")
-    print(f"Blast identified {blast_output.select('subject_accession').unique().shape[0]-1} new unique sequences.\n\n")
-    
+    blast_sequences = blast_output.select('cluster_id', 'query_accession', 'subject_accession')
+
+    print(f"{blast_sequences.filter(polars.col('subject_accession').eq('NO_HIT')).select('cluster_id').n_unique()} PULs had no blast hit.")
+    print(f"{blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('cluster_id').n_unique()} PULs had a blast hit.\n")
+
+    print(f"{blast_sequences.filter(polars.col('subject_accession').eq('NO_HIT')).select('query_accession').n_unique()} query sequences had no blast hit.")
+    print(f"{blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('query_accession').n_unique()} query sequences had a blast hit, mapped to {blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('subject_accession').n_unique()} subject sequences.\n\n")
 
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
-    raise NotImplementedError
-
+    # add whether to select blast results or original data
+    combined_clusters_blasted = (
+        combined_clusters_blasted
+        .with_columns((polars.col("new_length").gt(polars.col("length")+1000)).alias("blast_status").cast(polars.Boolean))
+        .with_columns(polars.col("blast_status").fill_null(False))
+    )
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
-    # TODO: fix PUL merging function to account for blast results
-
     
     # create file of unique accession ids from cluster tables
     unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()
@@ -389,6 +400,10 @@ def main(data_dir, filter_truncated):
 
     # run genecat script for fetching ncbi genomes.
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list())
+
+    # ids_in_file = set(polars.read_csv("src/data/genomes/combined_genomes.ids.txt", has_header=False).to_series().to_list())
+    # ids_in_table = set(unique_accessions.to_series().to_list())
+    # print(ids_in_file - ids_in_table)
 
     # check if need to add the one non-genbank genome
     cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"

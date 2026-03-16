@@ -146,7 +146,7 @@ def plot_gene_counts(gene_table):
         )
     )
 
-    plt.figure(figsize=(8, 4))
+    plt.figure(figsize=(6, 4))
     plt.scatter(x=gene_table.select("gene_count"), y=gene_table.select("percentage_in_PUL"), alpha=0.7, marker="o", edgecolors="black")
     plt.xlabel("Total gene count in sequence")
     plt.ylabel("Percentage of genes in PULs")

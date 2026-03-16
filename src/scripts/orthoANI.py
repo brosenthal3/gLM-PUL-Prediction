@@ -3,12 +3,6 @@ from Bio.SeqIO import read
 import os
 from pathlib import Path
 import argparse
-import polars
-import subprocess
-
-def compare_sequences(genome_a, genome_b):
-    ani = pyorthoani.orthoani(genome_a, genome_b)
-    return ani
 
 
 def read_sequence(genome_path):
@@ -16,28 +10,21 @@ def read_sequence(genome_path):
 
 
 def calculate_ani_table(genomes_list):
-    done_pairs = set()
-    ani_table = []
-    for i in range(len(genomes_list)):
-        for j in range(i+1, len(genomes_list)):
-            pair = frozenset([genomes_list[i], genomes_list[j]])
-            if pair in done_pairs:
-                continue
-            genome_a = read_sequence(genomes_list[i])
-            genome_b = read_sequence(genomes_list[j])
-            ani = compare_sequences(genome_a, genome_b)
-            done_pairs.add(pair)
-            ani_table.append((genomes_list[i], genomes_list[j], ani))
-
-    return ani_table
+    genomes = [read_sequence(genome_path) for genome_path in genomes_list]
+    result = pyorthoani.orthoani_pairwise(genomes)
+    return result
 
 
 def main(genomes_dir, output):
-    genomes_list = [str(path) for path in Path(genomes_dir).glob("*.fa")][:4]
+    genomes_list = [str(path) for path in Path(genomes_dir).glob("*.fa")][:10]
+    print("computing pairwise ANI")
     ani_table = calculate_ani_table(genomes_list)
-    ani_dataframe = polars.DataFrame(ani_table, schema=["genome_a", "genome_b", "ani"])
-    ani_dataframe.write_csv(Path(output).with_suffix('tsv'), separator='\t', has_header=True)
-    return ani_dataframe
+    print("writing to file")
+    with open(output, 'a') as out_handle:
+        for (q, r), ani in ani_table.items():
+            out_handle.write(f"{q}\t{r}\t{ani}\n")
+
+    return
 
 
 if __name__ == "__main__":

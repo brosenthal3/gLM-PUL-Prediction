@@ -424,12 +424,12 @@ def main(data_dir, filter_truncated):
     non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
     if os.path.getsize(non_genbank_genome_path) < 1000: # if file contains only error output, based on size
         os.path.remove(non_genbank_genome_path)
-        # copy fasta file from downloaded files, and rename
-        cmd = f"cp {data_dir}/genomes/IMG_2703719109/IMG Assembled Data/2703719109.fna {data_dir}/genomes/gtdb_genomes/; mv {data_dir}/genomes/gtdb_genomes/2703719109.fna {data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
-        subprocess.run(cmd, shell=True)
-
+        full_assembly = SeqIO.to_dict(SeqIO.parse(f"{data_dir}/genomes/IMG_2703719109/IMG Assembled Data/2703719109.fna", "fasta"))
+        SeqIO.write(full_assembly.get("Ga0139390_150"), f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa", "fasta")
 
 if __name__ == "__main__":
     data_dir = "src/data"
     filter_truncated = True
     main(data_dir, filter_truncated)
+
+

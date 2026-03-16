@@ -30,13 +30,15 @@ Three are from separate papers, with no provided data. These are manually remove
 Then there are 358 PULs from 44 unique accession IDs.
 
 ## Preprocessing
-Cluster tables from dbCAN and PULDB were merged to a single table, and any PULs that shared the same parent sequence ID and overlapped were merged into a single PUL, this resulted in 873 PULs in total. 
-
-After observing that some parent sequences are very short, and consist mainly of the desired PUL, the dataset was filtered such that the percentage of base-pairs of the full sequence that are in PULs is less than 50%, and that the sequence is larger than 100kbp:
+Cluster tables from dbCAN and PULDB were merged to a single table. 
+After observing that some parent sequences are very short, and consist mainly of the desired PUL, the dataset was filtered such that the sequence is larger than 100kbp:
 ```
-percentage_in_pul > 50 & sequence_length > 100000
+sequence_length > 100000
 ```
-This resulted in 94 sequences (and 98 PULs) being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99.5%) and sequence length (max taken). After replacing the truncated entries with the blast hits, the previous filter was applied again. The resulting dataset contains 331 genomes and 784 PULs. 
+This resulted in 131 sequences being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99%) and sequence length (max taken). Replaced 67 sequences, to a new total of 384 sequences. 
 
+All-vs-all OrthoANI was used to find any overly similar sequences. 
 
-NOTE: PUL0103 is longer than its entry on genbank, LR131282. Weird?
+All genomes were annotated for taxonomy using GTDB-tk, 29/384 failed to get annotated.
+
+Any PULs that shared the same parent sequence ID and overlapped were merged into a single PUL, this resulted in 865 PULs in total. 

@@ -1,6 +1,7 @@
 import polars
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
+import numpy as np
 
 def plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_sequences, save="src/data/plots/temp.png", blast=False):
     figure, axs = plt.subplots(1, figsize=(8, 6))
@@ -102,6 +103,64 @@ def plot_venn_diagram_blast_filtered(save="src/data/plots/temp.png"):
     plt.savefig(save, dpi=300)
 
 
+def plot_PULs_in_genome(labeled_table:polars.DataFrame, cluster_table: polars.DataFrame, sequence_id: str, save:str = 'src/data/plots/temp.png'):
+    # Filter the table for the given sequence_id
+    subset_puls = cluster_table.filter(polars.col("sequence_id") == sequence_id)
+    subset = labeled_table.filter(polars.col("sequence_id") == sequence_id)
+    # get range of genes in PULs for this sequence_id
+    contig_range = np.zeros(subset_puls.select("length").to_series()[0], dtype=int)
+    # set locations where genes are to 1
+    gene_ranges = [[row[2]+1, row[3]+1] for row in subset.iter_rows()] # NOTE: unsure about off by one errors here, need to check with actual data
+    pul_ranges = [[row[2], row[3]] for row in subset_puls.iter_rows()]
+
+    for range in gene_ranges:
+        contig_range[range[0]:range[1]] = 1
+
+    for range in pul_ranges:
+        contig_range[range[0]:range[1]] += 2
+
+    plt.figure(figsize=(12, 2))
+    plt.imshow([contig_range], aspect='auto', cmap='viridis', vmin=0, vmax=2)
+    plt.title(f"Genes in {sequence_id} colored by PUL membership")
+    plt.xlabel("bp in genome")
+    # add legend
+    plt.legend(
+        handles=[
+            plt.Line2D([0], [0], color='turquoise', lw=4, label='Gene'),
+            plt.Line2D([0], [0], color='yellow', lw=4, label='Gene in PUL'),
+            plt.Line2D([0], [0], color='purple', lw=4, label='No gene'),
+        ],
+        loc='upper right'
+    )
+    plt.yticks([])
+    plt.tight_layout()
+    save = save.replace(".png", f"_{sequence_id}.png")
+    plt.savefig(save)
+
+
+def plot_gene_counts(gene_table):
+    gene_table = (
+        gene_table.group_by("sequence_id").agg(
+            polars.col("protein_id").n_unique().alias("gene_count"),
+            (polars.col("is_PUL").sum()/polars.col("protein_id").n_unique()).alias("percentage_in_PUL")
+        )
+    )
+
+    plt.figure(figsize=(8, 4))
+    plt.scatter(x=gene_table.select("gene_count"), y=gene_table.select("percentage_in_PUL"), alpha=0.7, marker="o", edgecolors="black")
+    plt.xlabel("Total gene count in sequence")
+    plt.ylabel("Percentage of genes in PULs")
+    plt.title("Percentage of genes in PULs over total gene count in sequence")
+    plt.savefig("src/data/plots/genes_in_puls_over_total_genes.png", dpi=300)
+
+    plt.cla()
+
+    plt.hist(gene_table.select("gene_count"), bins=25, alpha=0.7, edgecolor="black")
+    plt.xlabel("Number of genes")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of gene counts in genomes")
+    plt.savefig("src/data/plots/gene_count_distribution.png", dpi=300)
+
 
 if __name__ == "__main__":
     # clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
@@ -112,4 +171,13 @@ if __name__ == "__main__":
     # plot_taxonomic_distributions(clusters_table_filtered, save="src/data/plots/taxonomy.png")
     # plot_percentage_in_puls_over_genome_length(clusters_table_filtered, replaced_PULs, save="src/data/plots/scatter_post_blast.png", blast=True)
     # plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")
-    plot_venn_diagram_blast()
+    #plot_venn_diagram_blast()
+
+    clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
+    labeled_table = polars.read_csv("src/data/results/genes_with_puls.tsv", separator='\t', infer_schema_length=700)
+    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_011898")
+    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_009441")
+    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_004663")
+    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "CP028460")
+    
+    plot_gene_counts(labeled_table)

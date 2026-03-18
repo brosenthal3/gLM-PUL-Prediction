@@ -508,6 +508,26 @@ def main(data_dir, filter_truncated):
     clusters_table_filtered = filter_clusters_table(combined_clusters_blasted)
     clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
 
+    selected_genomes = clusters_table_filtered.filter(polars.col('sequence_id').is_not_null()).select('sequence_id').unique()
+    print(f"\nAfter filtering, there are {clusters_table_filtered.shape[0]} PULs and {selected_genomes.shape[0]} unique sequences in the final cluster table.")
+    print("Moving some genome files around to run PULpy on the selected genomes...")
+    # move selected genomes to separate folder for easier access
+    os.makedirs("src/PULpy-master/genomes", exist_ok=True)
+    for genome in tqdm(selected_genomes.iter_rows(), total=selected_genomes.shape[0]):
+        genome = genome[0]
+        src_path = f"{data_dir}/genomes/gtdb_genomes/{genome}.fa"
+        dst_path = f"{data_dir}/genomes/selected_genomes/{genome}.fa"
+        dst_path_pulpy = f"src/PULpy-master/genomes/{genome}_genomic.fna"
+        # copy to /selected_genomes
+        if not Path(dst_path).exists():
+            cmd = f"cp {src_path} {dst_path}"
+            subprocess.run(cmd, shell=True, check=True)
+
+        # copy to PULpy folder and gzip for running PULpy, only if it doesn't already exist there
+        if not Path(dst_path_pulpy).exists():
+            cmd = f"cp {dst_path} {dst_path_pulpy} && gzip -f {dst_path_pulpy}"
+            subprocess.run(cmd, shell=True, check=True)
+
 
 if __name__ == "__main__":
     data_dir = "src/data"

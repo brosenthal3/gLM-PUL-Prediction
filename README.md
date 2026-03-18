@@ -37,8 +37,6 @@ sequence_length > 100000
 ```
 This resulted in 131 sequences being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99%) and sequence length (max taken). Replaced 67 sequences, to a new total of 384 sequences. 
 
-All-vs-all OrthoANI was used to find any overly similar sequences. 
-
-All genomes were annotated for taxonomy using GTDB-tk, 29/384 failed to get annotated.
+All-vs-all OrthoANI was used to find any overly similar sequences, so they can be de-duplicated. The ANI table is also used for train/test splitting. 
 
 Any PULs that shared the same parent sequence ID and overlapped were merged into a single PUL, this resulted in 865 PULs in total. 

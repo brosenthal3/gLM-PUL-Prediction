@@ -7,7 +7,8 @@ def split_dataset(clusters_table, k):
     group_kfold = GroupKFold(n_splits=k)
     X = clusters_table.select("cluster_id").to_series()
     clusters_table = clusters_table.with_columns(polars.col("class").fill_null("unknown"))
-    groups = (
+    groups = clusters_table.select("class").to_series()
+    groups_cat = (
         clusters_table
         .with_columns(polars.col("class").cast(polars.Categorical).alias("class_cat"))
         .select(polars.col("class_cat").to_physical())
@@ -15,8 +16,10 @@ def split_dataset(clusters_table, k):
     )
     for i, (train_index, test_index) in enumerate(group_kfold.split(X, groups=groups)):
         print(f"Fold {i}:")
-        print(f"  Train groups={groups[train_index].unique()}")
-        print(f"  Test groups={groups[test_index].unique()}")
+        print(f"\tTrain groups={groups[train_index].unique().to_dict()}")
+        print(f"\tTest groups={groups[test_index].unique().to_dict()}")
+
+        # select train and test sets based on indices
 
 
 if __name__ == "__main__":

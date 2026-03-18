@@ -15,6 +15,13 @@ def calculate_ani_table(genomes_list):
     return result
 
 
+def process_ani_table(ani_table_path):
+    ani_table = polars.read_csv(ani_table_path, separator='\t', has_header=False, new_columns=["query", "reference", "ani"])
+    ani_table = ani_table.filter(polars.col("query") != polars.col("reference"), polars.col("ani") >= 99)
+    print(ani_table)
+    return ani_table
+
+
 def main(genomes_dir, output):
     genomes_list = [str(path) for path in Path(genomes_dir).glob("*.fa")][:10]
     print("computing pairwise ANI")

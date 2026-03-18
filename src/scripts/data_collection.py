@@ -226,7 +226,7 @@ def merge_blast_hits(combined_clusters, blast_output):
     return clusters_with_blast
 
 
-def get_non_genbank_genome():
+def get_non_genbank_genome(data_dir):
     # check if exists
     path = f"{data_dir}/genomes/Ga0139390_150.gb"
     if Path(path).exists():
@@ -338,6 +338,105 @@ def run_genomes_fetcher(data_dir, output_path, fasta):
     subprocess.run(cmd, shell=True, check=True)
 
 
+def fix_non_genbank_genome(data_dir):
+    # STEP 1: for gb files
+    cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if "Ga0139390_150" in result.stdout:
+        print("Ga0139390_150 is already in the .gb file.")
+    else:
+        print("Ga0139390_150 is not in the .gb file, adding it now.")
+        non_genbank_genome_path = get_non_genbank_genome(data_dir)
+        cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
+        subprocess.run(cmd, shell=True, check=True)
+
+    # STEP 2: for fasta files
+    non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
+    if os.path.getsize(non_genbank_genome_path) < 1000: # if file contains only error output, based on size
+        os.path.remove(non_genbank_genome_path)
+        full_assembly = SeqIO.to_dict(SeqIO.parse(f"{data_dir}/genomes/IMG_2703719109/IMG Assembled Data/2703719109.fna", "fasta"))
+        SeqIO.write(full_assembly.get("Ga0139390_150"), f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa", "fasta")
+
+
+def filter_clusters_table(clusters_table):
+    # remove original sequences that were later merged
+    clusters_table = (clusters_table.filter((polars.col("merged") == "merged") | polars.col("merged").is_null()))
+    original_cols = [col for col in clusters_table.columns if not "new" in col]
+    fixed_cols = ["cluster_id", "tax_id", "database", "merged", "blast_status"]
+    new_cols = [col for col in clusters_table.columns if "new" in col]
+    rename_map = {old: old.replace("new", "").strip("_") for old in new_cols if "new" in old}
+
+    # get rows where blast_status is null or False, and select original columns
+    clusters_table_original = (
+        clusters_table
+        .filter(polars.col("blast_status") == False)
+        .select(original_cols)
+    )
+    not_replace = (clusters_table_original.select('sequence_id').unique().to_series().to_list())
+
+    # get rows to replace by blast results, replace with new columns
+    clusters_table_blasted = (
+        clusters_table
+        .filter(polars.col("blast_status") == True)
+        .select(fixed_cols + new_cols)
+        .rename(rename_map)
+        .select(original_cols)
+    )
+    clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
+    clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged')
+
+    # recalculate sum of length of PULs per genome and percentage of genome in PULs
+    pul_lengths = (
+        clusters_table_full
+        .group_by('sequence_id')
+        .agg(
+            (polars.col('end') - polars.col('start')).sum().alias('pul_length_sum'),
+            polars.col('length').first(),
+        ) # length of all puls in sequence, full sequence length
+        .with_columns((100 * polars.col('pul_length_sum') / polars.col('length')).alias('percentage_in_puls')) # % of puls in genome
+        .select('sequence_id', 'length', 'pul_length_sum', 'percentage_in_puls') # select only relevant columns
+    )
+    # merge back with cluster table
+    clusters_table_filtered = (
+        clusters_table_full
+        .drop(['length', 'pul_length_sum', 'percentage_in_puls'])
+        .join(pul_lengths, on='sequence_id', how='left')
+        .sort("cluster_id")
+        .sort("blast_status")
+        .sort("merged")
+        .select(original_cols)
+    )
+    return clusters_table_filtered
+
+
+def separate_classification(classification: polars.Expr, index) -> polars.Expr:
+    return classification.str.split(by=";").list.get(index, null_on_oob=True).str.split(by="__").list.get(1, null_on_oob=True)
+
+
+def get_taxonomic_annotation(gtdb_summary_path):
+    if not Path(gtdb_summary_path).exists():
+        print(f"GTDB-Tk taxonomic annotation file not found at {gtdb_summary_path}, cannot proceed with taxonomic annotation step.")
+        print("Please run GTDB-Tk classification on the fasta file of genomes and place the resulting summary file at the specified path.")
+        raise FileNotFoundError(f"GTDB-Tk summary file not found at {gtdb_summary_path}")
+
+    taxonomic_annotation = polars.read_csv(gtdb_summary_path, separator="\t").select('user_genome', 'classification')
+    taxonomic_annotation = (
+        taxonomic_annotation
+        .with_columns(
+            separate_classification(polars.col("classification"), 0).alias("domain"),
+            separate_classification(polars.col("classification"), 1).alias("phylum"),
+            separate_classification(polars.col("classification"), 2).alias("class"),
+            separate_classification(polars.col("classification"), 3).alias("order"),
+            separate_classification(polars.col("classification"), 4).alias("family"),
+            separate_classification(polars.col("classification"), 5).alias("genus"),
+            separate_classification(polars.col("classification"), 6).alias("species"),
+        )
+        .rename({'user_genome': 'sequence_id'})
+        .drop("classification")
+    )
+    return taxonomic_annotation
+
+
 def main(data_dir, filter_truncated):
     download_data_files(data_dir)
 
@@ -375,22 +474,14 @@ def main(data_dir, filter_truncated):
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     blast_sequences = blast_output.select('cluster_id', 'query_accession', 'subject_accession')
 
-    print(f"{blast_sequences.filter(polars.col('subject_accession').eq('NO_HIT')).select('cluster_id').n_unique()} PULs had no blast hit.")
-    print(f"{blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('cluster_id').n_unique()} PULs had a blast hit.\n")
-
-    print(f"{blast_sequences.filter(polars.col('subject_accession').eq('NO_HIT')).select('query_accession').n_unique()} query sequences had no blast hit.")
-    print(f"{blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('query_accession').n_unique()} query sequences had a blast hit, mapped to {blast_sequences.filter(~polars.col('subject_accession').eq('NO_HIT')).select('subject_accession').n_unique()} subject sequences.\n\n")
-
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
     # add whether to select blast results or original data
-    print(f"{combined_clusters_blasted.select("new_sequence_id").n_unique()}")
     combined_clusters_blasted = (
         combined_clusters_blasted
         .with_columns((polars.col("new_length").gt(polars.col("length"))).alias("blast_status").cast(polars.Boolean))
         .with_columns(polars.col("blast_status").fill_null(False))
     )
-    print(f"{combined_clusters_blasted.select("new_sequence_id").n_unique()}")
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
     
     # create file of unique accession ids from cluster tables
@@ -401,31 +492,22 @@ def main(data_dir, filter_truncated):
 
     # run genecat script for fetching ncbi genomes.
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list())
-
-    # ids_in_file = set(polars.read_csv("src/data/genomes/combined_genomes.ids.txt", has_header=False).to_series().to_list())
-    # ids_in_table = set(unique_accessions.to_series().to_list())
-    # print(ids_in_file - ids_in_table)
-
-    # check if need to add the one non-genbank genome
-    cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if "Ga0139390_150" in result.stdout:
-        print("Ga0139390_150 is already in the .gb file.")
-    else:
-        print("Ga0139390_150 is not in the .gb file, adding it now.")
-        non_genbank_genome_path = get_non_genbank_genome()
-        cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
-        subprocess.run(cmd, shell=True, check=True)
-
     # get genomes in fasta as well for GTDB-Tk classification
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", fasta=True)
+    # check if need to add the one non-genbank genome
+    fix_non_genbank_genome(data_dir)
 
-    # again, check Ga0139390_150
-    non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
-    if os.path.getsize(non_genbank_genome_path) < 1000: # if file contains only error output, based on size
-        os.path.remove(non_genbank_genome_path)
-        full_assembly = SeqIO.to_dict(SeqIO.parse(f"{data_dir}/genomes/IMG_2703719109/IMG Assembled Data/2703719109.fna", "fasta"))
-        SeqIO.write(full_assembly.get("Ga0139390_150"), f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa", "fasta")
+    # merge taxonomic annotation into clusters table, both on sequence_id and new_sequence_id
+    taxonomic_annotation = get_taxonomic_annotation("src/data/results/gtdbtk.bac120.summary.tsv")
+    combined_clusters_blasted = (
+        combined_clusters_blasted
+        .join(taxonomic_annotation, on="sequence_id", how="left")
+        .join(taxonomic_annotation, left_on="new_sequence_id", right_on="sequence_id", how="left", suffix="_new")
+    )
+    # filter based on whether to keep or replace with blast results, and remove original sequences that were later merged
+    clusters_table_filtered = filter_clusters_table(combined_clusters_blasted)
+    clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
+
 
 if __name__ == "__main__":
     data_dir = "src/data"

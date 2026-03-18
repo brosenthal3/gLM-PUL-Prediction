@@ -111,27 +111,34 @@ def plot_PULs_in_genome(labeled_table:polars.DataFrame, cluster_table: polars.Da
     contig_range = np.zeros(subset_puls.select("length").to_series()[0], dtype=int)
     # set locations where genes are to 1
     gene_ranges = [[row[2]+1, row[3]+1] for row in subset.iter_rows()] # NOTE: unsure about off by one errors here, need to check with actual data
-    pul_ranges = [[row[2], row[3]] for row in subset_puls.iter_rows()]
+    pul_ranges = [[row[2], row[3], row[5]] for row in subset_puls.iter_rows()]
 
     for range in gene_ranges:
         contig_range[range[0]:range[1]] = 1
 
     for range in pul_ranges:
-        contig_range[range[0]:range[1]] += 2
+        if range[2] == 'dbcan':
+            contig_range[range[0]:range[1]] = 2
+        elif range[2] == 'puldb':
+            contig_range[range[0]:range[1]] = 2
+        elif "_" in range[2]: 
+            contig_range[range[0]:range[1]] = 2
+        else:
+            contig_range[range[0]:range[1]] = 2
 
     plt.figure(figsize=(12, 2))
-    plt.imshow([contig_range], aspect='auto', cmap='viridis', vmin=0, vmax=2)
+    plt.imshow([contig_range], aspect='auto', cmap='viridis', vmin=0, vmax=3)
     plt.title(f"Genes in {sequence_id} colored by PUL membership")
     plt.xlabel("bp in genome")
     # add legend
-    plt.legend(
-        handles=[
-            plt.Line2D([0], [0], color='turquoise', lw=4, label='Gene'),
-            plt.Line2D([0], [0], color='yellow', lw=4, label='Gene in PUL'),
-            plt.Line2D([0], [0], color='purple', lw=4, label='No gene'),
-        ],
-        loc='upper right'
-    )
+    # plt.legend(
+    #     handles=[
+    #         plt.Line2D([0], [0], color='turquoise', lw=4, label='Gene'),
+    #         plt.Line2D([0], [0], color='yellow', lw=4, label='Gene in PUL'),
+    #         plt.Line2D([0], [0], color='purple', lw=4, label='No gene'),
+    #     ],
+    #     loc='upper right'
+    # )
     plt.yticks([])
     plt.tight_layout()
     save = save.replace(".png", f"_{sequence_id}.png")
@@ -175,7 +182,7 @@ if __name__ == "__main__":
 
     clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
     labeled_table = polars.read_csv("src/data/results/genes_with_puls.tsv", separator='\t', infer_schema_length=700)
-    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_011898")
+    plot_PULs_in_genome(labeled_table, clusters_table_filtered, "FP476056")
     # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_009441")
     # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_004663")
     # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "CP028460")

@@ -140,6 +140,8 @@ class orthoANIProcessor:
             .unique()
             .sort("shorter", "shorter_length", descending=False)
         )
+        print(ani_table.select("shorter").unique().shape[0], "unique shorter sequences in ANI table")
+        print(ani_table.select("longer").unique().shape[0], "unique longer sequences in ANI table")
 
         # group by shorter sequences, keep longest as cluster rep
         duplicated_clusters_grouped = ani_table.group_by("shorter")
@@ -164,6 +166,7 @@ class orthoANIProcessor:
             .join(self.lengths_table.rename({"sequence_id": "query", "length": "query_length"}), on="query", how="left")
             .join(self.lengths_table.rename({"sequence_id": "reference", "length": "reference_length"}), on="reference", how="left")
         )
+        print(self.ani_table.select("query").unique().shape[0], "unique sequences in ANI table")
         return self.ani_table
 
     def process_clusters(self):
@@ -188,4 +191,4 @@ if __name__ == "__main__":
 
     new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
     ani_table = orthiANI_processor.filter_ani_table()
-    print(ani_table.select("reference").unique().shape[0], "unique sequences in filtered ANI table")
+    print(new_cluster_table.select("sequence_id").unique().shape[0], "unique sequences in deduplicated clusters table")

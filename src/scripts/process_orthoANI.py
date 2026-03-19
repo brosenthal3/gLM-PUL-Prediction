@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import subprocess
 from tqdm import tqdm
+from data_collection import merge_overlapping_puls
 
 class orthoANIProcessor:
     def __init__(self, ani_table_path, clusters_table_path):
@@ -66,7 +67,7 @@ class orthoANIProcessor:
 
         hits = blast_results.sort("pident", descending=True).sort("length", descending=True)
         for hit in hits.iter_rows():
-            if hit[2] <= 95 or hit[3] <= 0.9 * len(pul_sequence):
+            if hit[2] <= 95 or hit[3] <= 0.85 * len(pul_sequence):
                 continue
             else:
                 return hit[4], hit[5]
@@ -181,15 +182,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
-    new_cluster_table = orthiANI_processor.process_clusters()
-    new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
+    # new_cluster_table = orthiANI_processor.process_clusters()
+    # new_cluster_table = merge_overlapping_puls(new_cluster_table, keep_original=False)
+    # new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
 
-#    new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
-#     ani_table = orthiANI_processor.filter_ani_table()
-#     for sequence_id in new_cluster_table.select("sequence_id").unique().to_series():
-#         group = ani_table.filter((polars.col("query") == sequence_id) | (polars.col("reference") == sequence_id))
-#         similar_sequences = group.select("query").to_series().append(group.select("reference").to_series())
-#         if similar_sequences.shape[0] > 0:
-#             joined = polars.DataFrame({'sequence_id': similar_sequences}).join(new_cluster_table.select("sequence_id").unique().to_series().to_frame(), how="inner", left_on="sequence_id", right_on="sequence_id")
-#             print(joined)
-# #            print(f"Sequence {sequence_id} has {group.shape[0]} ANI hits >= 99%")
+    new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
+    ani_table = orthiANI_processor.filter_ani_table()
+    print(ani_table.select("reference").unique().shape[0], "unique sequences in filtered ANI table")

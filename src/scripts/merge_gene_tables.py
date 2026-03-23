@@ -47,7 +47,7 @@ def join_gene_and_PUL_table(
 
 
 genes_table = polars.read_parquet("src/data/genecat_output/preprocess_output/genome.genes.parquet")
-cluster_table = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
+cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=700)
 genes_with_puls = join_gene_and_PUL_table(genes_table, cluster_table)
 genes_with_puls.write_csv("src/data/results/genes_with_puls.tsv", separator='\t')
 print(f"Total of {genes_with_puls['is_PUL'].sum()}/{genes_with_puls.shape[0]} genes are in PULs, which is {genes_with_puls['is_PUL'].sum() / genes_with_puls.shape[0] * 100}%.")

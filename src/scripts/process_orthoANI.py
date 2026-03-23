@@ -16,13 +16,16 @@ class orthoANIProcessor:
     
     def deduplicate_identical_sequences(self):
         merged_clusters_table = self.clusters_table
-        identical_sequences = self.ani_table.filter(polars.col("ani") == 1.0).filter(polars.col("query_length") == polars.col("reference_length")).sort("query")
-        identical_sequences_grouped = identical_sequences.group_by("query")
+        identical_sequences = (
+            self.ani_table
+            .filter(polars.col("ani") == 1.0).filter(polars.col("longer_length") == polars.col("shorter_length"))
+            .sort("shorter"))
+        identical_sequences_grouped = identical_sequences.group_by("shorter")
 
         replaced_sequences = []
         for _, group in identical_sequences_grouped:
-            query = group[0, "query"]
-            references = group.select("reference").to_series()
+            query = group[0, "shorter"]
+            references = group.select("longer").to_series()
             if query in replaced_sequences:
                 continue
             
@@ -37,8 +40,8 @@ class orthoANIProcessor:
 
                 # replace reference with query in ani table
                 self.ani_table = self.ani_table.with_columns(
-                    polars.when(polars.col("query").eq(ref)).then(polars.lit(query)).otherwise(polars.col("query")).alias("query"),
-                    polars.when(polars.col("reference").eq(ref)).then(polars.lit(query)).otherwise(polars.col("reference")).alias("reference"),
+                    polars.when(polars.col("shorter").eq(ref)).then(polars.lit(query)).otherwise(polars.col("shorter")).alias("shorter"),
+                    polars.when(polars.col("longer").eq(ref)).then(polars.lit(query)).otherwise(polars.col("longer")).alias("longer"),
                 )
                 replaced_sequences.append(ref)
 
@@ -46,7 +49,7 @@ class orthoANIProcessor:
         print(merged_clusters_table.select("sequence_id").unique().shape[0], "unique sequences in merged cluster table")
 
         self.clusters_table = merged_clusters_table
-        self.ani_table = self.ani_table.filter(polars.col("query") != polars.col("reference")).unique()
+        self.ani_table = self.ani_table.filter(polars.col("shorter") != polars.col("longer")).unique()
         return
 
 
@@ -67,7 +70,11 @@ class orthoANIProcessor:
 
         hits = blast_results.sort("pident", descending=True).sort("length", descending=True)
         for hit in hits.iter_rows():
-            if hit[2] <= 95 or hit[3] <= 0.85 * len(pul_sequence):
+            if hit[2] <= 95:
+                print("Bad percent identity")
+                continue
+            elif hit[3] <= 0.85 * len(pul_sequence):
+                print("Bad alignment length")
                 continue
             else:
                 return hit[4], hit[5]
@@ -115,8 +122,31 @@ class orthoANIProcessor:
 
 
     def deduplicate_similar_sequences(self):
-        ani_table = (
+        print(self.ani_table.select("shorter").unique().shape[0], "unique shorter sequences in ANI table")
+        print(self.ani_table.select("longer").unique().shape[0], "unique longer sequences in ANI table")
+
+        # group by shorter sequences, keep longest as cluster rep
+        duplicated_clusters_grouped = self.ani_table.group_by("shorter")
+        fails = 0
+        for sequence_id, group in duplicated_clusters_grouped:
+            group = group.sort("ani", descending=True)
+            group = group.sort("longer_length", descending=True)
+            representative = group[0, "longer"]
+            fails += self.replace_puls(sequence_id[0], representative)
+        print(f"{fails} failed replacements, PULs removed from cluster table due to no good BLAST hit found in reference sequences")
+        return
+
+
+    def filter_ani_table(self):
+        self.ani_table = (
             self.ani_table
+            .filter(polars.col("query") != polars.col("reference"), polars.col("ani") >= 0.99)
+            .with_columns(
+                polars.col("query").str.split(".").list.first().alias("query"),
+                polars.col("reference").str.split(".").list.first().alias("reference"),
+            )
+            .join(self.lengths_table.rename({"sequence_id": "query", "length": "query_length"}), on="query", how="left")
+            .join(self.lengths_table.rename({"sequence_id": "reference", "length": "reference_length"}), on="reference", how="left")
             .with_columns(
                 # Save longer sequence as cluster representative.
                 polars.when(polars.col("query_length") >= polars.col("reference_length"))
@@ -138,35 +168,9 @@ class orthoANIProcessor:
             )
             .select("shorter", "longer", "shorter_length", "longer_length", "ani")
             .unique()
-            .sort("shorter", "shorter_length", descending=False)
-        )
-        print(ani_table.select("shorter").unique().shape[0], "unique shorter sequences in ANI table")
-        print(ani_table.select("longer").unique().shape[0], "unique longer sequences in ANI table")
+            .sort("longer_length", descending=True)
+            .sort("shorter_length", descending=False))
 
-        # group by shorter sequences, keep longest as cluster rep
-        duplicated_clusters_grouped = ani_table.group_by("shorter")
-        fails = 0
-        for sequence_id, group in duplicated_clusters_grouped:
-            group = group.sort("longer_length", descending=True)
-            group = group.sort("ani", descending=True)
-            representative = group[0, "longer"]
-            fails += self.replace_puls(sequence_id[0], representative)
-        print(f"{fails} failed replacements, PULs removed from cluster table due to no good BLAST hit found in reference sequences")
-        return
-
-
-    def filter_ani_table(self):
-        self.ani_table = (
-            self.ani_table
-            .filter(polars.col("query") != polars.col("reference"), polars.col("ani") >= 0.99)
-            .with_columns(
-                polars.col("query").str.split(".").list.first().alias("query"),
-                polars.col("reference").str.split(".").list.first().alias("reference"),
-            )
-            .join(self.lengths_table.rename({"sequence_id": "query", "length": "query_length"}), on="query", how="left")
-            .join(self.lengths_table.rename({"sequence_id": "reference", "length": "reference_length"}), on="reference", how="left")
-        )
-        print(self.ani_table.select("query").unique().shape[0], "unique sequences in ANI table")
         return self.ani_table
 
     def process_clusters(self):
@@ -185,10 +189,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
-    # new_cluster_table = orthiANI_processor.process_clusters()
-    # new_cluster_table = merge_overlapping_puls(new_cluster_table, keep_original=False)
-    # new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
+    new_cluster_table = orthiANI_processor.process_clusters()
+    new_cluster_table = merge_overlapping_puls(new_cluster_table, keep_original=False)
+    new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
 
-    new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
-    ani_table = orthiANI_processor.filter_ani_table()
-    print(new_cluster_table.select("sequence_id").unique().shape[0], "unique sequences in deduplicated clusters table")
+    # new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
+    # orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
+    # ani_table = orthiANI_processor.filter_ani_table()
+    # remaining_sequences = new_cluster_table.select("sequence_id").unique()
+    # ani_table = ani_table.join(remaining_sequences.rename({"sequence_id": "shorter"}), on="shorter", how="semi").join(remaining_sequences.rename({"sequence_id": "longer"}), on="longer", how="semi")
+    # print(ani_table)
+
+    # print(remaining_sequences.shape[0], "unique sequences in deduplicated clusters table")

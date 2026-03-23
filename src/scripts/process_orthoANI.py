@@ -53,6 +53,30 @@ class orthoANIProcessor:
         return
 
 
+    def merge_hits(self, hits, max_gap=1000):
+        if hits.shape[0] == 1:
+            return hits
+
+        hits = hits.sort("sstart", descending=False).to_dicts()
+        merged_records = []
+        current = hits[0]
+        for row in hits[1:]:
+            # check if row is within max_gap of current hit
+            if (row["sstart"] - current["send"] <= max_gap):
+                total_len = current["length"] + row["length"]
+                current["sstart"] = min(current["sstart"], row["sstart"])
+                current["send"] = max(current["send"], row["send"])
+                current["pident"] = (current["pident"]*current["length"] + row["pident"]*row["length"]) / total_len
+                current["length"] = total_len
+                current["evalue"] = min(current["evalue"], row["evalue"])
+            else:
+                merged_records.append(current)
+                current = row
+        
+        merged_records.append(current)
+        return polars.DataFrame(merged_records)
+
+
     def blast_pul(self, pul_sequence, subject_path):
         with tempfile.TemporaryDirectory() as tmpdir:
             pul_path = Path(tmpdir) / "pul.fasta"
@@ -60,7 +84,7 @@ class orthoANIProcessor:
                 fasta_writer = FastaIO.FastaWriter(out_handle, wrap=None)
                 fasta_writer.write_record(pul_sequence)
 
-            cmd = f"blastn -query {pul_path} -subject {subject_path} -out {Path(tmpdir) / 'results.txt'} -outfmt '6 qseqid sseqid pident length sstart send evalue'"
+            cmd = f"blastn -query {pul_path} -subject {subject_path} -out {Path(tmpdir) / 'results.txt'} -task dc-megablast -perc_identity 99 -outfmt '6 qseqid sseqid pident length sstart send evalue'"
             subprocess.run(cmd, shell=True, check=True)
             try:
                 blast_results = polars.read_csv(Path(tmpdir) / "results.txt", separator='\t', has_header=False, new_columns=["qseqid", "sseqid", "pident", "length", "sstart", "send", "evalue"])
@@ -68,13 +92,15 @@ class orthoANIProcessor:
                 print(f"No BLAST hits found for PUL {pul_sequence.id} against subject {subject_path.name}")
                 return None
 
-        hits = blast_results.sort("pident", descending=True).sort("length", descending=True)
-        for hit in hits.iter_rows():
+        hits = blast_results.sort("pident", descending=True).sort("length", descending=True).with_columns(
+            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("sstart")).otherwise(polars.col("send")).alias("sstart"),
+            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("send")).otherwise(polars.col("sstart")).alias("send"),
+        )
+        merged_hits = self.merge_hits(hits)
+        for hit in merged_hits.iter_rows():
             if hit[2] <= 95:
-                print("Bad percent identity")
                 continue
-            elif hit[3] <= 0.85 * len(pul_sequence):
-                print("Bad alignment length")
+            elif hit[3] <= 0.90 * len(pul_sequence):
                 continue
             else:
                 return hit[4], hit[5]
@@ -105,7 +131,7 @@ class orthoANIProcessor:
             if blast_result is None:
                 # remove PUL from cluster table
                 self.clusters_table = self.clusters_table.filter(~polars.col("cluster_id").eq(pul[0]))
-                print(f"No good BLAST hit found for PUL {pul[0]}, removing from cluster table")
+                #print(f"No good BLAST hit found for PUL {pul[0]}, removing from cluster table")
                 fails += 1
                 continue
 
@@ -173,10 +199,45 @@ class orthoANIProcessor:
 
         return self.ani_table
 
+
+    def add_pul_annotations(self):
+        puls = self.clusters_table
+        # get list of all genomes in the clusters table, with their paths
+        genomes_path = Path("src/data/genomes/selected_genomes/")
+        valid_genomes = set(puls.select("sequence_id").unique().to_series())
+        genomes_path = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
+
+        # go through all puls
+        for pul in tqdm(puls.iter_rows(), total=puls.shape[0], desc="Adding PUL annotations"):
+            start = min(pul[2], pul[3])
+            end = max(pul[2], pul[3])
+            pul_genome_id = pul[1]
+            pul_sequence = read(genomes_path / f"{pul_genome_id}.fa", "fasta")[start:end]
+
+            # go through all other genomes 
+            for subject in genomes_path.iterdir():
+                # run blast search of pul against subject genome, get best hit coordinates
+                blast_result = self.blast_pul(pul_sequence, subject)
+                if blast_result is None:
+                    continue
+
+                new_start, new_end = min(blast_result), max(blast_result)
+                # add new row to cluster table with pul coordinates and sequence_id of subject
+                # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
+                new_row = pul.to_dict()
+                new_row["cluster_id"] = f"{pul[0]}_{subject.stem}"
+                new_row["sequence_id"] = subject.stem
+                new_row["start"] = new_start
+                new_row["end"] = new_end
+
+                raise NotImplementedError
+
+
     def process_clusters(self):
         self.filter_ani_table()
         self.deduplicate_identical_sequences()
         self.deduplicate_similar_sequences()
+        self.clusters_table = merge_overlapping_puls(self.clusters_table, keep_original=False)
         print(self.clusters_table.select("sequence_id").unique().shape[0], "unique sequences in final cluster table")
 
         return self.clusters_table
@@ -190,7 +251,6 @@ if __name__ == "__main__":
 
     orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
     new_cluster_table = orthiANI_processor.process_clusters()
-    new_cluster_table = merge_overlapping_puls(new_cluster_table, keep_original=False)
     new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
 
     # new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)

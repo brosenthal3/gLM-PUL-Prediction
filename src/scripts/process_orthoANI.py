@@ -89,7 +89,7 @@ class orthoANIProcessor:
             try:
                 blast_results = polars.read_csv(Path(tmpdir) / "results.txt", separator='\t', has_header=False, new_columns=["qseqid", "sseqid", "pident", "length", "sstart", "send", "evalue"])
             except polars.exceptions.NoDataError:
-                print(f"No BLAST hits found for PUL {pul_sequence.id} against subject {subject_path.name}")
+                #print(f"No BLAST hits found for PUL {pul_sequence.id} against subject {subject_path.name}")
                 return None
 
         hits = blast_results.sort("pident", descending=True).sort("length", descending=True).with_columns(
@@ -154,7 +154,7 @@ class orthoANIProcessor:
         # group by shorter sequences, keep longest as cluster rep
         duplicated_clusters_grouped = self.ani_table.group_by("shorter")
         fails = 0
-        for sequence_id, group in duplicated_clusters_grouped:
+        for sequence_id, group in tqdm(duplicated_clusters_grouped, total=self.ani_table.select("shorter").unique().shape[0], desc="Deduplicating similar sequences based on ANI"):
             group = group.sort("ani", descending=True)
             group = group.sort("longer_length", descending=True)
             representative = group[0, "longer"]
@@ -199,44 +199,71 @@ class orthoANIProcessor:
 
         return self.ani_table
 
+    
+    def get_taxonomic_info(self, sequence_id):
+        tax_info = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select(["domain", "phylum", "class", "order", "family", "genus", "species"]).unique()
+        if tax_info.shape[0] == 0:
+            return {}
+        else:
+            return tax_info[0].to_dict()
+
 
     def add_pul_annotations(self):
         puls = self.clusters_table
         # get list of all genomes in the clusters table, with their paths
         genomes_path = Path("src/data/genomes/selected_genomes/")
         valid_genomes = set(puls.select("sequence_id").unique().to_series())
-        genomes_path = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
+        genomes_paths = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
 
         # go through all puls
+        new_puls = 0
         for pul in tqdm(puls.iter_rows(), total=puls.shape[0], desc="Adding PUL annotations"):
             start = min(pul[2], pul[3])
             end = max(pul[2], pul[3])
             pul_genome_id = pul[1]
-            pul_sequence = read(genomes_path / f"{pul_genome_id}.fa", "fasta")[start:end]
-
+            pul_sequence = read(f"{genomes_path}/{pul_genome_id}.fa", "fasta")[start:end]
+            puls_found = 0
             # go through all other genomes 
-            for subject in genomes_path.iterdir():
+            for subject in genomes_paths:
+                # skip if subject genome is the same as the PUL genome
+                if subject.stem == pul_genome_id:
+                    continue
+
                 # run blast search of pul against subject genome, get best hit coordinates
                 blast_result = self.blast_pul(pul_sequence, subject)
                 if blast_result is None:
                     continue
 
                 new_start, new_end = min(blast_result), max(blast_result)
+                # get taxonomic info from new sequence_id
+                tax_info = self.get_taxonomic_info(subject.stem)
                 # add new row to cluster table with pul coordinates and sequence_id of subject
                 # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
-                new_row = pul.to_dict()
-                new_row["cluster_id"] = f"{pul[0]}_{subject.stem}"
-                new_row["sequence_id"] = subject.stem
-                new_row["start"] = new_start
-                new_row["end"] = new_end
+                new_row = {
+                    "cluster_id": f"{pul[0]}_{subject.stem}",
+                    "sequence_id": subject.stem,
+                    "start": new_start,
+                    "end": new_end,
+                    "database": "blast",
+                    "merged": False,
+                    "blast_status": False,
+                }
+                new_row.update(tax_info)
+                self.clusters_table = self.clusters_table.vstack(polars.DataFrame([new_row]))
+                new_puls += 1
+                puls_found += 1
+            
+            print(f"Found {puls_found} new PULs for {pul[0]}")
 
-                raise NotImplementedError
+        print(f"Added {new_puls} new PUL annotations to cluster table")
+        return
 
 
     def process_clusters(self):
         self.filter_ani_table()
         self.deduplicate_identical_sequences()
         self.deduplicate_similar_sequences()
+        self.add_pul_annotations()
         self.clusters_table = merge_overlapping_puls(self.clusters_table, keep_original=False)
         print(self.clusters_table.select("sequence_id").unique().shape[0], "unique sequences in final cluster table")
 

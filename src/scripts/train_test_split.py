@@ -1,37 +1,102 @@
-import polars
-from sklearn.model_selection import GroupKFold
 from pathlib import Path
+import polars
+import numpy as np
+from sklearn.model_selection import GroupKFold
+from sklearn.cluster import AgglomerativeClustering, HDBSCAN
 
 
-def split_dataset(clusters_table, k):
-    group_kfold = GroupKFold(n_splits=k)
-    X = clusters_table.select("cluster_id").to_series()
-    clusters_table = clusters_table.with_columns(polars.col("class").fill_null("unknown"))
-    groups = clusters_table.select("class").to_series()
-    groups_cat = (
-        clusters_table
-        .with_columns(polars.col("class").cast(polars.Categorical).alias("class_cat"))
-        .select(polars.col("class_cat").to_physical())
-        .to_series()
-    )
-    for i, (train_index, test_index) in enumerate(group_kfold.split(X, groups=groups)):
-        print(f"Fold {i}:")
-        print(f"\tTrain groups={groups[train_index].unique().to_dict()}")
-        print(f"\tTest groups={groups[test_index].unique().to_dict()}")
+class DatasetSplitter:
+    def __init__(self, clusters_table: polars.DataFrame, ani_table: polars.DataFrame):
+        self.clusters_table = clusters_table
+        self.ani_table = self._process_ani_table(ani_table)
+        self.ani_threshold = 90
 
-        # select train and test sets based on indices
+
+    def _process_ani_table(self, ani_table):
+        # rename col names and remove version numbers from sequence ids
+        ani_table = (
+            ani_table
+            .rename({"column_1": "query", "column_2": "reference", "column_3": "ani"})
+            .with_columns(
+                polars.col("query").str.split(".").list.first().alias("query"),
+                polars.col("reference").str.split(".").list.first().alias("reference"),
+            ))
+
+        # only keep genomes that are in the clusters table        
+        valid_sequences = self.clusters_table.select("sequence_id").unique()
+        filtered_ani_table =(
+            ani_table
+            .join(valid_sequences, left_on="query", right_on="sequence_id", how="semi")
+            .join(valid_sequences, left_on="reference", right_on="sequence_id", how="semi")
+            .sort(["query", "reference"])
+        )
+        # also filter the clusters table to only keep sequences that are in the ani table
+        self.clusters_table = self.clusters_table.join(filtered_ani_table, left_on="sequence_id", right_on="query", how="semi")
+
+        # transform to matrix format with query_id as index, subject_id as columns, and ani as values
+        ani_matrix = (
+            filtered_ani_table
+            .pivot(values="ani", index="query", on="reference")
+            .sort("query")
+        )
+
+        return ani_matrix
+
+
+    def cluster_on_ANI(self):
+        ani_queries = self.ani_table.select("query").to_series()
+        ani_matrix = self.ani_table.drop("query").to_numpy()
+        distance = 1 - (ani_matrix / 100)
+
+        clustering = HDBSCAN(
+            min_cluster_size=2,
+            min_samples=1,
+            metric='precomputed',
+            cluster_selection_epsilon = 1 - (self.ani_threshold / 100),
+            copy=False
+        )
+
+        labels = clustering.fit_predict(distance)
+        labels = polars.Series(labels)
+        result = polars.DataFrame({"sequence_id": ani_queries, "ani_cluster_id": labels}).sort("sequence_id")
+        return result
+
+
+    def split_dataset(self, k, output_dir):
+        if not output_dir.exists():
+            output_dir.mkdir(parents=True)
+
+        labels = self.cluster_on_ANI()
+        clusters_with_labels = self.clusters_table.join(labels, on="sequence_id", how="left").sort(["ani_cluster_id", "cluster_id"])
+        groups = clusters_with_labels.select("ani_cluster_id").to_series()
+        X = clusters_with_labels.select("cluster_id").to_series()
+
+        group_kfold = GroupKFold(n_splits=k)
+        for i, (train_index, test_index) in enumerate(group_kfold.split(X, groups=groups)):
+            print(f"Fold {i}:")
+            train_groups = polars.DataFrame({ "ani_cluster_id": groups[train_index].unique() })
+            test_groups = polars.DataFrame({ "ani_cluster_id": groups[test_index].unique() })
+            train_data = clusters_with_labels.join(train_groups, left_on="ani_cluster_id", right_on="ani_cluster_id", how="semi").drop("ani_cluster_id")
+            test_data = clusters_with_labels.join(test_groups, left_on="ani_cluster_id", right_on="ani_cluster_id", how="semi").drop("ani_cluster_id")
+            print(f"Train set: {len(train_data)} PULs, Test set: {len(test_data)} PULs")
+
+            # save the train and test sets for this fold
+            train_data.write_csv(f"{output_dir}/train_fold_{i}.tsv", separator='\t')
+            test_data.write_csv(f"{output_dir}/test_fold_{i}.tsv", separator='\t')
+
+
+def main():
+    ani_table = polars.read_csv("src/data/results/orthoANI_output.txt", separator='\t', has_header=False)
+    clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
+    splitter = DatasetSplitter(clusters_table, ani_table).split_dataset(k=5, output_dir=Path("src/data/splits/"))
 
 
 if __name__ == "__main__":
-    clusters_table_path = "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv"
-    if Path(clusters_table_path).exists():
-        clusters_table = polars.read_csv(clusters_table_path, separator='\t')
-    else:
-        return
-    k = 5 # later as argument
-    split_dataset(clusters_table, k)
-
+    main()
     
+
+
+
 # def report_stats_on_gene_table(
 #     gene_table: polars.DataFrame,
 #     label: str,

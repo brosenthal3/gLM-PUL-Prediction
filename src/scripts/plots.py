@@ -29,7 +29,7 @@ def get_taxonomic_counts(clusters_table_filtered, rank="phylum", cutoff=10, save
     return (
         clusters_table_filtered
         .group_by(rank)
-        .len()  # or .count() on older Polars
+        .len()
         .rename({"len": "count"})
         .with_columns(
             polars.when(polars.col("count") < cutoff)
@@ -182,9 +182,6 @@ if __name__ == "__main__":
 
     clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
     labeled_table = polars.read_csv("src/data/results/genes_with_puls.tsv", separator='\t', infer_schema_length=700)
-    plot_PULs_in_genome(labeled_table, clusters_table_filtered, "FP476056")
-    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_009441")
-    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "NC_004663")
-    # plot_PULs_in_genome(labeled_table, clusters_table_filtered, "CP028460")
+    #plot_PULs_in_genome(labeled_table, clusters_table_filtered, "FP476056")
     
     plot_gene_counts(labeled_table)

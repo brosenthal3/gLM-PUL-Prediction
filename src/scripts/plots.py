@@ -170,14 +170,44 @@ def plot_gene_counts(gene_table):
 
 
 def visualize_train_test_split(train_data, test_data, save="src/data/plots/temp.png"):
-    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-    phylum_counts_train = get_taxonomic_counts(train_data, rank="phylum", cutoff=5)
-    phylum_counts_test = get_taxonomic_counts(test_data, rank="phylum", cutoff=5)
-    for ax, counts, rank in zip(axs.flatten(), [phylum_counts_train, phylum_counts_test], ["Phylum", "Phylum"]):
-        x = counts.select(f"{rank.lower()}_group").to_series()
-        heights = counts.select("count").to_series()
-        ax.pie(heights, labels=x, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
-        ax.set_title(f"Taxonomic distribution on {rank} level")
+    fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+    axs = axs.flatten()
+    # plot taxonomic distributions for train and test sets 
+    rank = "phylum"
+    phylum_counts_train = get_taxonomic_counts(train_data, rank=rank, cutoff=5)
+    phylum_counts_test = get_taxonomic_counts(test_data, rank=rank, cutoff=5)
+    x_train = phylum_counts_train.select(f"{rank.lower()}_group").to_series()
+    x_test = phylum_counts_test.select(f"{rank.lower()}_group").to_series()
+    heights_train = phylum_counts_train.select("count").to_series()
+    heights_test = phylum_counts_test.select("count").to_series()
+    axs[0].pie(heights_train, labels=x_train, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
+    axs[0].set_title(f"Train set {rank} distribution")
+    axs[1].pie(heights_test, labels=x_test, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
+    axs[1].set_title(f"Test set {rank} distribution")
+
+    # plot genome length distributions for train and test sets
+    train_data = train_data.group_by("sequence_id").agg(polars.col("length").first(),
+    polars.col("cluster_id").count().alias("pul_count"))
+    test_data = test_data.group_by("sequence_id").agg(polars.col("length").first(),
+    polars.col("cluster_id").count().alias("pul_count"))
+
+    axs[2].scatter(
+        x=train_data.select("length"), y=train_data.select("pul_count"), 
+        alpha=0.7, marker="o", edgecolors="black",
+    )
+    axs[2].set_title("Genome length distribution in train set")
+    axs[2].set_xlabel("Genome length (bp)")
+    axs[2].set_ylabel("PUL count")
+    axs[2].set_xscale("log")
+    axs[3].scatter(
+        x=test_data.select("length"), y=test_data.select("pul_count"), 
+        alpha=0.7, marker="o", edgecolors="black",
+    )
+    axs[3].set_title("Genome length distribution in test set")
+    axs[3].set_xlabel("Genome length (bp)")
+    axs[3].set_ylabel("PUL count")
+    axs[3].set_xscale("log")
+
 
     plt.tight_layout()
     plt.savefig(save, dpi=300)
@@ -194,8 +224,10 @@ if __name__ == "__main__":
     # plot_percentage_in_puls_over_genome_length(clusters_table,replaced_PULs_original, save="src/data/plots/scatter_pre_blast.png")
     #plot_venn_diagram_blast()
 
-    clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
-    labeled_table = polars.read_csv("src/data/results/genes_with_puls.tsv", separator='\t', infer_schema_length=700)
+    # clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t', infer_schema_length=700)
+    # labeled_table = polars.read_csv("src/data/results/genes_with_puls.tsv", separator='\t', infer_schema_length=700)
     #plot_PULs_in_genome(labeled_table, clusters_table_filtered, "FP476056")
     
-    plot_gene_counts(labeled_table)
+    train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
+    test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)
+    visualize_train_test_split(train_data, test_data, save="src/data/plots/train_test_split_taxonomy.png")

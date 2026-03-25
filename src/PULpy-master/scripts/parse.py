@@ -107,3 +107,4 @@ gd_diagram.write(sys.argv[4] + "linear.jpg", "JPG")
 #gd_diagram.write("plasmid_linear_nice.svg", "SVG")
 #gd_diagram.write("plasmid_linear_nice.png", "PNG")
 
+

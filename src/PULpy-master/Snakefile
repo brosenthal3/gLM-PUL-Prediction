@@ -12,7 +12,7 @@ rule all:
 
 rule proteins:
 	input: 'genomes/{id}_genomic.fna.gz'
-	output: 
+	output:
 		faa='proteins/{id}_protein.faa',
 		gff='proteins/{id}_prodigal.gff'
 	conda: "envs/PULpy.yaml"
@@ -26,9 +26,9 @@ rule gff2table:
 		# if output dir doesn't exist
 		# create it
 		try:
-    			os.stat("feature_table")
+			os.stat("feature_table")
 		except:
-    			os.mkdir("feature_table")
+			os.mkdir("feature_table")
 
 		# open the input file
 		gff = open(input[1], mode="r")
@@ -62,7 +62,7 @@ rule gff2table:
 rule ncbi2table:
 	input: "ncbi_feature_table/{id}_feature_table.txt", "proteins/{id}_protein.faa"
 	output: 'feature_table/{id}_ft.txt'
-        run:
+	run:
 
 		# if output dir doesn't exist
 		# create it
@@ -140,4 +140,5 @@ rule puls:
 		mkdir -p puls
 		./scripts/predict_puls.R {input.ft} {input.pfam} {input.dbcan} {output.all} {output.sum} {params.id}
 		'''
+
 

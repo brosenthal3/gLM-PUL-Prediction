@@ -8,19 +8,23 @@ def integrate_PULpy_annotations(clusters_table: polars.DataFrame, pulpy_annotati
 
     # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
     # genome	pulid	contigid	start	end	pattern
-    pulpy_annotations = pulpy_annotations.select("genome", "pulid", "start", "end").rename({"genome": "sequence_id", "pulid": "cluster_id"})
     sequence_info = (
         clusters_table
         .select("sequence_id", "tax_id", "database", "merged", "length", "pul_length_sum", "percentage_in_puls", "blast_status", "domain", "phylum", "class", "order", "family", "genus", "species")
         .unique(subset="sequence_id")
     )
-    pulpy_annotations = pulpy_annotations.join(sequence_info, on="sequence_id", how="inner").select(clusters_table.columns)
+    pulpy_annotations = (
+        pulpy_annotations
+        .select("genome", "pulid", "start", "end").rename({"genome": "sequence_id", "pulid": "cluster_id"})
+        .join(sequence_info, on="sequence_id", how="inner").select(clusters_table.columns)
+        .with_columns(polars.lit("PULpy").alias("database"))
+    )
     print(f"Found {pulpy_annotations.shape[0]} PULpy annotations that could be integrated into the cluster table")
     # concat both
     integrated_table = polars.concat([clusters_table, pulpy_annotations], how="vertical")
     # merge overlapping puls
     print(f"Before merging overlapping PULs: {integrated_table.shape[0]} PULs")
-    integrated_table = merge_overlapping_puls(integrated_table)
+    integrated_table = merge_overlapping_puls(integrated_table, keep_original=False)
     print(f"After merging overlapping PULs: {integrated_table.shape[0]} PULs\n")
 
     return integrated_table

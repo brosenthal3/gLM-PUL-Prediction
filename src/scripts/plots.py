@@ -183,15 +183,35 @@ class Plotter:
         plt.savefig(f"{self.save_path}/train_test_split.png", dpi=300)
 
 
+    def get_pul_lengths(self, puls_table):
+        return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
+
+    def plot_pulpy_puls(self):
+        pulpy_puls = self.clusters_table.filter(polars.col("database").str.contains("PULpy"))
+        experimental_puls = self.clusters_table.filter(~polars.col("database").str.contains("PULpy"))
+
+        pulpy_pul_lengths = self.get_pul_lengths(pulpy_puls)
+        experimental_pul_lengths = self.get_pul_lengths(experimental_puls)
+        
+        plt.figure(figsize=(6, 4))
+        # plot box plots of pul lengths for pulpy and experimental puls
+        plt.boxplot([pulpy_pul_lengths.select("pul_length").to_series(), experimental_pul_lengths.select("pul_length").to_series()], tick_labels=["PULpy", "Experimental"])
+        plt.ylabel("PUL length (bp)")
+        plt.title("PUL lengths of PULpy and experimental annotations")
+        plt.tight_layout()
+        plt.savefig(f"{self.save_path}/pulpy_pul_lengths.png", dpi=300)
+
+
 if __name__ == "__main__":
     # get clusters and gene table
-    clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
+    clusters_table = polars.read_csv("src/data/results/clusters_with_pulpy.tsv", separator='\t', infer_schema_length=600)
     gene_table = polars.read_parquet("src/data/genecat_output/preprocess_output/genome.genes.parquet")
     plotter = Plotter(clusters_table, gene_table)
+    plotter.plot_pulpy_puls()
     
-    train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
-    test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)
-    plotter.visualize_train_test_split(train_data, test_data)
+    # train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
+    # test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)
+    # plotter.visualize_train_test_split(train_data, test_data)
 
 
 ## VENN DIAGRAMS, not used but code might be useful

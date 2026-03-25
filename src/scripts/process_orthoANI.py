@@ -200,12 +200,14 @@ class orthoANIProcessor:
         return self.ani_table
 
     
-    def get_taxonomic_info(self, sequence_id):
-        tax_info = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select(["domain", "phylum", "class", "order", "family", "genus", "species"]).unique()
-        if tax_info.shape[0] == 0:
+    def get_subject_info(self, sequence_id):
+        subject_info = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select(
+            ["tax_id", "length", "pul_length_sum", "percentage_in_puls", "blast_status", "domain", "phylum", "class", "order", "family", "genus", "species"]
+        ).unique()
+        if subject_info.shape[0] == 0:
             return {}
         else:
-            return tax_info[0].to_dict()
+            return subject_info[0].to_dict()
 
 
     def add_pul_annotations(self):
@@ -236,7 +238,7 @@ class orthoANIProcessor:
 
                 new_start, new_end = min(blast_result), max(blast_result)
                 # get taxonomic info from new sequence_id
-                tax_info = self.get_taxonomic_info(subject.stem)
+                subject_info = self.get_subject_info(subject.stem)
                 # add new row to cluster table with pul coordinates and sequence_id of subject
                 # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
                 new_row = {
@@ -246,10 +248,9 @@ class orthoANIProcessor:
                     "end": new_end,
                     "database": "blast",
                     "merged": False,
-                    "blast_status": False,
                 }
-                new_row.update(tax_info)
-                self.clusters_table = self.clusters_table.vstack(polars.DataFrame([new_row]))
+                new_row.update(subject_info)
+                self.clusters_table = self.clusters_table.vstack(polars.DataFrame([new_row]).select(self.clusters_table.columns))
                 new_puls += 1
                 puls_found += 1
             

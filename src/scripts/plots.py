@@ -186,6 +186,7 @@ class Plotter:
     def get_pul_lengths(self, puls_table):
         return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
 
+
     def plot_pulpy_puls(self):
         pulpy_puls = self.clusters_table.filter(polars.col("database").str.contains("PULpy"))
         experimental_puls = self.clusters_table.filter(~polars.col("database").str.contains("PULpy"))
@@ -202,12 +203,65 @@ class Plotter:
         plt.savefig(f"{self.save_path}/pulpy_pul_lengths.png", dpi=300)
 
 
+    def get_bins(self, labeled_table):
+        bins = np.unique(
+            np.logspace(
+                start=np.log2(labeled_table['n_genes'].min()),
+                stop=np.log2(80),
+                base=2,
+                num=20,
+            ).astype(int)
+        )
+        labels = [f'<{bins[0]}'] + [f'{bins[i]}-{bins[i + 1]}' for i in range(len(bins[:-1]))] + [f'>{bins[-1]}']
+        return bins, labels
+
+    def get_n_genes(self, labeled_table):
+        labeled_table = join_gene_and_PUL_table(gene_table=self.gene_table, cluster_table=labeled_table)
+        labeled_table = labeled_table.group_by("cluster_id").agg(polars.col("is_PUL").sum().alias("n_genes")).sort("n_genes", descending=False).filter(polars.col("cluster_id").is_not_null())
+        return labeled_table
+
+
+    def plot_pul_gene_count(self):
+        pulpy_table = self.clusters_table.filter(polars.col("cluster_id").str.contains("PULpy"))
+        experimental_table = self.clusters_table.filter(~polars.col("cluster_id").str.contains("PULpy"))
+
+        pulpy_table = self.get_n_genes(pulpy_table)
+        experimental_table = self.get_n_genes(experimental_table)
+
+        # Get bins from combined table to ensure consistency
+        combined_table = polars.concat([pulpy_table, experimental_table])
+        bins, labels = self.get_bins(combined_table)
+        
+        # Reapply bins to individual tables
+        labeled_table_experimental = experimental_table.with_columns(polars.col('n_genes').cut(breaks=bins.tolist(), include_breaks=False, labels=labels).alias('gene_bin'))
+        labeled_table_pulpy = pulpy_table.with_columns(polars.col('n_genes').cut(breaks=bins.tolist(), include_breaks=False, labels=labels).alias('gene_bin'))
+
+        labels_pulpy = labels
+        labels_experimental = labels
+
+        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+        axs[0].hist(labeled_table_pulpy.select("gene_bin").to_series(), bins=len(labels_pulpy), edgecolor="black")
+        axs[0].set_xlabel("Number of genes in PUL")
+        axs[0].set_ylabel("Count")
+        axs[0].set_title("Distribution of gene counts in PULpy annotations")
+        axs[0].tick_params(axis='x', rotation=45)
+
+        axs[1].hist(labeled_table_experimental.select("gene_bin").to_series(), bins=len(labels_experimental), edgecolor="black")
+        axs[1].set_xlabel("Number of genes in PUL")
+        axs[1].set_ylabel("Count")
+        axs[1].set_title("Distribution of gene counts in experimental annotations")
+        axs[1].tick_params(axis='x', rotation=45)
+
+        plt.tight_layout()
+        plt.savefig(f"{self.save_path}/pul_gene_count_distribution.png", dpi=300)
+
+
 if __name__ == "__main__":
     # get clusters and gene table
     clusters_table = polars.read_csv("src/data/results/clusters_with_pulpy.tsv", separator='\t', infer_schema_length=600)
     gene_table = polars.read_parquet("src/data/genecat_output/preprocess_output/genome.genes.parquet")
     plotter = Plotter(clusters_table, gene_table)
-    plotter.plot_pulpy_puls()
+    plotter.plot_pul_gene_count()
     
     # train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
     # test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)

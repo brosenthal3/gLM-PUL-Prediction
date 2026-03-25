@@ -250,7 +250,8 @@ class orthoANIProcessor:
                     "merged": False,
                 }
                 new_row.update(subject_info)
-                self.clusters_table = self.clusters_table.vstack(polars.DataFrame([new_row]).select(self.clusters_table.columns))
+                new_row_df = polars.DataFrame(new_row, schema=self.clusters_table.schema)
+                self.clusters_table = self.clusters_table.vstack(new_row_df)
                 new_puls += 1
                 puls_found += 1
             

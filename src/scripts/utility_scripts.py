@@ -29,7 +29,7 @@ def request_sequence(acc, db="nuccore"):
     return record
 
 
-def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 100,) -> polars.DataFrame:
+def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 50,) -> polars.DataFrame:
     labled_gene_table = (
         cluster_table
         .rename({"start": "pul_start", "end": "pul_end"}) # avoid column name conflicts
@@ -42,6 +42,13 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
         .with_columns(
             polars.when(
                 polars.col("start") >= polars.col("pul_start") - buffer, # allow for some buffer around the PUL boundaries
+                polars.col("end") <= polars.col("pul_end") + buffer,
+            )
+            .then(polars.col("cluster_id"))
+            .otherwise(None)
+            .alias("cluster_id"),
+            polars.when(
+                polars.col("start") >= polars.col("pul_start") - buffer,
                 polars.col("end") <= polars.col("pul_end") + buffer,
             )
             .then(True)
@@ -57,10 +64,11 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
             polars.col("start").first().alias("start"),
             polars.col("end").first().alias("end"),
             polars.col("strand").first().alias("strand"),
+            polars.col("cluster_id").drop_nulls().first().alias("cluster_id")
         )
         .sort(by=["sequence_id", "start", "end"])
         .with_row_index(name="gene_id", offset=0)  # important
-        .select(["sequence_id", "protein_id", "start", "end", "strand", "is_PUL"])
+        .select(["sequence_id", "protein_id", "start", "end", "strand", "is_PUL", "cluster_id"])
     )
 
     return labled_gene_table

@@ -1,0 +1,36 @@
+name: glm-pul-prediction
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.13
+  - pip
+  - numpy
+  - pandas
+  - polars
+  - scikit-learn
+  - matplotlib
+  - matplotlib-venn
+  - tqdm
+  - requests
+  - beautifulsoup4
+  - rich
+  - openpyxl
+  - pyarrow
+
+  # bioinfo stuff
+  - biopython
+  - reportlab
+  - ete4
+
+  # for notebooks
+  - ipykernel
+  - jupyterlab
+
+  - pip:
+      - pyorthoani
+      - gb-io
+
+# Notes:
+# - GTDB-Tk is run on HPC in src/scripts/slurm_run_gtdbtk.sh

@@ -40,4 +40,8 @@ This resulted in 131 sequences being filtered out. To potentially keep these PUL
 All-vs-all OrthoANI was used to find any overly similar sequences, so they can be de-duplicated. The ANI table is also used for train/test splitting. 
 92 sequences de-duplicated.
 
-Any PULs that shared the same parent sequence ID and overlapped were merged into a single PUL, this resulted in 865 PULs in total. 
+### PULpy
+PULpy used as extra annotations for bacteriodata sequences. The tool did not run immediately and some adaptations were made to the code:
+1. `Snakefile` and all files in `scripts/` contained mismatching indentations (spaces and tabs), so all tabs were replaced by spaces.
+2. `run_pulpy.sh` script was written, including all preparation scripts from the original `README.md`. Changes: all wget commands were added a `--no-check-certificate` flag, download links for dbCAN HMMs was updated to the current domain where the data is hosted (http://pro.unl.edu instead of depracated http://bcb.unl.edu).
+3. Dependencies (snakemake and misceallaneous perl dependencies) were added to the environment definition at `envs/PULpy.yaml`.

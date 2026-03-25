@@ -169,6 +169,20 @@ def plot_gene_counts(gene_table):
     plt.savefig("src/data/plots/gene_count_distribution.png", dpi=300)
 
 
+def visualize_train_test_split(train_data, test_data, save="src/data/plots/temp.png"):
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    phylum_counts_train = get_taxonomic_counts(train_data, rank="phylum", cutoff=5)
+    phylum_counts_test = get_taxonomic_counts(test_data, rank="phylum", cutoff=5)
+    for ax, counts, rank in zip(axs.flatten(), [phylum_counts_train, phylum_counts_test], ["Phylum", "Phylum"]):
+        x = counts.select(f"{rank.lower()}_group").to_series()
+        heights = counts.select("count").to_series()
+        ax.pie(heights, labels=x, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
+        ax.set_title(f"Taxonomic distribution on {rank} level")
+
+    plt.tight_layout()
+    plt.savefig(save, dpi=300)
+
+
 if __name__ == "__main__":
     # clusters_table_filtered = polars.read_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
     # clusters_table = polars.read_csv("src/data/results/combined_clusters.tsv", separator='\t', infer_schema_length=600).filter((polars.col("merged") == "merged") | polars.col("merged").is_null())

@@ -265,7 +265,7 @@ class orthoANIProcessor:
         self.filter_ani_table()
         self.deduplicate_identical_sequences()
         self.deduplicate_similar_sequences()
-        self.add_pul_annotations()
+        #self.add_pul_annotations()
         self.clusters_table = merge_overlapping_puls(self.clusters_table, keep_original=False)
         print(self.clusters_table.select("sequence_id").unique().shape[0], "unique sequences in final cluster table")
 

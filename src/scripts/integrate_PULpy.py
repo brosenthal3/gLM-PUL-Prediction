@@ -42,7 +42,7 @@ def get_pulpy_annotations(pulpy_output_path):
 
 
 def main():
-    clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
+    clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
     pulpy_annotations = get_pulpy_annotations("src/PULpy-master/puls/")
     # integrate annotations
     integrated_table = integrate_PULpy_annotations(clusters_table, pulpy_annotations)

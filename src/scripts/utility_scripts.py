@@ -72,3 +72,26 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
     )
 
     return labled_gene_table
+
+
+def recompute_length_percentage(cluster_table: polars.DataFrame) -> polars.DataFrame:
+    # recompute length and percentage in PUL for all clusters, since we added new ones
+    # recalculate sum of length of PULs per genome and percentage of genome in PULs
+    pul_lengths = (
+        cluster_table
+        .group_by('sequence_id')
+        .agg(
+            (polars.col('end') - polars.col('start')).sum().alias('pul_length_sum'),
+            polars.col('length').first(),
+        ) # length of all puls in sequence, full sequence length
+        .with_columns((100 * polars.col('pul_length_sum') / polars.col('length')).alias('percentage_in_puls')) # % of puls in genome
+        .select('sequence_id', 'length', 'pul_length_sum', 'percentage_in_puls') # select only relevant columns
+    )
+    # merge back with cluster table
+    cluster_table = (
+        cluster_table
+        .drop(['length', 'pul_length_sum', 'percentage_in_puls'])
+        .join(pul_lengths, on='sequence_id', how='left')
+    )
+
+    return cluster_table

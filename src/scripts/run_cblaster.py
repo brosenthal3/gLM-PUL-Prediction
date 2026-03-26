@@ -13,7 +13,7 @@
     # cblaster makedb src/data/genomes/combined_genomes.gb -n cblasterdb
 
 import polars
-from utility_scripts import join_gene_and_PUL_table
+from utility_scripts import join_gene_and_PUL_table, recompute_length_percentage
 from data_collection import merge_overlapping_puls
 from Bio import SeqIO
 import os
@@ -51,7 +51,7 @@ class CblasterProcessor:
 
     
     def run_cblaster(self, filename: str, cluster_id: str):
-        filters = "-me 1.09e-9 -mi 70 -mc 75 -g 5000 -mh 2"
+        filters = "-me 1.0e-9 -mi 70 -mc 75 -g 5000 -mh 2"
         cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {self.cblaster_output_path}/{cluster_id}.csv -bde ',' " + filters
         subprocess.run(cmd, shell=True, check=True)
 
@@ -84,11 +84,11 @@ class CblasterProcessor:
             query_id = self.clusters_table.filter(polars.col("cluster_id") == filename.split(".")[0]).select("sequence_id")
             df = (
                 df.with_columns(
-                    polars.sum_horizontal(df.columns[5:]).alias("total_hits"),
+                    polars.sum_horizontal(df.columns[5:]).cast(polars.Int64).alias("total_hits"),
                     polars.lit(f"cblaster_{filename.split("/")[-1].split(".")[0]}").alias("cluster_id"), 
                 )
                 .rename({"Organism": "sequence_id", "Start": "start", "End": "end"})
-                .filter(polars.col("total_hits") >= num_genes*0.7)
+                .filter(polars.col("total_hits").ge(num_genes * 0.7))
                 .select("sequence_id", "cluster_id", "start", "end")
                 .join(query_id, on="sequence_id", how="anti") # remove self-hits
             )
@@ -108,13 +108,13 @@ class CblasterProcessor:
             .join(sequence_info, on="sequence_id", how="inner").select(self.clusters_table.columns)
             .with_columns(polars.lit("cblaster").alias("database"))
         )
-        print(f"Found {cblaster_results_df.shape[0]} cblaster annotations that could be integrated into the cluster table")
         integrated_table = polars.concat([self.clusters_table, cblaster_results_df], how="vertical")
         # merge overlapping puls
-        #print(f"Before merging overlapping PULs: {integrated_table.shape[0]} PULs")
-        # integrated_table = merge_overlapping_puls(integrated_table, keep_original=False)
-        # print(f"After merging overlapping PULs: {integrated_table.shape[0]} PULs\n")
-
+        print(f"Before merging overlapping PULs: {integrated_table.shape[0]} PULs")
+        integrated_table = merge_overlapping_puls(integrated_table, keep_original=False)
+        print(f"After merging overlapping PULs: {integrated_table.shape[0]} PULs\n")
+        print(f"Added total of {integrated_table.filter(polars.col("database").str.contains("cblaster")).shape[0]} PULs from cblaster")
+        integrated_table = recompute_length_percentage(integrated_table).sort("start").sort("sequence_id")
         integrated_table.write_csv("src/data/results/cblaster_results.tsv", separator='\t')
 
 

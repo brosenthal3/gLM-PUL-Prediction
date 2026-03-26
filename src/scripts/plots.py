@@ -12,13 +12,16 @@ class Plotter:
         self.save_path = save_path
 
 
-    def plot_percentage_in_puls_over_genome_length(self, blast=False):
+    def plot_percentage_in_puls_over_genome_length(self, blast=False, cblaster=False):
         replaced_sequences = self.clusters_table.filter(polars.col("blast_status") == True)
+        if cblaster:
+            replaced_sequences = self.clusters_table.filter(polars.col("database").str.contains("cblaster"))
+
         color = "orange" if blast else "red"
 
         figure, axs = plt.subplots(1, figsize=(8, 6))
         axs.scatter(x=self.clusters_table.select('length'), y=self.clusters_table.select('percentage_in_puls'))
-        axs.scatter(x=replaced_sequences.select('length'), y=replaced_sequences.select('percentage_in_puls'), color=color, label="Replaced by BLAST hit")
+        axs.scatter(x=replaced_sequences.select('length'), y=replaced_sequences.select('percentage_in_puls'), color=color, label=f"{"BLAST hit" if blast else "cblaster hit"}")
 
         axs.set_xscale("log")
         axs.set_xlim(1e4, 1e7)
@@ -258,10 +261,14 @@ class Plotter:
 
 if __name__ == "__main__":
     # get clusters and gene table
-    clusters_table = polars.read_csv("src/data/results/clusters_with_pulpy.tsv", separator='\t', infer_schema_length=600)
+    clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
     gene_table = polars.read_parquet("src/data/genecat_output/preprocess_output/genome.genes.parquet")
     plotter = Plotter(clusters_table, gene_table)
-    plotter.plot_pul_gene_count()
+#    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)
+    #plotter.plot_pul_gene_count()
+
+    plotter.clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
+    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)
     
     # train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
     # test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)

@@ -14,7 +14,8 @@ class orthoANIProcessor:
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=1000)
         self.lengths_table = self.clusters_table.select("sequence_id", "length").unique()
     
-    def deduplicate_identical_sequences(self):
+
+    def _deduplicate_identical_sequences(self):
         merged_clusters_table = self.clusters_table
         identical_sequences = (
             self.ani_table
@@ -29,8 +30,8 @@ class orthoANIProcessor:
             if query in replaced_sequences:
                 continue
             
+            # replace all identical sequences in cluster table with query
             for ref in references:
-                # replace all identical sequences in cluster table with query
                 merged_clusters_table = merged_clusters_table.with_columns(
                     polars.when(polars.col("sequence_id").eq(ref))
                     .then(polars.lit(query))
@@ -50,10 +51,14 @@ class orthoANIProcessor:
 
         self.clusters_table = merged_clusters_table
         self.ani_table = self.ani_table.filter(polars.col("shorter") != polars.col("longer")).unique()
-        return
 
 
-    def merge_hits(self, hits, max_gap=1000):
+    def _merge_hits(self, hits, max_gap=1000):
+        # make sure sstart is always ssmaller than send
+        hits = hits.with_columns(
+            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("sstart")).otherwise(polars.col("send")).alias("sstart"),
+            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("send")).otherwise(polars.col("sstart")).alias("send"),
+        )
         if hits.shape[0] == 1:
             return hits
 
@@ -72,35 +77,33 @@ class orthoANIProcessor:
             else:
                 merged_records.append(current)
                 current = row
-        
+
         merged_records.append(current)
-        return polars.DataFrame(merged_records)
+        return polars.DataFrame(merged_records).sort("pident", descending=True).sort("length", descending=True)
 
 
-    def blast_pul(self, pul_sequence, subject_path):
+    def _blast_pul(self, pul_sequence, subject_path):
         with tempfile.TemporaryDirectory() as tmpdir:
             pul_path = Path(tmpdir) / "pul.fasta"
+            # write pul sequence to fasta file
             with open(pul_path, 'w') as out_handle:
                 fasta_writer = FastaIO.FastaWriter(out_handle, wrap=None)
                 fasta_writer.write_record(pul_sequence)
 
+            # run blastn of pul against subject genome, get best hit coordinates
             cmd = f"blastn -query {pul_path} -subject {subject_path} -out {Path(tmpdir) / 'results.txt'} -task dc-megablast -perc_identity 99 -outfmt '6 qseqid sseqid pident length sstart send evalue'"
             subprocess.run(cmd, shell=True, check=True)
             try:
                 blast_results = polars.read_csv(Path(tmpdir) / "results.txt", separator='\t', has_header=False, new_columns=["qseqid", "sseqid", "pident", "length", "sstart", "send", "evalue"])
             except polars.exceptions.NoDataError:
-                #print(f"No BLAST hits found for PUL {pul_sequence.id} against subject {subject_path.name}")
                 return None
 
-        hits = blast_results.sort("pident", descending=True).sort("length", descending=True).with_columns(
-            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("sstart")).otherwise(polars.col("send")).alias("sstart"),
-            polars.when(polars.col("sstart") < polars.col("send")).then(polars.col("send")).otherwise(polars.col("sstart")).alias("send"),
-        )
-        merged_hits = self.merge_hits(hits)
+        # filter and merge hits
+        hits = blast_results.sort("pident", descending=True).sort("length", descending=True)
+        merged_hits = self._merge_hits(hits)
+        # return best hit
         for hit in merged_hits.iter_rows():
-            if hit[2] <= 95:
-                continue
-            elif hit[3] <= 0.90 * len(pul_sequence):
+            if hit[2] <= 95 or hit[2] <= 0.90 * len(pul_sequence):
                 continue
             else:
                 return hit[4], hit[5]
@@ -109,17 +112,16 @@ class orthoANIProcessor:
 
 
     def replace_puls(self, old_id, new_id):
-        fails = 0
         # get sequences
         genomes_path = Path("src/data/genomes/selected_genomes/")
         old_sequence = read(genomes_path / f"{old_id}.fa", "fasta")
         subject_path = genomes_path / f"{new_id}.fa"
+        fails = 0
 
         # group by old_id
         old_puls = self.clusters_table.filter(polars.col("sequence_id") == old_id)
         for pul in old_puls.iter_rows():
-            start = min(pul[2], pul[3])
-            end = max(pul[2], pul[3])
+            start, end = min(pul[2], pul[3]), max(pul[2], pul[3])
             pul_sequence = old_sequence[start:end]
 
             if not len(pul_sequence) > 0:
@@ -127,7 +129,7 @@ class orthoANIProcessor:
                 fails += 1
                 continue
 
-            blast_result = self.blast_pul(pul_sequence, subject_path)
+            blast_result = self._blast_pul(pul_sequence, subject_path)
             if blast_result is None:
                 # remove PUL from cluster table
                 self.clusters_table = self.clusters_table.filter(~polars.col("cluster_id").eq(pul[0]))
@@ -147,7 +149,7 @@ class orthoANIProcessor:
         return fails
 
 
-    def deduplicate_similar_sequences(self):
+    def _deduplicate_similar_sequences(self):
         print(self.ani_table.select("shorter").unique().shape[0], "unique shorter sequences in ANI table")
         print(self.ani_table.select("longer").unique().shape[0], "unique longer sequences in ANI table")
 
@@ -209,82 +211,85 @@ class orthoANIProcessor:
         else:
             return subject_info[0].to_dict()
 
+    #### depricated, using cblaster instead ####
+    # def add_pul_annotations(self):
+    #     puls = self.clusters_table
+    #     # get list of all genomes in the clusters table, with their paths
+    #     genomes_path = Path("src/data/genomes/selected_genomes/")
+    #     valid_genomes = set(puls.select("sequence_id").unique().to_series())
+    #     genomes_paths = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
 
-    def add_pul_annotations(self):
-        puls = self.clusters_table
-        # get list of all genomes in the clusters table, with their paths
-        genomes_path = Path("src/data/genomes/selected_genomes/")
-        valid_genomes = set(puls.select("sequence_id").unique().to_series())
-        genomes_paths = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
+    #     # go through all puls
+    #     new_puls = 0
+    #     for pul in tqdm(puls.iter_rows(), total=puls.shape[0], desc="Adding PUL annotations"):
+    #         start = min(pul[2], pul[3])
+    #         end = max(pul[2], pul[3])
+    #         pul_genome_id = pul[1]
+    #         pul_sequence = read(f"{genomes_path}/{pul_genome_id}.fa", "fasta")[start:end]
+    #         puls_found = 0
+    #         # go through all other genomes 
+    #         for subject in genomes_paths:
+    #             # skip if subject genome is the same as the PUL genome
+    #             if subject.stem == pul_genome_id:
+    #                 continue
 
-        # go through all puls
-        new_puls = 0
-        for pul in tqdm(puls.iter_rows(), total=puls.shape[0], desc="Adding PUL annotations"):
-            start = min(pul[2], pul[3])
-            end = max(pul[2], pul[3])
-            pul_genome_id = pul[1]
-            pul_sequence = read(f"{genomes_path}/{pul_genome_id}.fa", "fasta")[start:end]
-            puls_found = 0
-            # go through all other genomes 
-            for subject in genomes_paths:
-                # skip if subject genome is the same as the PUL genome
-                if subject.stem == pul_genome_id:
-                    continue
+    #             # run blast search of pul against subject genome, get best hit coordinates
+    #             blast_result = self.blast_pul(pul_sequence, subject)
+    #             if blast_result is None:
+    #                 continue
 
-                # run blast search of pul against subject genome, get best hit coordinates
-                blast_result = self.blast_pul(pul_sequence, subject)
-                if blast_result is None:
-                    continue
-
-                new_start, new_end = min(blast_result), max(blast_result)
-                # get taxonomic info from new sequence_id
-                subject_info = self.get_subject_info(subject.stem)
-                # add new row to cluster table with pul coordinates and sequence_id of subject
-                # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
-                new_row = {
-                    "cluster_id": f"{pul[0]}_{subject.stem}",
-                    "sequence_id": subject.stem,
-                    "start": new_start,
-                    "end": new_end,
-                    "database": "blast",
-                    "merged": False,
-                }
-                new_row.update(subject_info)
-                new_row_df = polars.DataFrame(new_row, schema=self.clusters_table.schema)
-                self.clusters_table = self.clusters_table.vstack(new_row_df)
-                new_puls += 1
-                puls_found += 1
+    #             new_start, new_end = min(blast_result), max(blast_result)
+    #             # get taxonomic info from new sequence_id
+    #             subject_info = self.get_subject_info(subject.stem)
+    #             # add new row to cluster table with pul coordinates and sequence_id of subject
+    #             # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
+    #             new_row = {
+    #                 "cluster_id": f"{pul[0]}_{subject.stem}",
+    #                 "sequence_id": subject.stem,
+    #                 "start": new_start,
+    #                 "end": new_end,
+    #                 "database": "blast",
+    #                 "merged": False,
+    #             }
+    #             new_row.update(subject_info)
+    #             new_row_df = polars.DataFrame(new_row, schema=self.clusters_table.schema)
+    #             self.clusters_table = self.clusters_table.vstack(new_row_df)
+    #             new_puls += 1
+    #             puls_found += 1
             
-            print(f"Found {puls_found} new PULs for {pul[0]}")
+    #         print(f"Found {puls_found} new PULs for {pul[0]}")
 
-        print(f"Added {new_puls} new PUL annotations to cluster table")
-        return
+    #     print(f"Added {new_puls} new PUL annotations to cluster table")
+    #     return
 
 
     def process_clusters(self):
         self.filter_ani_table()
-        self.deduplicate_identical_sequences()
-        self.deduplicate_similar_sequences()
-        #self.add_pul_annotations()
+        self._deduplicate_identical_sequences()
+        self._deduplicate_similar_sequences()
         self.clusters_table = merge_overlapping_puls(self.clusters_table, keep_original=False)
         print(self.clusters_table.select("sequence_id").unique().shape[0], "unique sequences in final cluster table")
 
         return self.clusters_table
 
+    def save_cluster_table(self, output_path):
+        self.clusters_table.write_csv(output_path, separator='\t')
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Filter OrthoANI table for ANI >= 99% and query != reference")
+    parser = argparse.ArgumentParser(description="Use OrthoANI table to deduplicate any sequences with ANI >= 99%")
     parser.add_argument("--input", "-i", help="Path to the ANI table file", default="src/data/results/orthoANI_output.txt")
+    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
+    parser.add_argument("--output", "-o", help="Path to save the deduplicated cluster table", default="src/data/results/clusters_deduplicated.tsv")
     args = parser.parse_args()
 
-    orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
-    new_cluster_table = orthiANI_processor.process_clusters()
-    new_cluster_table.write_csv("src/data/results/clusters_deduplicated.tsv", separator='\t')
+    orthoANI_processor = orthoANIProcessor(args.input, args.clusters_table)
+    new_cluster_table = orthoANI_processor.process_clusters()
+    orthoANI_processor.save_cluster_table(args.output)
 
     # new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
-    # orthiANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
-    # ani_table = orthiANI_processor.filter_ani_table()
+    # orthoANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
+    # ani_table = orthoANI_processor.filter_ani_table()
     # remaining_sequences = new_cluster_table.select("sequence_id").unique()
     # ani_table = ani_table.join(remaining_sequences.rename({"sequence_id": "shorter"}), on="shorter", how="semi").join(remaining_sequences.rename({"sequence_id": "longer"}), on="longer", how="semi")
     # print(ani_table)

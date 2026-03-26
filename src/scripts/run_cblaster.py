@@ -40,6 +40,9 @@ class CblasterProcessor:
         labeled_table = join_gene_and_PUL_table(gene_table=self.gene_table, cluster_table=self.clusters_table).group_by("cluster_id")
         all_genes = SeqIO.index("src/data/genecat_output/call_genes/genome.genes.faa", "fasta")
         for cluster_id, group in tqdm(labeled_table, desc="Extracting PUL genes", ):
+            if cluster_id[0] is None:
+                continue
+
             out_file = f"{self.pul_genes_path}/{cluster_id[0]}.fasta"
             genes = []
             for row in group.select("protein_id", "cluster_id").iter_rows():

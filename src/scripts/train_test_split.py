@@ -1,4 +1,5 @@
 from pathlib import Path
+import argparse
 import polars
 import numpy as np
 from sklearn.model_selection import GroupKFold
@@ -6,10 +7,10 @@ from sklearn.cluster import AgglomerativeClustering, HDBSCAN
 
 
 class DatasetSplitter:
-    def __init__(self, clusters_table: polars.DataFrame, ani_table: polars.DataFrame):
+    def __init__(self, clusters_table: polars.DataFrame, ani_table: polars.DataFrame, ani_threshold: float):
         self.clusters_table = clusters_table
         self.ani_table = self._process_ani_table(ani_table)
-        self.ani_threshold = 90
+        self.ani_threshold = ani_threshold
 
 
     def _process_ani_table(self, ani_table):
@@ -43,7 +44,7 @@ class DatasetSplitter:
         return ani_matrix
 
 
-    def cluster_on_ANI(self):
+    def _cluster_on_ANI(self):
         ani_queries = self.ani_table.select("query").to_series()
         ani_matrix = self.ani_table.drop("query").to_numpy()
         distance = 1 - (ani_matrix / 100)
@@ -66,7 +67,7 @@ class DatasetSplitter:
         if not output_dir.exists():
             output_dir.mkdir(parents=True)
 
-        labels = self.cluster_on_ANI()
+        labels = self._cluster_on_ANI()
         clusters_with_labels = self.clusters_table.join(labels, on="sequence_id", how="left").sort(["ani_cluster_id", "cluster_id"])
         groups = clusters_with_labels.select("ani_cluster_id").to_series()
         X = clusters_with_labels.select("cluster_id").to_series()
@@ -85,15 +86,21 @@ class DatasetSplitter:
             test_data.write_csv(f"{output_dir}/test_fold_{i}.tsv", separator='\t')
 
 
-def main():
+def main(clusters_table_path: str, k: int, ani_threshold: float):
+    clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
     ani_table = polars.read_csv("src/data/results/orthoANI_output.txt", separator='\t', has_header=False)
-    clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
-    splitter = DatasetSplitter(clusters_table, ani_table).split_dataset(k=5, output_dir=Path("src/data/splits/"))
+    splitter = DatasetSplitter(clusters_table, ani_table, ani_threshold)
+    splitter.split_dataset(k=k, output_dir=Path("src/data/splits/"))
 
 
 if __name__ == "__main__":
-    main()
-    
+    parser = argparse.ArgumentParser(description="Split dataset into train and test sets based on ANI clustering")
+    parser.add_argument("-i", "--input", type=str, default="src/data/results/clusters_deduplicated.tsv", help="Path to the clusters table")
+    parser.add_argument("--k", type=int, default=5, help="Number of folds for cross-validation")
+    parser.add_argument("--ani_threshold", type=float, default=90.0, help="ANI threshold for clustering")
+
+    args = parser.parse_args()
+    main(args.input, args.k, args.ani_threshold)
 
 
 

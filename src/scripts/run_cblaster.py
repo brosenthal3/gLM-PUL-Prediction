@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 import subprocess
 import argparse
+from pathlib import Path
 
 class CblasterProcessor:
     def __init__(self, clusters_table_path: str, gene_table_path: str, cblaster_output_path: str, email: str):
@@ -62,6 +63,7 @@ class CblasterProcessor:
             cluster_id = filename.split("/")[-1].split(".")[0]
             # only run cblaster if output file doesn't already exist, to avoid rerunning on already processed clusters
             if not filename.endswith(".fasta") or Path(f"{self.cblaster_output_path}/{cluster_id}.csv").exists():
+                print(f"Skipping {cluster_id}, already processed")
                 continue
 
             self.run_cblaster(f"{self.pul_genes_path}/{filename}", cluster_id)

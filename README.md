@@ -37,7 +37,7 @@ sequence_length > 100000
 ```
 This resulted in 131 sequences being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99%) and sequence length (max taken). Replaced 67 sequences, to a new total of 384 sequences. 
 
-All-vs-all OrthoANI was used to find any overly similar sequences, so they can be de-duplicated. The ANI table is also used for train/test splitting. 
+All-vs-all **OrthoANI** was used to find any overly similar sequences, so they can be de-duplicated. The ANI table is also used for train/test splitting. 
 92 sequences de-duplicated.
 
 ### PULpy
@@ -45,3 +45,29 @@ PULpy used as extra annotations for bacteriodata sequences. The tool did not run
 1. `Snakefile` and all files in `scripts/` contained mismatching indentations (spaces and tabs), so all tabs were replaced by spaces.
 2. `run_pulpy.sh` script was written, including all preparation scripts from the original `README.md`. Changes: all wget commands were added a `--no-check-certificate` flag, download links for dbCAN HMMs was updated to the current domain where the data is hosted (http://pro.unl.edu instead of depracated http://bcb.unl.edu).
 3. Dependencies (snakemake and misceallaneous perl dependencies) were added to the environment definition at `envs/PULpy.yaml`.
+
+### cblaster
+cblaster used to generate additional annotations for homologous PULs across the sequences in the dataset. The search is done using the following filters:
+``` 
+-min_eval 1.0e-9 -min_identity 70 -min_coverage 75 --gap_size 5000 --min_hits 2
+``` 
+All hits were filtered based on the number of genes from the query that were also in the hit, requiring a mimimum of `70%` of the genes to be present.
+
+### Train-test split
+Train-test splits are created in the `train_test_split.py` script. 
+
+The script uses the ANI-table to perform HDBSCAN clustering, with a threshold of `90%`. Then grouped k-folds are created using `GroupKFold` from `sklearn.model_selection`.
+
+## Running preprocessing scripts:
+Order of scripts is currently as follows:
+```bash
+1) data_collection.py
+2) slurm_run_gtdbtk.sh # potentially configuration required for hpc
+3) orthoANI.py
+4) data_collection.py # again... still need to fix is so that these two can be ran sequentially
+5) deduplicate.py
+6) run_cblaster.py -rc -po
+7) PULpy-master # need to run snakemake inside directory
+8) integrate_pulpy.py
+9) train_test_split.py
+```

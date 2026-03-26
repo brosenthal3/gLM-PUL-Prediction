@@ -9,6 +9,7 @@
     # run cblaster with PUL sequences as query against diamond db, output in tabular format
     # parse cblaster output and integrate into clusters table
 
+    # cblaster config --email b.rosenthal@lumc.nl
     # cblaster makedb src/data/genomes/combined_genomes.gb -n cblasterdb
 
 import polars
@@ -25,6 +26,7 @@ class CblasterProcessor:
         self.gene_table = polars.read_parquet(gene_table_path)
         self.cblaster_output_path = cblaster_output_path
         self.pul_genes_path = "src/data/puls_genes"
+        self.database = "./src/data/cblasterdb"
 
 
     def write_genes_fasta(self):
@@ -48,22 +50,23 @@ class CblasterProcessor:
 
     
     def run_cblaster(self, filename: str, cluster_id: str):
-        cmd = f"cblaster search -m local -db cblasterdb.dmnd -qf {filename} -b {self.cblaster_output_path}/{cluster_id}.csv -bde ','"
+        filters = "-me 1.09e-9 -mi 70 -mc 75 -g 5000 -mh 2"
+        cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {self.cblaster_output_path}/{cluster_id}.csv -bde ',' " + filters
         subprocess.run(cmd, shell=True, check=True)
 
     
     def make_cblaster_db(self):
-        if os.path.exists("cblasterdb.dmnd"):
+        if os.path.exists(f"{self.database}.dmnd"):
             print("Cblaster database already exists, skipping...")
             return
 
-        cmd = "cblaster makedb src/data/genomes/genbank_genomes/*.gb -n cblasterdb --force -b 20"
+        cmd = f"cblaster config --email b.rosenthal@lumc.nl && cblaster makedb src/data/genomes/genbank_genomes/*.gb -n {self.database} --force -b 20"
         subprocess.run(cmd, shell=True, check=True)
 
     
     def run_cblaster_on_all_genes(self):
         os.makedirs(self.cblaster_output_path, exist_ok=True)
-        for filename in tqdm(os.listdir(self.pul_genes_path)[:5], desc="Running cblaster on PUL genes"):
+        for filename in tqdm(os.listdir(self.pul_genes_path), desc="Running cblaster on PUL genes"):
             if not filename.endswith(".fasta"):
                 continue
 
@@ -83,7 +86,7 @@ class CblasterProcessor:
                     polars.lit(filename.split("/")[-1].split(".")[0]).alias("cluster_id"), 
                 )
                 .rename({"Scaffold": "sequence_id", "Start": "start", "End": "end"})
-                .filter(polars.col("total_hits") == num_genes)
+                .filter(polars.col("total_hits") >= num_genes*0.7)
                 .select("sequence_id", "cluster_id", "start", "end")
             )
             cblaster_results.append(df)

@@ -45,7 +45,11 @@ class CblasterProcessor:
     def run_cblaster(self, filename: str, cluster_id: str):
         filters = "-me 1.0e-9 -mi 70 -mc 75 -g 5000 -mh 2"
         cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {self.cblaster_output_path}/{cluster_id}.csv -bde ',' " + filters
-        subprocess.run(cmd, shell=True, check=True)
+        try:
+            subprocess.run(cmd, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error running cblaster for cluster {cluster_id}: {e}")
+            return
 
     
     def make_cblaster_db(self):

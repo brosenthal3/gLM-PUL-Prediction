@@ -1,17 +1,3 @@
-# requires: 
-    # conda install -c bioconda -c conda-forge diamond=2.1.24
-    # pip install cblaster
-
-# stepwise approach
-    # create 1 fasta file with all PUL sequences
-    # make cblaster db from genomes/combined_genomes.gb
-    # make diamond db
-    # run cblaster with PUL sequences as query against diamond db, output in tabular format
-    # parse cblaster output and integrate into clusters table
-
-    # cblaster config --email b.rosenthal@lumc.nl
-    # cblaster makedb src/data/genomes/combined_genomes.gb -n cblasterdb
-
 import polars
 from utility_scripts import join_gene_and_PUL_table, recompute_length_percentage
 from data_collection import merge_overlapping_puls
@@ -19,15 +5,17 @@ from Bio import SeqIO
 import os
 from tqdm import tqdm
 import subprocess
-
+import argparse
 
 class CblasterProcessor:
-    def __init__(self, clusters_table_path: str, gene_table_path: str, cblaster_output_path: str):
+    def __init__(self, clusters_table_path: str, gene_table_path: str, cblaster_output_path: str, email: str):
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.gene_table = polars.read_parquet(gene_table_path)
         self.cblaster_output_path = cblaster_output_path
+        self.email = email
+        # path specifications
         self.pul_genes_path = "src/data/puls_genes"
-        self.database = "./src/data/cblasterdb"
+        self.database = "src/data/cblasterdb"
 
 
     def write_genes_fasta(self):
@@ -39,7 +27,7 @@ class CblasterProcessor:
 
         labeled_table = join_gene_and_PUL_table(gene_table=self.gene_table, cluster_table=self.clusters_table).group_by("cluster_id")
         all_genes = SeqIO.index("src/data/genecat_output/call_genes/genome.genes.faa", "fasta")
-        for cluster_id, group in tqdm(labeled_table, desc="Extracting PUL genes", ):
+        for cluster_id, group in tqdm(labeled_table, desc="Extracting PUL genes", total=self.clusters_table.shape[0]):
             if cluster_id[0] is None:
                 continue
 
@@ -64,7 +52,7 @@ class CblasterProcessor:
             print("Cblaster database already exists, skipping...")
             return
 
-        cmd = f"cblaster config --email b.rosenthal@lumc.nl && cblaster makedb src/data/genomes/genbank_genomes/*.gb -n {self.database} --force -b 20"
+        cmd = f"cblaster config --email {self.email} && cblaster makedb src/data/genomes/genbank_genomes/*.gb -n {self.database} --force -b 20"
         subprocess.run(cmd, shell=True, check=True)
 
     
@@ -122,12 +110,28 @@ class CblasterProcessor:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run cblaster on PUL genes and integrate results into cluster table")
+    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/clusters_deduplicated.tsv")
+    parser.add_argument("--gene_table", "-g", help="Path to the gene table file", default="src/data/genecat_output/preprocess_output/genome.genes.parquet")
+    parser.add_argument("--cblaster_output", "-o", help="Path to save the cblaster output files", default="src/data/cblaster_output")
+    parser.add_argument("--run_cblaster", "-rc", action="store_true", help="Whether to run cblaster or just process existing output files")
+    parser.add_argument("--process_output", "-po", action="store_true", help="Whether to process cblaster output files and integrate into cluster table")
+    parser.add_argument("--gene_threshold", "-gt", type=float, default=0.7, help="Minimum percentage of genes in cluster that must have hits in cblaster to be considered a hit")
+    parser.add_argument("--email", "-e", type=str, default="b.rosenthal@lumc.nl", help="Email address to use for cblaster configuration")
+    args = parser.parse_args()
+
     cblaster_processor = CblasterProcessor(
-        clusters_table_path="src/data/results/clusters_deduplicated.tsv",
-        gene_table_path="src/data/genecat_output/preprocess_output/genome.genes.parquet",
-        cblaster_output_path="src/data/cblaster_output"
+        clusters_table_path=args.clusters_table,
+        gene_table_path=args.gene_table,
+        cblaster_output_path=args.cblaster_output,
+        email=args.email,
     )
-    #cblaster_processor.write_genes_fasta()
-    #cblaster_processor.make_cblaster_db()
-    #cblaster_processor.run_cblaster_on_all_genes()
-    cblaster_processor.process_cblaster_output()
+    if args.run_cblaster:
+        # run cblaster on all genes in all clusters and save output files
+        cblaster_processor.write_genes_fasta()
+        cblaster_processor.make_cblaster_db()
+        cblaster_processor.run_cblaster_on_all_genes()
+
+    if args.process_output:
+        # read cblaster output files, filter for hits with at least 70% of genes in cluster, and integrate into cluster table
+        cblaster_processor.process_cblaster_output()

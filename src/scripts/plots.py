@@ -206,7 +206,7 @@ class Plotter:
     def get_bins(self, labeled_table):
         bins = np.unique(
             np.logspace(
-                start=np.log2(labeled_table['n_genes'].min()),
+                start=1,
                 stop=np.log2(80),
                 base=2,
                 num=20,
@@ -222,8 +222,8 @@ class Plotter:
 
 
     def plot_pul_gene_count(self):
-        pulpy_table = self.clusters_table.filter(polars.col("cluster_id").str.contains("PULpy"))
-        experimental_table = self.clusters_table.filter(~polars.col("cluster_id").str.contains("PULpy"))
+        pulpy_table = self.clusters_table.filter(polars.col("database").str.contains("PULpy"))
+        experimental_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator="\t", infer_schema_length=600)
 
         pulpy_table = self.get_n_genes(pulpy_table)
         experimental_table = self.get_n_genes(experimental_table)

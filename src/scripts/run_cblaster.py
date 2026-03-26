@@ -48,7 +48,7 @@ class CblasterProcessor:
 
     
     def run_cblaster(self, filename: str, cluster_id: str):
-        cmd = f"cblaster search -m local -db cblasterdb.dmnd -qf {filename} -b {self.cblaster_output_path}_{cluster_id}.tsv -bde '\t'"
+        cmd = f"cblaster search -m local -db cblasterdb.dmnd -qf {filename} -b {self.cblaster_output_path}/{cluster_id}.csv -bde ','"
         subprocess.run(cmd, shell=True, check=True)
 
     
@@ -57,7 +57,7 @@ class CblasterProcessor:
             print("Cblaster database already exists, skipping...")
             return
 
-        cmd = "cblaster makedb src/data/genomes/combined_genomes.gb -n cblasterdb --force"
+        cmd = "cblaster makedb src/data/genomes/genbank_genomes/*.gb -n cblasterdb --force -b 20"
         subprocess.run(cmd, shell=True, check=True)
 
     
@@ -68,14 +68,14 @@ class CblasterProcessor:
                 continue
 
             cluster_id = filename.split("/")[-1].split(".")[0]
-            self.run_cblaster(filename, cluster_id)
+            self.run_cblaster(f"{self.pul_genes_path}/{filename}", cluster_id)
 
 
     def process_cblaster_output(self):
         # read all cblaster output files and concatenate into one dataframe
         cblaster_results = []
         for filename in os.listdir(self.cblaster_output_path):
-            df = polars.read_csv(f"{self.cblaster_output_path}/{filename}", separator='\t')
+            df = polars.read_csv(f"{self.cblaster_output_path}/{filename}", separator=',')
             num_genes = len(df.columns) - 4
             df = (
                 df.with_columns(
@@ -119,4 +119,4 @@ if __name__ == "__main__":
     cblaster_processor.write_genes_fasta()
     cblaster_processor.make_cblaster_db()
     cblaster_processor.run_cblaster_on_all_genes()
-    cblaster_processor.process_cblaster_output()
+    #cblaster_processor.process_cblaster_output()

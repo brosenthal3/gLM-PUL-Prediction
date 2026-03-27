@@ -126,7 +126,10 @@ if __name__ == "__main__":
     parser.add_argument("--gene_threshold", "-gt", type=float, default=0.7, help="Minimum percentage of genes in cluster that must have hits in cblaster to be considered a hit")
     parser.add_argument("--email", "-e", type=str, default="b.rosenthal@lumc.nl", help="Email address to use for cblaster configuration")
     args = parser.parse_args()
-
+    if not args.run_cblaster and not args.process_output:
+        print("Please specify at least one of --run_cblaster or --process_output")
+        exit(1)
+    
     cblaster_processor = CblasterProcessor(
         clusters_table_path=args.clusters_table,
         gene_table_path=args.gene_table,

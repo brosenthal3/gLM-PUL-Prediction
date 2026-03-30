@@ -7,7 +7,7 @@ import polars
 from Bio import Entrez, SeqIO
 import numpy as np
 import gb_io
-from utility_scripts import request_summary, request_sequence
+from utility_scripts import get_length, get_sequence_lengths, request_summary, request_sequence, recompute_length_percentage
 from tqdm import tqdm
 
 EMAIL = 'b.rosenthal@lumc.com'
@@ -158,41 +158,6 @@ def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_c
     return merged_puls.sort('cluster_id').sort('merged')
 
 
-def get_length(acc):
-    # get esummary from ncbi
-    record = request_summary(acc)
-
-    if 'error' in record.keys():
-        # try getting full sequence and parsing length from there
-        record = request_sequence(acc)
-        length = record.split('\n')[0].split()[2]
-    else:
-        uid = record['result']['uids'][0]
-        length = record['result'][uid]['slen']
-
-    try:
-        length = int(length) 
-    except ValueError:
-        length = None
-
-    return length
-
-
-def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
-    lengths = []
-    for acc in tqdm(list(unique_accessions['sequence_id']), desc="Fetching sequence lengths"):
-        try:
-            length = get_length(acc)
-        except Exception as e:
-            print(f"Error fetching length for {acc}, skipping.")
-            length = None
-
-        lengths.append({'sequence_id': acc, 'length': length})
-        time.sleep(0.1)
-
-    return lengths
-
-
 def merge_blast_hits(combined_clusters, blast_output):
     # format output
     blast_output_valid = (
@@ -200,28 +165,70 @@ def merge_blast_hits(combined_clusters, blast_output):
         .filter(~polars.col('subject_accession').eq('NO_HIT'))
         .with_columns(
             polars.col('subject_start').cast(polars.Int64),
-            polars.col('subject_end').cast(polars.Int64)
+            polars.col('subject_end').cast(polars.Int64),
+            polars.col('query_start').cast(polars.Int64),
+            polars.col('query_end').cast(polars.Int64),
         )
-        .rename({
-            'subject_accession': 'sequence_id', 
-            'subject_start': 'start', 
-            'subject_end': 'end'
-        })
-        .select('cluster_id', 'sequence_id', 'start', 'end')
+        .select('query_accession', 'subject_accession', 'query_start', 'query_end', 'subject_start', 'subject_end', 'alignment_length')
     )
+    print(f"Found {blast_output_valid.shape[0]} valid BLAST hits for truncated genomes.")
 
-    # get lengths and percentage in PULs for blast hits
-    blast_output_with_lengths = merge_with_lengths(blast_output_valid, data_dir, lengths_path=f"{data_dir}/results/blast_sequence_lengths.tsv")
-    # rename again to prepare for merging
-    blast_output_with_lengths = blast_output_with_lengths.rename({
-        'sequence_id': 'new_sequence_id', 
-        'start': 'new_start', 
-        'end': 'new_end', 
-        'length': 'new_length', 
-        'pul_length_sum': 'new_pul_length_sum',
-        'percentage_in_puls': 'new_percentage_in_puls'
-    })
-    clusters_with_blast = combined_clusters.join(blast_output_with_lengths, on='cluster_id', how='left')
+    # Join combined_clusters with blast results on sequence_id matching query_accession
+    clusters_with_blast = (
+        combined_clusters
+        .join(
+            blast_output_valid.rename({'query_accession': 'join_key'}),
+            left_on='sequence_id',
+            right_on='join_key',
+            how='left',
+            suffix='_blast'
+        )
+        # get new positions
+        .with_columns([
+            polars.when(polars.col('subject_accession').is_not_null())
+            .then((polars.col('start') - polars.col('query_start') + polars.col('subject_start')).cast(polars.Int64))
+            .otherwise(polars.col('start'))
+            .alias('new_start'),
+            
+            polars.when(polars.col('subject_accession').is_not_null())
+            .then((
+                (polars.col('start') - polars.col('query_start') + polars.col('subject_start')) +
+                (polars.col('end') - polars.col('start'))
+            ).cast(polars.Int64))
+            .otherwise(polars.col('end'))
+            .alias('new_end'),
+        ])
+        # Update columns with blast results where available
+        .with_columns([
+            polars.when(polars.col('subject_accession').is_not_null())
+            .then(polars.col('subject_accession'))
+            .otherwise(polars.col('sequence_id'))
+            .alias('sequence_id_updated'),
+            
+            polars.when(polars.col('subject_accession').is_not_null())
+            .then(polars.col('alignment_length'))
+            .otherwise(polars.col('length'))
+            .alias('length_updated'),
+        ])
+        # Select and rename back to original column names, dropping temporary blast columns
+        .select([
+            polars.col('cluster_id'),
+            polars.col('sequence_id_updated').alias('sequence_id'),
+            polars.col('new_start').alias('start'),
+            polars.col('new_end').alias('end'),
+            polars.col('tax_id'),
+            polars.col('database'),
+            polars.col('merged'),
+            polars.col('length_updated').alias('length').cast(polars.Int64),
+            polars.col('pul_length_sum').cast(polars.Int64),
+            polars.col('percentage_in_puls').cast(polars.Float64),
+            polars.when(polars.col('subject_accession').is_not_null())
+            .then(polars.lit(True))
+            .otherwise(polars.lit(False))
+            .alias('blast_status'),
+        ])
+    )
+    clusters_with_blast = recompute_length_percentage(clusters_with_blast)
 
     return clusters_with_blast
 
@@ -334,7 +341,6 @@ def get_genomes(data_dir, ids, query_type="genbank", separate=False, output_path
 
 def run_genomes_fetcher(data_dir, output_path, query_type="genbank", separate=False):
     separate = "--separate" if separate else ""
-
     cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/results/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type {query_type} {separate}"
     subprocess.run(cmd, shell=True, check=True)
 
@@ -360,58 +366,6 @@ def fix_non_genbank_genome(data_dir):
         SeqIO.write(full_assembly.get("Ga0139390_150"), f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa", "fasta")
     else:
         print("Ga0139390_150 fasta file is valid, no need to replace.")
-
-
-def filter_clusters_table(clusters_table):
-    # remove original sequences that were later merged
-    clusters_table = (clusters_table.filter((polars.col("merged") == "merged") | polars.col("merged").is_null()))
-    original_cols = [col for col in clusters_table.columns if not "new" in col]
-    fixed_cols = ["cluster_id", "tax_id", "database", "merged", "blast_status"]
-    new_cols = [col for col in clusters_table.columns if "new" in col]
-    rename_map = {old: old.replace("new", "").strip("_") for old in new_cols if "new" in old}
-
-    # get rows where blast_status is null or False, and select original columns
-    clusters_table_original = (
-        clusters_table
-        .filter(polars.col("blast_status") == False)
-        .select(original_cols)
-    )
-    not_replace = (clusters_table_original.select('sequence_id').unique().to_series().to_list())
-
-    # get rows to replace by blast results, replace with new columns
-    clusters_table_blasted = (
-        clusters_table
-        .filter(polars.col("blast_status") == True)
-        .select(fixed_cols + new_cols)
-        .rename(rename_map)
-        .select(original_cols)
-    )
-    print(f"Found {clusters_table_blasted.select('sequence_id').n_unique()} sequences to replace.")
-    clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
-    clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged')
-
-    # recalculate sum of length of PULs per genome and percentage of genome in PULs
-    pul_lengths = (
-        clusters_table_full
-        .group_by('sequence_id')
-        .agg(
-            (polars.col('end') - polars.col('start')).sum().alias('pul_length_sum'),
-            polars.col('length').first(),
-        ) # length of all puls in sequence, full sequence length
-        .with_columns((100 * polars.col('pul_length_sum') / polars.col('length')).alias('percentage_in_puls')) # % of puls in genome
-        .select('sequence_id', 'length', 'pul_length_sum', 'percentage_in_puls') # select only relevant columns
-    )
-    # merge back with cluster table
-    clusters_table_filtered = (
-        clusters_table_full
-        .drop(['length', 'pul_length_sum', 'percentage_in_puls'])
-        .join(pul_lengths, on='sequence_id', how='left')
-        .sort("cluster_id")
-        .sort("blast_status")
-        .sort("merged")
-        .select(original_cols)
-    )
-    return clusters_table_filtered
 
 
 def separate_classification(classification: polars.Expr, index) -> polars.Expr:
@@ -481,7 +435,7 @@ def main(data_dir, filter_truncated):
     dbcan_clusters = get_dbcan_clusters(data_dir).select(selected_cols).with_columns(polars.lit("dbcan").alias("database"))
     puldb_clusters = get_puldb_clusters(data_dir).select(selected_cols).with_columns(polars.lit("puldb").alias("database"))
     combined_clusters = polars.concat([dbcan_clusters, puldb_clusters], how='vertical')
-    combined_clusters = merge_overlapping_puls(combined_clusters)
+    combined_clusters = merge_overlapping_puls(combined_clusters, keep_original=False)
 
     # get length and percentage of genome in PULs
     combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/results/sequence_lengths.tsv").sort('cluster_id').sort('merged')
@@ -489,35 +443,32 @@ def main(data_dir, filter_truncated):
     print(f"Found {combined_clusters.select('sequence_id').unique().shape[0]} unique sequences.")
 
     # STEP 2: BLAST truncated genomes to find potential longer versions
-    truncated_genomes = combined_clusters.filter(polars.col('length')<100000)
-    truncated_genomes_puls = combined_clusters.join(truncated_genomes.select('sequence_id'), left_on='sequence_id', right_on='sequence_id', how='semi')
-    truncated_genomes_puls.write_csv(f"{data_dir}/results/truncated_genomes.tsv", separator='\t')
-    print(f"Found {truncated_genomes.select('sequence_id').n_unique()} sequences shorter than 100kb")
-    # run blast
+    combined_clusters.filter(polars.col('length')<100000).write_csv(f"{data_dir}/results/truncated_genomes.tsv", separator='\t')
     blast_truncated_genomes(data_dir)    
     blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
-    # add whether to select blast results or original data
-    combined_clusters_blasted = (
-        combined_clusters_blasted
-        .with_columns(
-            (
-                (polars.col("new_length").gt(polars.col("length"))) # new length is greater than original length
-                &
-                ((polars.col("new_end") - polars.col("new_start")) >= ((polars.col("end") - polars.col("start")) * 0.5)) # blast hit covers at least 50% of original PUL length
-            ).cast(polars.Boolean).alias("blast_status")
-        )
-        .with_columns(polars.col("blast_status").fill_null(False))
-    )
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
     
     # STEP 3: download genomes for later steps 
     # create file of unique accession ids from cluster tables
-    unique_ids_total = combined_clusters_blasted['sequence_id'].append(combined_clusters_blasted['new_sequence_id']).unique()
-    unique_accessions = polars.DataFrame(unique_ids_total).sort('sequence_id').filter(polars.col('sequence_id').is_not_null())
-    unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
+    current_unique_accessions = polars.read_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
+
+    unique_accessions = (
+        blast_output.select("subject_accession")
+        .vstack(combined_clusters.select(polars.col("sequence_id").alias("subject_accession")).unique())
+        .unique()
+        .rename({"subject_accession": "sequence_id"})
+    )
+
+    print(unique_accessions)
+    extra_genomes = unique_accessions.join(current_unique_accessions, on="sequence_id", how="anti")
+    print(extra_genomes)
+    raise NotImplementedError
+
+    unique_accessions.filter(polars.col('sequence_id').is_not_null()).write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")
+
     # get genome sequences, in gb format and fasta format for gtdb-tk and pulpy
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/combined_genomes.gb", query_type="genbank", separate=False)
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", query_type="fasta", separate=True)
@@ -526,24 +477,20 @@ def main(data_dir, filter_truncated):
     # STEP 4: add taxonomic annotation from GTDB-Tk classification (gtdb-tk ran separately)
     # merge taxonomic annotation into clusters table, both on sequence_id and new_sequence_id
     taxonomic_annotation = get_taxonomic_annotation("src/data/results/gtdbtk.bac120.summary.tsv")
-    combined_clusters_blasted = (
+    combined_clusters_gtdb = (
         combined_clusters_blasted
         .join(taxonomic_annotation, on="sequence_id", how="left")
-        .join(taxonomic_annotation, left_on="new_sequence_id", right_on="sequence_id", how="left", suffix="_new")
     )
-
-    # STEP 4.1: select blast or original data
-    clusters_table_filtered = filter_clusters_table(combined_clusters_blasted)
-    clusters_table_filtered.write_csv("src/data/results/combined_clusters_blasted_gtdb_filtered.tsv", separator='\t')
+    combined_clusters_gtdb.write_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t')
 
     # STEP 5: select genomes for running PULpy
-    selected_genomes = clusters_table_filtered.filter(polars.col('sequence_id').is_not_null()).select('sequence_id').unique()
-    print(f"\nAfter filtering, there are {clusters_table_filtered.shape[0]} PULs and {selected_genomes.shape[0]} unique sequences in the final cluster table.")
+    selected_genomes = combined_clusters_gtdb.filter(polars.col('sequence_id').is_not_null()).select('sequence_id').unique()
+    print(f"\nAfter filtering, there are {combined_clusters_gtdb.shape[0]} PULs and {selected_genomes.shape[0]} unique sequences in the final cluster table.")
     move_genomes_for_pulpy(data_dir, selected_genomes)
 
     # STEP 6: get genomes for running cblaster
-    # get_genomes(data_dir, selected_genomes['sequence_id'].to_list(), output_path="genomes/genbank_genomes", query_type="genbank", separate=True)
-    # subprocess.run(f"rm {data_dir}/genomes/genbank_genomes/Ga0139390_150.gb && cp {data_dir}/genomes/Ga0139390_150.gb {data_dir}/genomes/genbank_genomes/", shell=True, check=True)
+    get_genomes(data_dir, selected_genomes['sequence_id'].to_list(), output_path="genomes/genbank_genomes", query_type="genbank", separate=True)
+    subprocess.run(f"rm {data_dir}/genomes/genbank_genomes/Ga0139390_150.gb && cp {data_dir}/genomes/Ga0139390_150.gb {data_dir}/genomes/genbank_genomes/", shell=True, check=True)
 
 
 if __name__ == "__main__":

@@ -165,7 +165,7 @@ def main():
         "-o", 
         "--output", 
         type=str, 
-        default="src/data/results/blast_full_sequences.tsv",
+        default="src/data/results/blast_results.tsv",
         help="Output file"
     )
     parser.add_argument(

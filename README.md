@@ -63,8 +63,8 @@ Order of scripts is currently as follows:
 ```bash
 1) data_collection.py
 2) slurm_run_gtdbtk.sh # potentially configuration required for hpc
-3) orthoANI.py
-4) data_collection.py # again... still need to fix is so that these two can be ran sequentially
+3) data_collection.py # again... still need to fix is so that these two can be ran sequentially
+4) orthoANI.py
 5) deduplicate.py
 6) run_cblaster.py -rc -po
 7) PULpy-master # need to run snakemake inside directory

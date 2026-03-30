@@ -29,6 +29,41 @@ def request_sequence(acc, db="nuccore"):
     return record
 
 
+def get_length(acc):
+    # get esummary from ncbi
+    record = request_summary(acc)
+
+    if 'error' in record.keys():
+        # try getting full sequence and parsing length from there
+        record = request_sequence(acc)
+        length = record.split('\n')[0].split()[2]
+    else:
+        uid = record['result']['uids'][0]
+        length = record['result'][uid]['slen']
+
+    try:
+        length = int(length) 
+    except ValueError:
+        length = None
+
+    return length
+
+
+def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
+    lengths = []
+    for acc in tqdm(list(unique_accessions['sequence_id']), desc="Fetching sequence lengths"):
+        try:
+            length = get_length(acc)
+        except Exception as e:
+            print(f"Error fetching length for {acc}, skipping.")
+            length = None
+
+        lengths.append({'sequence_id': acc, 'length': length})
+        time.sleep(0.1)
+
+    return lengths
+
+
 def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 50,) -> polars.DataFrame:
     labled_gene_table = (
         cluster_table

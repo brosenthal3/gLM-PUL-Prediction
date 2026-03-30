@@ -500,7 +500,10 @@ def main(data_dir, filter_truncated):
     # add whether to select blast results or original data
     combined_clusters_blasted = (
         combined_clusters_blasted
-        .with_columns((polars.col("new_length").gt(polars.col("length"))).alias("blast_status").cast(polars.Boolean))
+        .with_columns(
+            (polars.col("new_length").gt(polars.col("length"))) & # new length is greater than original length
+            ((polars.col("new_end") - polars.col("new_start")) >= ((polars.col("end") - polars.col("start")) * 0.9)) # blast hit covers at least 90% of original PUL length
+            .alias("blast_status").cast(polars.Boolean))
         .with_columns(polars.col("blast_status").fill_null(False))
     )
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')

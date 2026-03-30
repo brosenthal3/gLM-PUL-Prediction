@@ -118,7 +118,7 @@ def main():
         genes="src/data/genecat_output/preprocess_output/genome.genes.parquet",
         features="src/data/genecat_output/preprocess_output/genome.features.parquet",
         clusters_dir="src/data/splits",
-        output_dir="src/results/gecco",
+        output_dir="src/data/results/gecco",
         hmms="src/data/hmms/Pfam35.hmm.gz" # make sure hmms are downloaded and path is correct
     )
     handler.run_cross_validation(k=5)

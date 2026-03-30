@@ -45,6 +45,7 @@ class orthoANIProcessor:
                     polars.when(polars.col("longer").eq(ref)).then(polars.lit(query)).otherwise(polars.col("longer")).alias("longer"),
                 )
                 replaced_sequences.append(ref)
+                print(f"Replaced {ref} with {query}")
 
         print(f"Replaced {len(replaced_sequences)} identical sequences with their cluster representative")
         print(merged_clusters_table.select("sequence_id").unique().shape[0], "unique sequences in merged cluster table")
@@ -113,9 +114,13 @@ class orthoANIProcessor:
 
     def replace_puls(self, old_id, new_id):
         # get sequences
-        genomes_path = Path("src/data/genomes/selected_genomes/")
+        genomes_path = Path("src/data/genomes/gtdb_genomes/")
         old_sequence = read(genomes_path / f"{old_id}.fa", "fasta")
         subject_path = genomes_path / f"{new_id}.fa"
+        if not subject_path.exists():
+            print(f"Subject genome {new_id} not found, skipping replacement for {old_id}")
+            return 1
+
         fails = 0
 
         # group by old_id
@@ -133,6 +138,7 @@ class orthoANIProcessor:
             if blast_result is None:
                 # remove PUL from cluster table
                 self.clusters_table = self.clusters_table.filter(~polars.col("cluster_id").eq(pul[0]))
+                print(f"Failed for {old_id} vs {new_id}")
                 #print(f"No good BLAST hit found for PUL {pul[0]}, removing from cluster table")
                 fails += 1
                 continue
@@ -210,57 +216,6 @@ class orthoANIProcessor:
             return {}
         else:
             return subject_info[0].to_dict()
-
-    #### depricated, using cblaster instead ####
-    # def add_pul_annotations(self):
-    #     puls = self.clusters_table
-    #     # get list of all genomes in the clusters table, with their paths
-    #     genomes_path = Path("src/data/genomes/selected_genomes/")
-    #     valid_genomes = set(puls.select("sequence_id").unique().to_series())
-    #     genomes_paths = [genome for genome in genomes_path.iterdir() if genome.stem in valid_genomes]
-
-    #     # go through all puls
-    #     new_puls = 0
-    #     for pul in tqdm(puls.iter_rows(), total=puls.shape[0], desc="Adding PUL annotations"):
-    #         start = min(pul[2], pul[3])
-    #         end = max(pul[2], pul[3])
-    #         pul_genome_id = pul[1]
-    #         pul_sequence = read(f"{genomes_path}/{pul_genome_id}.fa", "fasta")[start:end]
-    #         puls_found = 0
-    #         # go through all other genomes 
-    #         for subject in genomes_paths:
-    #             # skip if subject genome is the same as the PUL genome
-    #             if subject.stem == pul_genome_id:
-    #                 continue
-
-    #             # run blast search of pul against subject genome, get best hit coordinates
-    #             blast_result = self.blast_pul(pul_sequence, subject)
-    #             if blast_result is None:
-    #                 continue
-
-    #             new_start, new_end = min(blast_result), max(blast_result)
-    #             # get taxonomic info from new sequence_id
-    #             subject_info = self.get_subject_info(subject.stem)
-    #             # add new row to cluster table with pul coordinates and sequence_id of subject
-    #             # cluster_id	sequence_id	start	end	tax_id	database	merged	length	pul_length_sum	percentage_in_puls	blast_status	domain	phylum	class	order	family	genus	species
-    #             new_row = {
-    #                 "cluster_id": f"{pul[0]}_{subject.stem}",
-    #                 "sequence_id": subject.stem,
-    #                 "start": new_start,
-    #                 "end": new_end,
-    #                 "database": "blast",
-    #                 "merged": False,
-    #             }
-    #             new_row.update(subject_info)
-    #             new_row_df = polars.DataFrame(new_row, schema=self.clusters_table.schema)
-    #             self.clusters_table = self.clusters_table.vstack(new_row_df)
-    #             new_puls += 1
-    #             puls_found += 1
-            
-    #         print(f"Found {puls_found} new PULs for {pul[0]}")
-
-    #     print(f"Added {new_puls} new PUL annotations to cluster table")
-    #     return
 
 
     def process_clusters(self):

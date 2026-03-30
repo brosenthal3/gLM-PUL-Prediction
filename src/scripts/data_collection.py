@@ -386,6 +386,7 @@ def filter_clusters_table(clusters_table):
         .rename(rename_map)
         .select(original_cols)
     )
+    print(f"Found {clusters_table_blasted.select('sequence_id').n_unique()} sequences to replace.")
     clusters_table_full = clusters_table_original.vstack(clusters_table_blasted)
     clusters_table_full = merge_overlapping_puls(clusters_table_full, blast=True, keep_original=False).sort('merged')
 
@@ -501,9 +502,12 @@ def main(data_dir, filter_truncated):
     combined_clusters_blasted = (
         combined_clusters_blasted
         .with_columns(
-            (polars.col("new_length").gt(polars.col("length"))) & # new length is greater than original length
-            ((polars.col("new_end") - polars.col("new_start")) >= ((polars.col("end") - polars.col("start")) * 0.9)) # blast hit covers at least 90% of original PUL length
-            .alias("blast_status").cast(polars.Boolean))
+            (
+                (polars.col("new_length").gt(polars.col("length"))) # new length is greater than original length
+                &
+                ((polars.col("new_end") - polars.col("new_start")) >= ((polars.col("end") - polars.col("start")) * 0.5)) # blast hit covers at least 50% of original PUL length
+            ).cast(polars.Boolean).alias("blast_status")
+        )
         .with_columns(polars.col("blast_status").fill_null(False))
     )
     combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')

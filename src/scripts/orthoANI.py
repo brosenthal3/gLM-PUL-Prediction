@@ -16,7 +16,7 @@ def calculate_ani_table(genomes_list):
 
 
 def main(genomes_dir, output):
-    genomes_list = [str(path) for path in Path(genomes_dir).glob("*.fa")][:10]
+    genomes_list = [str(path) for path in Path(genomes_dir).glob("*.fa")]
     print("computing pairwise ANI")
     ani_table = calculate_ani_table(genomes_list)
     print("writing to file")

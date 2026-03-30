@@ -346,16 +346,16 @@ def run_genomes_fetcher(data_dir, output_path, query_type="genbank", separate=Fa
 
 
 def fix_non_genbank_genome(data_dir):
-    # STEP 1: for gb files
-    cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if "Ga0139390_150" in result.stdout:
-        print("Ga0139390_150 is already in the .gb file.")
-    else:
-        print("Ga0139390_150 is not in the .gb file, adding it now.")
-        non_genbank_genome_path = get_non_genbank_genome(data_dir)
-        cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
-        subprocess.run(cmd, shell=True, check=True)
+    # STEP 1: for gb files, depr for now
+    # cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
+    # result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    # if "Ga0139390_150" in result.stdout:
+    #     print("Ga0139390_150 is already in the .gb file.")
+    # else:
+    #     print("Ga0139390_150 is not in the .gb file, adding it now.")
+    #     non_genbank_genome_path = get_non_genbank_genome(data_dir)
+    #     cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
+    #     subprocess.run(cmd, shell=True, check=True)
 
     # STEP 2: for fasta files
     non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
@@ -425,7 +425,6 @@ def move_genomes_for_pulpy(data_dir, selected_genomes):
             subprocess.run(cmd, shell=True, check=True)
 
 
-
 def main(data_dir, filter_truncated):
     # STEP 0: download files if not already present
     download_data_files(data_dir)
@@ -452,27 +451,27 @@ def main(data_dir, filter_truncated):
     
     # STEP 3: download genomes for later steps 
     # create file of unique accession ids from cluster tables
-    current_unique_accessions = polars.read_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
-
     unique_accessions = (
         blast_output.select("subject_accession")
         .vstack(combined_clusters.select(polars.col("sequence_id").alias("subject_accession")).unique())
         .unique()
         .rename({"subject_accession": "sequence_id"})
+        .filter(polars.col('sequence_id').is_not_null())
+        .filter(~polars.col('sequence_id').eq("NO_HIT"))
     )
-
-    print(unique_accessions)
-    extra_genomes = unique_accessions.join(current_unique_accessions, on="sequence_id", how="anti")
-    print(extra_genomes)
-    raise NotImplementedError
-
-    unique_accessions.filter(polars.col('sequence_id').is_not_null()).write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
+    unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")
 
-    # get genome sequences, in gb format and fasta format for gtdb-tk and pulpy
-    get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/combined_genomes.gb", query_type="genbank", separate=False)
+    # get genome sequences, in fasta format
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", query_type="fasta", separate=True)
     fix_non_genbank_genome(data_dir)
+
+    # get selected genomes for pulpy and orthoani
+    selected_genomes = combined_clusters_blasted.filter(polars.col('sequence_id').is_not_null()).select('sequence_id').unique()
+    move_genomes_for_pulpy(data_dir, selected_genomes)
+    # get genbank genomes for cblaster
+    get_genomes(data_dir, selected_genomes['sequence_id'].to_list(), output_path="genomes/genbank_genomes", query_type="genbank", separate=True)
+    subprocess.run(f"rm {data_dir}/genomes/genbank_genomes/Ga0139390_150.gb && cp {data_dir}/genomes/Ga0139390_150.gb {data_dir}/genomes/genbank_genomes/", shell=True, check=True)
 
     # STEP 4: add taxonomic annotation from GTDB-Tk classification (gtdb-tk ran separately)
     # merge taxonomic annotation into clusters table, both on sequence_id and new_sequence_id
@@ -483,14 +482,7 @@ def main(data_dir, filter_truncated):
     )
     combined_clusters_gtdb.write_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t')
 
-    # STEP 5: select genomes for running PULpy
-    selected_genomes = combined_clusters_gtdb.filter(polars.col('sequence_id').is_not_null()).select('sequence_id').unique()
-    print(f"\nAfter filtering, there are {combined_clusters_gtdb.shape[0]} PULs and {selected_genomes.shape[0]} unique sequences in the final cluster table.")
-    move_genomes_for_pulpy(data_dir, selected_genomes)
 
-    # STEP 6: get genomes for running cblaster
-    get_genomes(data_dir, selected_genomes['sequence_id'].to_list(), output_path="genomes/genbank_genomes", query_type="genbank", separate=True)
-    subprocess.run(f"rm {data_dir}/genomes/genbank_genomes/Ga0139390_150.gb && cp {data_dir}/genomes/Ga0139390_150.gb {data_dir}/genomes/genbank_genomes/", shell=True, check=True)
 
 
 if __name__ == "__main__":

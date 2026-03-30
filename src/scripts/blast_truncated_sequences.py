@@ -83,20 +83,6 @@ class BlastHandler:
             sacc, sstart, send, qstart, qend, evalue, pident, alignment_length = result
         else:
             sacc, sstart, send, qstart, qend, evalue, pident, alignment_length = "NO_HIT", "NA", "NA", "NA", "NA", "NA", "NA", "NA"
-            unsuccessful_accessions.append(accession)
-
-        # output.append({
-        #     "query_accession": accession,
-        #     "query_start": qstart,
-        #     "query_end": qend,
-        #     "tax_id": taxid,
-        #     "subject_accession": sacc,
-        #     "subject_start": sstart,
-        #     "subject_end": send,
-        #     "evalue": evalue,
-        #     "pident": pident,
-        #     "alignment_length": alignment_length
-        # })
 
         # write to file immediately to avoid losing results if script crashes and to keep track of progress
         with open(self.output_file, "a") as f:
@@ -106,6 +92,7 @@ class BlastHandler:
     def get_blast_results(self):
         # iterate over sequences
         accessions_table = self.cluster_table.select("sequence_id", "tax_id").unique()
+        print(f"Processing total of {accessions_table.shape[0]} unique sequences for BLAST.")
 
         for row in tqdm(accessions_table.iter_rows(named=True), total=accessions_table.shape[0]):
             accession = row["sequence_id"]
@@ -125,9 +112,9 @@ class BlastHandler:
 
             self.save_result(result)
             time.sleep(5) # being nice to NCBI
-        
-        print(f"Finished processing. Unsuccessful accessions: {len(unsuccessful_accessions)}")
 
+        print(f"Finished processing all sequences.")
+        
 
 # def get_pul_info(output, accession, cluster_id, start, end):
 #     for entry in output:

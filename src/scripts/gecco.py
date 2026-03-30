@@ -46,6 +46,9 @@ class GECCOHandler:
 
     def _train(self, train_clusters, genes, features, model_path):
         print(f"Starting training for fold {model_path.split('_')[-1]}...")
+        if os.path.exists(model_path):
+            print(f"Model path {model_path} already exists, skipping training.")
+            return
         # example: gecco -vv train --genes genes.tsv --features features.tsv --clusters clusters.tsv -o model
         cmd = f"gecco -vv train --genes {genes} --features {features} --clusters {train_clusters} -o {model_path}"
         subprocess.run(cmd, shell=True, check=True)
@@ -53,16 +56,29 @@ class GECCOHandler:
     
     def _predict(self, genome_path, model_path, output_path):
         print(f"Starting prediction for genome {Path(genome_path).stem}...")
+        # check output path
+        if os.path.exists(output_path):
+            print(f"Output path {output_path} already exists, skipping prediction.")
+            return
+
         # gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
         cmd = f"gecco run --model {model_path} --hmm {self.hmms} --genome {genome_path} -o {output_path}"
         subprocess.run(cmd, shell=True, check=True)
 
 
     def _evaluate(self, predictions_path, test_clusters):
-        # open all predictions
-        # concat to one dataframe
-        # compare with test_clusters; for each gene check pred vs true label, calculate metrics
-        pass
+        pred_clusters = []
+        for output_dir in os.listdir(predictions_path):
+            for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
+                if output_file.endswith(".clusters.tsv"):
+                    pred_path = os.path.join(predictions_path, output_dir, output_file)
+                    print(f"Reading predictions from {pred_path}...")
+                    pred_clusters.append(polars.read_csv(pred_path, separator='\t'))
+
+        pred_clusters = polars.concat(pred_clusters)
+        print(f"Total predicted clusters: {pred_clusters.shape[0]}")
+        test_clusters = polars.read_csv(test_clusters, separator='\t')
+
 
 
     def run_fold(self, train_clusters, test_clusters, fold):

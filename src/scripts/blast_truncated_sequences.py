@@ -77,7 +77,7 @@ class BlastHandler:
         return fasta_path
 
 
-    def save_result(self, result):
+    def save_result(self, result, accession, taxid):
         # save result, save NA if no hit found
         if result:
             sacc, sstart, send, qstart, qend, evalue, pident, alignment_length = result
@@ -110,7 +110,7 @@ class BlastHandler:
                 result = None
             fasta_path.unlink()
 
-            self.save_result(result)
+            self.save_result(result, accession, taxid)
             time.sleep(5) # being nice to NCBI
 
         print(f"Finished processing all sequences.")

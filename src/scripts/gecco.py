@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import urllib.request
 import tempfile
+from utility_scripts import join_gene_and_PUL_table
+from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
 
 
 class GECCOHandler:
@@ -72,36 +74,59 @@ class GECCOHandler:
             for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
                 if output_file.endswith(".clusters.tsv"):
                     pred_path = os.path.join(predictions_path, output_dir, output_file)
-                    print(f"Reading predictions from {pred_path}...")
                     pred_clusters.append(polars.read_csv(pred_path, separator='\t'))
 
-        pred_clusters = polars.concat(pred_clusters)
-        print(f"Total predicted clusters: {pred_clusters.shape[0]}")
+        pred_clusters = polars.concat(pred_clusters).with_columns(
+            polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
+        )
         test_clusters = polars.read_csv(test_clusters, separator='\t')
+        print(f"Total predicted clusters: {pred_clusters.shape[0]}")
+        print(f"Total test clusters: {test_clusters.shape[0]}")
 
+        # get all genes of test set
+        test_genes = (self.genes.join(test_clusters, on="sequence_id", how="semi"))
+        # label test genes
+        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
+        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
+        # join predicted clusters with test clusters
+        labeled_table = (
+            labeled_test_genes
+            .join(labeled_prediction_genes, on="protein_id", how="full", suffix="_pred")
+            .sort("is_PUL_pred", descending=False)
+            .with_columns(
+                polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
+                polars.when(polars.col("is_PUL_pred").is_null()).then(False).otherwise(polars.col("is_PUL_pred")).alias("is_PUL_pred"),
+            )
+        )
+        true = labeled_table.select(polars.col("is_PUL")).to_series().to_list()
+        pred = labeled_table.select(polars.col("is_PUL_pred")).to_series().to_list()
+        report = classification_report(true, pred, output_dict=True)
+        print(classification_report(true, pred))
+
+
+
+    def _save_temp_table(self, table, clusters):
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv")
+        genes_table = (
+            table
+            .join(clusters, on="sequence_id", how="semi")
+            .write_csv(temp_file.name, separator='\t')
+        )
+        return temp_file
 
 
     def run_fold(self, train_clusters, test_clusters, fold):
         model_path = f"{self.output_dir}/model_{fold}"
         # filter gene and feature tables to only include genes in training set
         train_genes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
-        temp_genes_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv")
-        genes_table = (
-            self.genes
-            .join(train_genes, on="sequence_id", how="semi")
-            .write_csv(temp_genes_file.name, separator='\t')
-        )
-        temp_features_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv")
-        features_table = (
-            self.features
-            .join(train_genes, on="sequence_id", how="semi")
-            .write_csv(temp_features_file.name, separator='\t')
-        )
+
+        temp_genes_file = self._save_temp_table(self.genes, train_genes)
+        temp_features_file = self._save_temp_table(self.features, train_genes)
         self._train(train_clusters, temp_genes_file.name, temp_features_file.name, model_path)
 
         # get all genomes in test set, which are the sequences in the test_clusters table
-        test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique().to_series().to_list()
-        for test_genome in test_genomes:
+        test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
+        for test_genome in test_genomes.to_series().to_list():
             genome_path = f"src/data/genomes/selected_genomes/{test_genome}.fa"
             output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
             self._predict(genome_path, model_path, output_path)

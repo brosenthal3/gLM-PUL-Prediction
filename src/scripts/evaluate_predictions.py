@@ -1,0 +1,131 @@
+import polars
+import argparse
+import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, average_precision_score
+import seaborn as sns
+from utility_scripts import join_gene_and_PUL_table
+
+class PredictionEvaluator:
+    def __init__(self, labeled_results_path, predicted_genes_path, clusters_table_path, pulpy_annotations_path):
+        self.predicted_genes = polars.read_csv(predicted_genes_path, separator='\t')
+        self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
+        self.labeled_results = polars.read_csv(labeled_results_path, separator='\t')
+        self.get_pulpy_annotations(pulpy_annotations_path)
+        self.set_evaluation_data()
+        self.filter = None
+
+    def set_evaluation_data(self):
+        self.true = self.labeled_results.select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
+        self.pred = self.labeled_results.select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
+        self.p_pred = self.labeled_results.select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
+        self.pulpy_pred = self.labeled_results.select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
+
+
+    def get_pulpy_annotations(self, pulpy_annotations_path):
+        pulpy_annotations = (
+            polars.read_csv(pulpy_annotations_path, separator='\t')
+            .select("genome", "pulid", "start", "end")
+            .rename({"genome": "sequence_id", "pulid": "cluster_id"})
+        )
+        pulpy_annotations = (
+            join_gene_and_PUL_table(self.predicted_genes, pulpy_annotations)
+            .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_pulpy", "cluster_id": "cluster_id_pulpy"})
+        )
+        self.labeled_results = self.labeled_results.join(
+            pulpy_annotations,
+            on="protein_id",
+            how="left"
+        )
+
+    
+    def filter_phylum(self, phylum):
+        self.labeled_results = (
+            self.labeled_results
+            .join(
+                self.clusters_table.select("sequence_id", "phylum").unique(),
+                on="sequence_id",
+                how="left"
+            )
+            .filter(polars.col("phylum") == phylum)
+        )
+        self.set_evaluation_data()
+        self.filter = phylum
+        
+    
+    def confusion_matrix(self):
+        cm = confusion_matrix(self.true, self.pred)
+        print(cm)
+
+
+    def evaluate(self):
+        print("True vs Predicted:")
+        print(classification_report(self.true, self.pred))
+
+        print("True vs PULpy:")
+        print(classification_report(self.true, self.pulpy_pred))
+
+        print("PULpy vs Predicted:")
+        print(classification_report(self.pulpy_pred, self.pred))
+
+
+    def precision_recall_curve(self):
+        # for true vs pred
+        precision, recall, thresholds = precision_recall_curve(self.true, self.p_pred)
+        auc = average_precision_score(self.true, self.p_pred)
+        plt.plot(recall, precision, label="Experimental vs Gecco (AUC: {:.2f})".format(auc))
+
+        # for pulpy vs pred
+        precision, recall, thresholds = precision_recall_curve(self.pulpy_pred, self.p_pred)
+        auc = average_precision_score(self.pulpy_pred, self.p_pred)
+        plt.plot(recall, precision, label="PULpy vs Gecco (AUC: {:.2f})".format(auc))
+
+        # add labels and legend
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.legend(loc="upper right")
+        plt.title(f"Precision-Recall Curve {'(filtered by ' + self.filter + ')' if self.filter else ''}")
+        plt.savefig("src/data/plots/pr_curve.png")
+        plt.clf()
+
+
+    def get_prediction_lengths(self, table, label_col, cluster_col):
+        lengths = (
+            table
+            .filter(polars.col(label_col) == True)
+            .group_by(cluster_col)
+            .agg(polars.count("protein_id").alias("length"))
+            .select("length").to_series().to_list()
+        )
+        return lengths
+
+
+    def lengths_histogram(self):
+        predicted_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL_pred", "cluster_id_pred")
+        true_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL", "cluster_id")
+        pulpy_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL_pulpy", "cluster_id_pulpy")
+        lengths = [predicted_lengths, true_lengths, pulpy_lengths]
+
+        plt.figure()
+        for data, label in zip(lengths, ["Predicted PULs", "True PULs", "PULpy PULs"]):
+            sns.kdeplot(data=data, fill=True, label=label, cut=0, common_norm=False, bw_adjust=0.7)
+        plt.xlim(0, 100)
+        plt.xlabel('PUL Length (number of genes)')
+        plt.ylabel('Density (KDE)')
+        plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
+        plt.legend()
+        plt.savefig("src/data/plots/pul_length_kde.png")
+        plt.clf()
+
+
+
+if __name__ == "__main__":
+    evaluator = PredictionEvaluator(
+        "src/data/results/gecco/labeled_results_0.tsv",
+        "src/data/results/gecco/predicted_genes_0.tsv",
+        "src/data/splits/test_fold_0.tsv",
+        "src/data/results/pulpy_annotations.tsv"
+    )
+    evaluator.filter_phylum("Bacteroidota")
+    evaluator.lengths_histogram()
+    evaluator.precision_recall_curve()
+    evaluator.evaluate()

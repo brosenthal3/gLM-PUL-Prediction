@@ -1,4 +1,5 @@
 import polars
+import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, average_precision_score
@@ -116,6 +117,37 @@ class PredictionEvaluator:
         plt.savefig("src/data/plots/pul_length_kde.png")
         plt.clf()
 
+    
+    def visualize_predictions(self, sequence_id):
+        # get all genes of this sequence
+        genes = self.labeled_results.filter(polars.col("sequence_id") == sequence_id)
+        sequence_length = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
+        fig, axs = plt.subplots(figsize=(10, 3))
+        features = []
+        # top ax: called genes
+        for row in genes.iter_rows(named=True):
+            if row["is_PUL"]:
+                features.append((row["start"], row["end"], 0, "Experimental"))
+            if row["is_PUL_pred"]:
+                features.append((row["start"], row["end"], 1, "Predicted"))
+            if row["is_PUL_pulpy"]:
+                features.append((row["start"], row["end"], 2, "PULpy"))
+
+        colors = {
+            "Experimental": "blue",
+            "Predicted": "orange",
+            "PULpy": "green"
+        }
+        for start, end, y, label in features:
+            axs.plot([start, end], [y, y+0.9], label=label, color=colors[label], linewidth=3)
+
+        axs.set_ylim(0, 3)
+        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "Predicted", "PULpy"])
+        plt.suptitle(f"PUL predictions for sequence {sequence_id}")
+        plt.tight_layout()
+        plt.savefig(f"src/data/plots/predictions_{sequence_id}.png")
+        plt.clf()
+        
 
 
 if __name__ == "__main__":
@@ -125,7 +157,8 @@ if __name__ == "__main__":
         "src/data/splits/test_fold_0.tsv",
         "src/data/results/pulpy_annotations.tsv"
     )
-    evaluator.filter_phylum("Bacteroidota")
-    evaluator.lengths_histogram()
-    evaluator.precision_recall_curve()
-    evaluator.evaluate()
+    #evaluator.filter_phylum("Bacteroidota")
+    # evaluator.lengths_histogram()
+    # evaluator.precision_recall_curve()
+    # evaluator.evaluate()
+    evaluator.visualize_predictions("FP476056")

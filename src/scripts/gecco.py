@@ -94,8 +94,9 @@ class GECCOHandler:
         # get all genes of test set
         test_genes = (pred_genes.join(test_clusters, on="sequence_id", how="semi"))
         # label test genes
-        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
-        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
+        cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
+        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
+        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select(cols)
         # join predicted clusters with test clusters
         labeled_table = (
             labeled_test_genes

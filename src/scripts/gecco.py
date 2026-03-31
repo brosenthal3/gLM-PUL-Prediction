@@ -151,8 +151,6 @@ class GECCOHandler:
             train_clusters, test_clusters = self.get_training_data(fold)
             results = self.run_fold(train_clusters, test_clusters, fold)
 
-            break
-
 
 def main():
     handler = GECCOHandler(

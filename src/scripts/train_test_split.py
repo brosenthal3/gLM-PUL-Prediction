@@ -110,8 +110,8 @@ def main(clusters_table_path: str, gene_table_path: str, k: int, ani_threshold: 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Split dataset into train and test sets based on ANI clustering")
-    parser.add_argument("-i", "--input", type=str, default="src/data/results/clusters_deduplicated.tsv", help="Path to the clusters table")
-    parser.add_argument("--genes", type=str, default="src/data/genecat_output/preprocess_output/genome.genes.parquet", help="Path to the gene table")
+    parser.add_argument("-i", "--input", type=str, default="src/data/results/cblaster_results.tsv", help="Path to the clusters table")
+    parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to the gene table")
     parser.add_argument("--k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--ani_threshold", type=float, default=90.0, help="ANI threshold for clustering")
 

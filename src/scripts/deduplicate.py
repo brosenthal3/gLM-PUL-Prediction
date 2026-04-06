@@ -104,7 +104,7 @@ class orthoANIProcessor:
         merged_hits = self._merge_hits(hits)
         # return best hit
         for hit in merged_hits.iter_rows():
-            if hit[2] <= 95 or hit[2] <= 0.90 * len(pul_sequence):
+            if hit[2] <= 95 or hit[3] <= 0.90 * len(pul_sequence):
                 continue
             else:
                 return hit[4], hit[5]
@@ -138,8 +138,6 @@ class orthoANIProcessor:
             if blast_result is None:
                 # remove PUL from cluster table
                 self.clusters_table = self.clusters_table.filter(~polars.col("cluster_id").eq(pul[0]))
-                print(f"Failed for {old_id} vs {new_id}")
-                #print(f"No good BLAST hit found for PUL {pul[0]}, removing from cluster table")
                 fails += 1
                 continue
 
@@ -228,25 +226,30 @@ class orthoANIProcessor:
         return self.clusters_table
 
     def save_cluster_table(self, output_path):
+        self.clusters_table = self.clusters_table.sort("cluster_id").sort("sequence_id")
         self.clusters_table.write_csv(output_path, separator='\t')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Use OrthoANI table to deduplicate any sequences with ANI >= 99%")
     parser.add_argument("--input", "-i", help="Path to the ANI table file", default="src/data/results/orthoANI_output.txt")
-    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
+    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/combined_clusters_blasted_gtdb.tsv")
     parser.add_argument("--output", "-o", help="Path to save the deduplicated cluster table", default="src/data/results/clusters_deduplicated.tsv")
+    parser.add_argument("--check", action="store_true", help="Check the deduplicated cluster table")
+
     args = parser.parse_args()
 
-    orthoANI_processor = orthoANIProcessor(args.input, args.clusters_table)
-    new_cluster_table = orthoANI_processor.process_clusters()
-    orthoANI_processor.save_cluster_table(args.output)
+    if args.check:
+        new_cluster_table = polars.read_csv(args.output, separator='\t', infer_schema_length=1000)
+        orthoANI_processor = orthoANIProcessor(args.input, args.clusters_table)
+        ani_table = orthoANI_processor.filter_ani_table()
+        remaining_sequences = new_cluster_table.select("sequence_id").unique()
+        ani_table = ani_table.join(remaining_sequences.rename({"sequence_id": "shorter"}), on="shorter", how="semi").join(remaining_sequences.rename({"sequence_id": "longer"}), on="longer", how="semi")
+        print(ani_table)
 
-    # new_cluster_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=1000)
-    # orthoANI_processor = orthoANIProcessor(args.input, "src/data/results/combined_clusters_blasted_gtdb_filtered.tsv")
-    # ani_table = orthoANI_processor.filter_ani_table()
-    # remaining_sequences = new_cluster_table.select("sequence_id").unique()
-    # ani_table = ani_table.join(remaining_sequences.rename({"sequence_id": "shorter"}), on="shorter", how="semi").join(remaining_sequences.rename({"sequence_id": "longer"}), on="longer", how="semi")
-    # print(ani_table)
+        print(remaining_sequences.shape[0], "unique sequences in deduplicated clusters table")
 
-    # print(remaining_sequences.shape[0], "unique sequences in deduplicated clusters table")
+    else:
+        orthoANI_processor = orthoANIProcessor(args.input, args.clusters_table)
+        new_cluster_table = orthoANI_processor.process_clusters()
+        orthoANI_processor.save_cluster_table(args.output)

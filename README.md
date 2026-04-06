@@ -66,8 +66,9 @@ Order of scripts is currently as follows:
 3) data_collection.py # again... still need to fix is so that these two can be ran sequentially
 4) orthoANI.py
 5) deduplicate.py
-6) run_cblaster.py -rc -po
-7) PULpy-master # need to run snakemake inside directory
-8) integrate_pulpy.py
-9) train_test_split.py
+6) genecat_preprocess.sh
+8) run_cblaster.py -rc -po
+8) PULpy-master # need to run snakemake inside directory
+9) integrate_pulpy.py
+10) train_test_split.py
 ```

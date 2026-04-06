@@ -9,14 +9,14 @@ import argparse
 from pathlib import Path
 
 class CblasterProcessor:
-    def __init__(self, clusters_table_path: str, gene_table_path: str, cblaster_output_path: str, email: str):
+    def __init__(self, clusters_table_path: str, gene_table_path: str, cblaster_output_path: str, email: str, database: str):
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.gene_table = polars.read_parquet(gene_table_path)
         self.cblaster_output_path = cblaster_output_path
         self.email = email
         # path specifications
         self.pul_genes_path = "src/data/puls_genes"
-        self.database = "src/data/cblasterdb"
+        self.database = database
 
 
     def write_genes_fasta(self):
@@ -27,7 +27,7 @@ class CblasterProcessor:
             return
 
         labeled_table = join_gene_and_PUL_table(gene_table=self.gene_table, cluster_table=self.clusters_table).group_by("cluster_id")
-        all_genes = SeqIO.index("src/data/genecat_output/call_genes/genome.genes.faa", "fasta")
+        all_genes = SeqIO.index("src/data/genecat_output/genome.genes.faa", "fasta")
         for cluster_id, group in tqdm(labeled_table, desc="Extracting PUL genes", total=self.clusters_table.shape[0]):
             if cluster_id[0] is None:
                 continue
@@ -77,6 +77,9 @@ class CblasterProcessor:
         # read all cblaster output files and concatenate into one dataframe
         cblaster_results = []
         for filename in os.listdir(self.cblaster_output_path):
+            if not filename.endswith(".csv"):
+                continue
+
             df = polars.read_csv(f"{self.cblaster_output_path}/{filename}", separator=',')
             num_genes = len(df.columns) - 5
             query_id = self.clusters_table.filter(polars.col("cluster_id") == filename.split(".")[0]).select("sequence_id")
@@ -119,12 +122,13 @@ class CblasterProcessor:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run cblaster on PUL genes and integrate results into cluster table")
     parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/clusters_deduplicated.tsv")
-    parser.add_argument("--gene_table", "-g", help="Path to the gene table file", default="src/data/genecat_output/preprocess_output/genome.genes.parquet")
+    parser.add_argument("--gene_table", "-g", help="Path to the gene table file", default="src/data/genecat_output/genome.genes.parquet")
     parser.add_argument("--cblaster_output", "-o", help="Path to save the cblaster output files", default="src/data/cblaster_output")
     parser.add_argument("--run_cblaster", "-rc", action="store_true", help="Whether to run cblaster or just process existing output files")
     parser.add_argument("--process_output", "-po", action="store_true", help="Whether to process cblaster output files and integrate into cluster table")
     parser.add_argument("--gene_threshold", "-gt", type=float, default=0.7, help="Minimum percentage of genes in cluster that must have hits in cblaster to be considered a hit")
     parser.add_argument("--email", "-e", type=str, default="b.rosenthal@lumc.nl", help="Email address to use for cblaster configuration")
+    parser.add_argument("--database", "-db", type=str, default="src/data/cblasterdb", help="Path to the cblaster database")
     args = parser.parse_args()
     if not args.run_cblaster and not args.process_output:
         print("Please specify at least one of --run_cblaster or --process_output")
@@ -135,6 +139,7 @@ if __name__ == "__main__":
         gene_table_path=args.gene_table,
         cblaster_output_path=args.cblaster_output,
         email=args.email,
+        database=args.database
     )
     if args.run_cblaster:
         # run cblaster on all genes in all clusters and save output files

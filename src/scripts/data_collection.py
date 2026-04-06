@@ -421,6 +421,9 @@ def move_genomes_for_pulpy(data_dir, selected_genomes):
 
         # copy to PULpy folder and gzip for running PULpy, only if it doesn't already exist there
         if not Path(dst_path_pulpy).with_suffix('.fna.gz').exists():
+            # check if file is sufficiently large
+            if os.path.getsize(src_path) < 15000:
+                continue
             cmd = f"cp {dst_path} {dst_path_pulpy} && gzip -f {dst_path_pulpy}"
             subprocess.run(cmd, shell=True, check=True)
 

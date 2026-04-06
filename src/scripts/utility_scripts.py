@@ -71,7 +71,7 @@ def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
     )
 
 
-def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 50,) -> polars.DataFrame:
+def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 100,) -> polars.DataFrame:
     gene_table = reset_start_end(gene_table)
     cluster_table = reset_start_end(cluster_table)
 

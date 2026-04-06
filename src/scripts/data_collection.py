@@ -458,6 +458,7 @@ def main(data_dir, filter_truncated):
         .rename({"subject_accession": "sequence_id"})
         .filter(polars.col('sequence_id').is_not_null())
         .filter(~polars.col('sequence_id').eq("NO_HIT"))
+        .sort("sequence_id")
     )
     unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")

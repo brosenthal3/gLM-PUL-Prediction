@@ -64,7 +64,17 @@ def get_sequence_lengths(unique_accessions: polars.DataFrame) -> list:
     return lengths
 
 
+def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
+    return table.with_columns(
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("start")).otherwise(polars.col("end")).alias("start"),
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("end")).otherwise(polars.col("start")).alias("end"),
+    )
+
+
 def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 50,) -> polars.DataFrame:
+    gene_table = reset_start_end(gene_table)
+    cluster_table = reset_start_end(cluster_table)
+
     labled_gene_table = (
         cluster_table
         .rename({"start": "pul_start", "end": "pul_end"}) # avoid column name conflicts

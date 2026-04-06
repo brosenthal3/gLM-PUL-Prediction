@@ -60,7 +60,6 @@ class GECCOHandler:
         print(f"Starting prediction for genome {Path(genome_path).stem}...")
         # check output path
         if os.path.exists(output_path):
-            print(f"Output path {output_path} already exists, skipping prediction.")
             return
 
         # gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
@@ -68,41 +67,49 @@ class GECCOHandler:
         subprocess.run(cmd, shell=True, check=True)
 
 
-    def _evaluate(self, predictions_path, test_clusters):
+    def _evaluate(self, predictions_path, fold, test_clusters):
         pred_clusters = []
+        pred_genes = []
         for output_dir in os.listdir(predictions_path):
             for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
                 if output_file.endswith(".clusters.tsv"):
                     pred_path = os.path.join(predictions_path, output_dir, output_file)
                     pred_clusters.append(polars.read_csv(pred_path, separator='\t'))
+                elif output_file.endswith(".genes.tsv"):
+                    pred_path = os.path.join(predictions_path, output_dir, output_file)
+                    pred_genes.append(polars.read_csv(pred_path, separator='\t'))
 
         pred_clusters = polars.concat(pred_clusters).with_columns(
             polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
         )
+        pred_genes = polars.concat(pred_genes).with_columns(
+            polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
+        )
+        pred_clusters.write_csv(f"{self.output_dir}/predicted_clusters_{fold}.tsv", separator='\t')
+
         test_clusters = polars.read_csv(test_clusters, separator='\t')
         print(f"Total predicted clusters: {pred_clusters.shape[0]}")
         print(f"Total test clusters: {test_clusters.shape[0]}")
 
         # get all genes of test set
-        test_genes = (self.genes.join(test_clusters, on="sequence_id", how="semi"))
+        test_genes = (pred_genes.join(test_clusters, on="sequence_id", how="semi"))
         # label test genes
-        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
-        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select("protein_id", "sequence_id", "cluster_id", "is_PUL")
+        cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
+        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
+        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select(cols)
         # join predicted clusters with test clusters
         labeled_table = (
             labeled_test_genes
             .join(labeled_prediction_genes, on="protein_id", how="full", suffix="_pred")
-            .sort("is_PUL_pred", descending=False)
             .with_columns(
                 polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
                 polars.when(polars.col("is_PUL_pred").is_null()).then(False).otherwise(polars.col("is_PUL_pred")).alias("is_PUL_pred"),
             )
+            .join(test_genes.select("protein_id", "average_p"), on="protein_id", how="left")
+            .sort("protein_id")
+            .sort("sequence_id")
         )
-        true = labeled_table.select(polars.col("is_PUL")).to_series().to_list()
-        pred = labeled_table.select(polars.col("is_PUL_pred")).to_series().to_list()
-        report = classification_report(true, pred, output_dict=True)
-        print(classification_report(true, pred))
-
+        labeled_table.write_csv(f"{self.output_dir}/labeled_results_{fold}.tsv", separator='\t')
 
 
     def _save_temp_table(self, table, clusters):
@@ -131,7 +138,7 @@ class GECCOHandler:
             output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
             self._predict(genome_path, model_path, output_path)
 
-        results = self._evaluate(f"{self.output_dir}/fold_{fold}", test_clusters)
+        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters)
         return results
 
 
@@ -150,6 +157,8 @@ class GECCOHandler:
             print(f"Running fold {fold}...")
             train_clusters, test_clusters = self.get_training_data(fold)
             results = self.run_fold(train_clusters, test_clusters, fold)
+
+            break
 
 
 def main():

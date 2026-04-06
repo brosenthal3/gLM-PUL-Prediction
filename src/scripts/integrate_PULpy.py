@@ -44,10 +44,11 @@ def get_pulpy_annotations(pulpy_output_path):
 def main():
     clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
     pulpy_annotations = get_pulpy_annotations("src/PULpy-master/puls/")
+    pulpy_annotations.write_csv("src/data/results/pulpy_annotations.tsv", separator='\t')
     # integrate annotations
-    integrated_table = integrate_PULpy_annotations(clusters_table, pulpy_annotations)
-    print(f"Adding PULpy resulted in {integrated_table.shape[0]} puls")
-    integrated_table.write_csv("src/data/results/clusters_with_pulpy.tsv", separator='\t')
+    # integrated_table = integrate_PULpy_annotations(clusters_table, pulpy_annotations)
+    # print(f"Adding PULpy resulted in {integrated_table.shape[0]} puls")
+    # integrated_table.write_csv("src/data/results/clusters_with_pulpy.tsv", separator='\t')
 
 
 if __name__ == "__main__":

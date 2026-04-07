@@ -35,9 +35,11 @@ class Plotter:
         plt.savefig(f"{self.save_path}/percentage_in_puls_over_genome_length.png", dpi=300)
 
 
-    def get_taxonomic_counts(self, rank="phylum", cutoff=10):
+    def get_taxonomic_counts(self, table=None, rank="phylum", cutoff=10):
+        if table is None:
+            table = self.clusters_table
         return (
-            self.clusters_table
+            table
             .group_by(rank)
             .len()
             .rename({"len": "count"})
@@ -147,9 +149,9 @@ class Plotter:
         fig, axs = plt.subplots(2, 2, figsize=(10, 8))
         axs = axs.flatten()
         # plot taxonomic distributions for train and test sets 
-        rank = "phylum"
-        phylum_counts_train = get_taxonomic_counts(train_data, rank=rank, cutoff=5)
-        phylum_counts_test = get_taxonomic_counts(test_data, rank=rank, cutoff=5)
+        rank = "family"
+        phylum_counts_train = self.get_taxonomic_counts(train_data, rank=rank, cutoff=5)
+        phylum_counts_test = self.get_taxonomic_counts(test_data, rank=rank, cutoff=5)
         x_train = phylum_counts_train.select(f"{rank.lower()}_group").to_series()
         x_test = phylum_counts_test.select(f"{rank.lower()}_group").to_series()
         heights_train = phylum_counts_train.select("count").to_series()
@@ -262,17 +264,17 @@ class Plotter:
 if __name__ == "__main__":
     # get clusters and gene table
     clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
-    gene_table = polars.read_parquet("src/data/genecat_output/preprocess_output/genome.genes.parquet")
+    gene_table = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     plotter = Plotter(clusters_table, gene_table)
 #    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)
     #plotter.plot_pul_gene_count()
 
-    plotter.clusters_table = polars.read_csv("src/data/results/clusters_deduplicated.tsv", separator='\t', infer_schema_length=600)
-    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)
+#    plotter.clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
+#    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)
     
-    # train_data = polars.read_csv("src/data/splits/train_fold_0.tsv", separator='\t', infer_schema_length=600)
-    # test_data = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t', infer_schema_length=600)
-    # plotter.visualize_train_test_split(train_data, test_data)
+    train_data = polars.read_csv("src/data/splits/train_fold_1.tsv", separator='\t', infer_schema_length=600)
+    test_data = polars.read_csv("src/data/splits/test_fold_1.tsv", separator='\t', infer_schema_length=600)
+    plotter.visualize_train_test_split(train_data, test_data)
 
 
 ## VENN DIAGRAMS, not used but code might be useful

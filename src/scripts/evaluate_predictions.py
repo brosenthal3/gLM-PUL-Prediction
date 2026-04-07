@@ -12,15 +12,27 @@ class PredictionEvaluator:
     Currently aggregates predictions across all folds.
     """
 
-    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path):
+    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k):
+        self.classification_reports = []
+        self.average_precision_scores = []
         labeled_results_list = []
-        for i in range(5):
+
+        for i in range(k):
             labeled_results = polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t')
             labeled_results_list.append(labeled_results)
+            self.labeled_results = labeled_results
+            self.get_pulpy_annotations(pulpy_annotations_path)
+            self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
+            self.set_evaluation_data()
+            self.filter = None
+            print("Fold ", i)
+            self.evaluate()
+            self.classification_reports.append(classification_report(self.true, self.pred, output_dict=True))
+            self.average_precision_scores.append(average_precision_score(self.true, self.p_pred))
 
         self.labeled_results = polars.concat(labeled_results_list)
-        self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.get_pulpy_annotations(pulpy_annotations_path)
+        self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.set_evaluation_data()
         self.filter = None
 
@@ -79,16 +91,24 @@ class PredictionEvaluator:
         print(classification_report(self.pulpy_pred, self.pred))
 
 
-    def precision_recall_curve(self):
-        # for true vs pred
-        precision, recall, thresholds = precision_recall_curve(self.true, self.p_pred)
-        auc = average_precision_score(self.true, self.p_pred)
-        plt.plot(recall, precision, label="Experimental vs Gecco (AUC: {:.2f})".format(auc))
+    def plot_pr(self, true, pred, label, color):
+        precision, recall, thresholds = precision_recall_curve(true, pred)
+        auc = average_precision_score(true, pred)
+        plt.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color)
 
+
+    def precision_recall_curve(self):
+        # use similar colors for associated curves
+        colors = plt.cm.tab20.colors
+        # for true vs pred
+        self.plot_pr(self.true, self.p_pred, "True vs Gecco", colors[0])
         # for pulpy vs pred
-        precision, recall, thresholds = precision_recall_curve(self.pulpy_pred, self.p_pred)
-        auc = average_precision_score(self.pulpy_pred, self.p_pred)
-        plt.plot(recall, precision, label="PULpy vs Gecco (AUC: {:.2f})".format(auc))
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs Gecco", colors[1])
+
+        # then filter by phylum and plot again
+        self.filter_phylum("Bacteroidota")
+        self.plot_pr(self.true, self.p_pred, "True vs Gecco (Bacteroidota)", colors[2])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs Gecco (Bacteroidota)", colors[3])
 
         # add labels and legend
         plt.xlabel("Recall")
@@ -149,7 +169,7 @@ class PredictionEvaluator:
             "PULpy": "green"
         }
         for start, end, y, label in features:
-            axs.plot([start, end], [y, y+0.9], label=label, color=colors[label], linewidth=3)
+            axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
 
         axs.set_ylim(0, 3)
         axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "Predicted", "PULpy"])
@@ -159,6 +179,41 @@ class PredictionEvaluator:
         plt.clf()
 
 
+    def f1_per_genome(self):
+        all_labels = self.labeled_results
+        unique_genomes = all_labels.select("sequence_id").unique().to_series().to_list()
+        for genome in unique_genomes:
+            genome_labels = all_labels.filter(polars.col("sequence_id") == genome)
+            true = genome_labels.select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
+            pred = genome_labels.select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
+            report = classification_report(true, pred, output_dict=True, zero_division=0)
+            f1_score_false = report["False"]["f1-score"]
+            f1_score_true = report["True"]["f1-score"]
+            print(f"Genome: {genome}, F1 Score (False): {f1_score_false:.2f}, F1 Score (True): {f1_score_true:.2f}")
+            print(f"Total predicted: {sum(pred)}, Total true: {sum(true)}\n")
+
+    
+    def f1_per_fold(self):
+        f1_scores_per_fold = []
+        for i, report in enumerate(self.classification_reports):
+            f1_score_false = report["False"]["f1-score"]
+            f1_score_true = report["True"]["f1-score"]
+            f1_scores_per_fold.append((f1_score_false, f1_score_true))
+
+        # plot the F1 scores per fold
+        folds = np.arange(len(self.classification_reports))
+        f1_false = [score[0] for score in f1_scores_per_fold]
+        f1_true = [score[1] for score in f1_scores_per_fold]
+        plt.figure()
+        plt.plot(folds, self.average_precision_scores, label="Average Precision Score", marker='o', color='purple')
+        plt.plot(folds, f1_true, label="F1 Score (True)", marker='o')
+        plt.xlabel("Fold")
+        plt.ylabel("Score")
+        plt.title("F1 and RC-AUC Scores per fold")
+        plt.legend()
+        plt.savefig("src/data/plots/f1_scores_per_fold.png")
+        plt.clf()
+
 
 if __name__ == "__main__":
     results_path = "src/data/results/gecco"
@@ -167,10 +222,13 @@ if __name__ == "__main__":
     evaluator = PredictionEvaluator(
         f"{results_path}/labeled_results",
         "src/data/results/cblaster_results.tsv",
-        f"{pulpy_annotations_path}"
+        f"{pulpy_annotations_path}",
+        k=5
     )
-    evaluator.filter_phylum("Bacteroidota")
-    evaluator.lengths_histogram()
-    evaluator.precision_recall_curve()
-    evaluator.evaluate()
-    #evaluator.visualize_predictions("FP476056")
+    evaluator.f1_per_fold()
+#    evaluator.filter_phylum("Bacteroidota")
+#    evaluator.lengths_histogram()
+#    evaluator.precision_recall_curve()
+#    evaluator.evaluate()
+#    evaluator.f1_per_genome()
+#    evaluator.visualize_predictions("NC_008261")

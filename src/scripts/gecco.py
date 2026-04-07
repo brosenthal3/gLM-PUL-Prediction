@@ -161,8 +161,8 @@ class GECCOHandler:
 
 def main():
     handler = GECCOHandler(
-        genes="src/data/genecat_output/preprocess_output/genome.genes.parquet",
-        features="src/data/genecat_output/preprocess_output/genome.features.parquet",
+        genes="src/data/genecat_output/genome.genes.parquet",
+        features="src/data/genecat_output/genome.features.parquet",
         clusters_dir="src/data/splits",
         output_dir="src/data/results/gecco",
         hmms="src/data/hmms/Pfam35.hmm.gz" # make sure hmms are downloaded and path is correct

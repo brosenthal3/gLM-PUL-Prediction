@@ -7,13 +7,23 @@ import seaborn as sns
 from utility_scripts import join_gene_and_PUL_table
 
 class PredictionEvaluator:
-    def __init__(self, labeled_results_path, predicted_genes_path, clusters_table_path, pulpy_annotations_path):
-        self.predicted_genes = polars.read_csv(predicted_genes_path, separator='\t')
+    """
+    Evaluator class for evaluating the predictions of GECCO against experimental data and PULpy annotations.
+    Currently aggregates predictions across all folds.
+    """
+
+    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path):
+        labeled_results_list = []
+        for i in range(5):
+            labeled_results = polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t')
+            labeled_results_list.append(labeled_results)
+
+        self.labeled_results = polars.concat(labeled_results_list)
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
-        self.labeled_results = polars.read_csv(labeled_results_path, separator='\t')
         self.get_pulpy_annotations(pulpy_annotations_path)
         self.set_evaluation_data()
         self.filter = None
+
 
     def set_evaluation_data(self):
         self.true = self.labeled_results.select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
@@ -29,7 +39,7 @@ class PredictionEvaluator:
             .rename({"genome": "sequence_id", "pulid": "cluster_id"})
         )
         pulpy_annotations = (
-            join_gene_and_PUL_table(self.predicted_genes, pulpy_annotations)
+            join_gene_and_PUL_table(self.labeled_results, pulpy_annotations)
             .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_pulpy", "cluster_id": "cluster_id_pulpy"})
         )
         self.labeled_results = self.labeled_results.join(
@@ -51,7 +61,7 @@ class PredictionEvaluator:
         )
         self.set_evaluation_data()
         self.filter = phylum
-        
+
     
     def confusion_matrix(self):
         cm = confusion_matrix(self.true, self.pred)
@@ -85,7 +95,7 @@ class PredictionEvaluator:
         plt.ylabel("Precision")
         plt.legend(loc="upper right")
         plt.title(f"Precision-Recall Curve {'(filtered by ' + self.filter + ')' if self.filter else ''}")
-        plt.savefig("src/data/plots/pr_curve.png")
+        plt.savefig(f"src/data/plots/pr_curve{self.filter}.png")
         plt.clf()
 
 
@@ -114,7 +124,7 @@ class PredictionEvaluator:
         plt.ylabel('Density (KDE)')
         plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
         plt.legend()
-        plt.savefig("src/data/plots/pul_length_kde.png")
+        plt.savefig(f"src/data/plots/pul_length_kde{self.filter}.png")
         plt.clf()
 
     
@@ -147,18 +157,20 @@ class PredictionEvaluator:
         plt.tight_layout()
         plt.savefig(f"src/data/plots/predictions_{sequence_id}.png")
         plt.clf()
-        
+
 
 
 if __name__ == "__main__":
+    results_path = "src/data/results/gecco"
+    pulpy_annotations_path = "src/data/results/pulpy_annotations.tsv"
+
     evaluator = PredictionEvaluator(
-        "src/data/results/gecco/labeled_results_0.tsv",
-        "src/data/results/gecco/predicted_genes_0.tsv",
-        "src/data/splits/test_fold_0.tsv",
-        "src/data/results/pulpy_annotations.tsv"
+        f"{results_path}/labeled_results",
+        "src/data/results/cblaster_results.tsv",
+        f"{pulpy_annotations_path}"
     )
-    #evaluator.filter_phylum("Bacteroidota")
-    # evaluator.lengths_histogram()
-    # evaluator.precision_recall_curve()
-    # evaluator.evaluate()
-    evaluator.visualize_predictions("FP476056")
+    evaluator.filter_phylum("Bacteroidota")
+    evaluator.lengths_histogram()
+    evaluator.precision_recall_curve()
+    evaluator.evaluate()
+    #evaluator.visualize_predictions("FP476056")

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import urllib.request
 import tempfile
+import argparse
 from utility_scripts import join_gene_and_PUL_table
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
 
@@ -60,6 +61,7 @@ class GECCOHandler:
         print(f"Starting prediction for genome {Path(genome_path).stem}...")
         # check output path
         if os.path.exists(output_path):
+            print(f"Predictions for genome {Path(genome_path).stem} already exist, skipping prediction.\n")
             return
 
         # gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
@@ -70,6 +72,7 @@ class GECCOHandler:
     def _evaluate(self, predictions_path, fold, test_clusters):
         pred_clusters = []
         pred_genes = []
+        # collect all predicted clusters and genes from the predictions directory
         for output_dir in os.listdir(predictions_path):
             for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
                 if output_file.endswith(".clusters.tsv"):
@@ -79,6 +82,7 @@ class GECCOHandler:
                     pred_path = os.path.join(predictions_path, output_dir, output_file)
                     pred_genes.append(polars.read_csv(pred_path, separator='\t'))
 
+        # concat both into single tables, remove version num from sequence_id
         pred_clusters = polars.concat(pred_clusters).with_columns(
             polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
         )
@@ -91,13 +95,15 @@ class GECCOHandler:
         print(f"Total predicted clusters: {pred_clusters.shape[0]}")
         print(f"Total test clusters: {test_clusters.shape[0]}")
 
-        # get all genes of test set
+        # get all genes in test set
         test_genes = (pred_genes.join(test_clusters, on="sequence_id", how="semi"))
-        # label test genes
+
+        # join genes with test clusters and predicted clusters
         cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
-        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
+        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols) 
         labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select(cols)
-        # join predicted clusters with test clusters
+
+        # join gene tables of predicted clusters with test clusters
         labeled_table = (
             labeled_test_genes
             .join(labeled_prediction_genes, on="protein_id", how="full", suffix="_pred")
@@ -105,7 +111,7 @@ class GECCOHandler:
                 polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
                 polars.when(polars.col("is_PUL_pred").is_null()).then(False).otherwise(polars.col("is_PUL_pred")).alias("is_PUL_pred"),
             )
-            .join(test_genes.select("protein_id", "average_p"), on="protein_id", how="left")
+            .join(test_genes.select("protein_id", "average_p"), on="protein_id", how="left") # add predicted probability for each gene (for PR curve)
             .sort("protein_id")
             .sort("sequence_id")
         )
@@ -122,7 +128,8 @@ class GECCOHandler:
         return temp_file
 
 
-    def run_fold(self, train_clusters, test_clusters, fold):
+    def run_fold(self, fold):
+        train_clusters, test_clusters = self.get_training_data(fold)
         model_path = f"{self.output_dir}/model_{fold}"
         # filter gene and feature tables to only include genes in training set
         train_genes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
@@ -146,28 +153,37 @@ class GECCOHandler:
         # get the training data for this fold, which is all clusters that are not in the test set
         test_clusters = f"{self.clusters_dir}/test_fold_{fold}.tsv"
         train_clusters = f"{self.clusters_dir}/train_fold_{fold}.tsv"
-
-        # adapt train clusters to fit gecco input format
-        train_clusters_df = polars.read_csv(train_clusters, separator='\t').select("sequence_id", "cluster_id", "start", "end")
         return train_clusters, test_clusters
 
 
     def run_cross_validation(self, k):
         for fold in range(k):
             print(f"Running fold {fold}...")
-            train_clusters, test_clusters = self.get_training_data(fold)
-            results = self.run_fold(train_clusters, test_clusters, fold)
+            results = self.run_fold(fold)
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Run GECCO cross-validation")
+    parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
+    parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
+    parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
+    parser.add_argument("--output_dir", type=str, default="src/data/results/gecco", help="Directory to save results")
+    parser.add_argument("--hmms", type=str, default="src/data/hmms/Pfam35.hmm.gz", help="Path to HMM file (will be downloaded if not found)")
+    parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
+    parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
+    args = parser.parse_args()
+
     handler = GECCOHandler(
-        genes="src/data/genecat_output/genome.genes.parquet",
-        features="src/data/genecat_output/genome.features.parquet",
-        clusters_dir="src/data/splits",
-        output_dir="src/data/results/gecco",
-        hmms="src/data/hmms/Pfam35.hmm.gz" # make sure hmms are downloaded and path is correct
+        genes=args.genes,
+        features=args.features,
+        clusters_dir=args.clusters_dir,
+        output_dir=args.output_dir,
+        hmms=args.hmms
     )
-    handler.run_cross_validation(k=5)
+    if args.run_fold is not None:
+        handler.run_fold(args.run_fold)
+    else:
+        handler.run_cross_validation(k=args.k)
 
 
 if __name__ == "__main__":

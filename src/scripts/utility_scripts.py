@@ -108,12 +108,11 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
             polars.col("sequence_id").first().alias("sequence_id"),
             polars.col("start").first().alias("start"),
             polars.col("end").first().alias("end"),
-            polars.col("strand").first().alias("strand"),
             polars.col("cluster_id").drop_nulls().first().alias("cluster_id")
         )
         .sort(by=["sequence_id", "start", "end"])
         .with_row_index(name="gene_id", offset=0)  # important
-        .select(["sequence_id", "protein_id", "start", "end", "strand", "is_PUL", "cluster_id"])
+        .select(["sequence_id", "protein_id", "start", "end", "is_PUL", "cluster_id"])
     )
 
     return labled_gene_table

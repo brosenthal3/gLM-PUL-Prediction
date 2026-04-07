@@ -103,6 +103,22 @@ class GenecatHandler:
 
 
     def run_fold(self, fold):
+        train_clusters, test_clusters = self.get_training_data(fold)
+        train_genes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
+
+        temp_genes_file = self._save_temp_table(self.genes, train_genes)
+        temp_features_file = self._save_temp_table(self.features, train_genes)
+        self._get_embeddings(temp_genes_file.name, temp_features_file.name)
+
+        # get all genomes in test set, which are the sequences in the test_clusters table
+        test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
+        for test_genome in test_genomes.to_series().to_list():
+            genome_path = f"src/data/genomes/selected_genomes/{test_genome}.fa"
+            output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
+            self._predict(genome_path, model_path, output_path)
+
+        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters)
+        return results
 
 
     def get_training_data(self, fold):
@@ -119,12 +135,11 @@ class GenecatHandler:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run GECCO cross-validation")
+    parser = argparse.ArgumentParser(description="Run Zero-shot Genecat cross-validation")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
     parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
-    parser.add_argument("--output_dir", type=str, default="src/data/results/gecco", help="Directory to save results")
-    parser.add_argument("--hmms", type=str, default="src/data/hmms/Pfam35.hmm.gz", help="Path to HMM file (will be downloaded if not found)")
+    parser.add_argument("--output_dir", type=str, default="src/data/results/genecat", help="Directory to save results")
     parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
     args = parser.parse_args()

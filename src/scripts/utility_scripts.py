@@ -139,3 +139,21 @@ def recompute_length_percentage(cluster_table: polars.DataFrame) -> polars.DataF
     )
 
     return cluster_table
+
+
+def report_pul_statistics():
+    genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+    for k in range(5):
+        test = f"src/data/splits/test_fold_{k}.tsv"
+        train = f"src/data/splits/train_fold_{k}.tsv"
+        test_df = polars.read_csv(test, separator='\t')
+        train_df = polars.read_csv(train, separator='\t')
+
+        # join dfs
+        test_joined = join_gene_and_PUL_table(genes, test_df)
+        train_joined = join_gene_and_PUL_table(genes, train_df)
+
+        # true proportion
+        print(f"Fold {k}:")
+        print(f"  Train: {train_joined['is_PUL'].mean()}")
+        print(f"  Test: {test_joined['is_PUL'].mean()}")

@@ -27,7 +27,7 @@ class PredictionEvaluator:
             self.set_evaluation_data()
             self.filter = None
             print("Fold ", i)
-            self.evaluate()
+            self.confusion_matrix()
             self.classification_reports.append(classification_report(self.true, self.pred, output_dict=True))
             self.average_precision_scores.append(average_precision_score(self.true, self.p_pred))
 

@@ -1,8 +1,6 @@
 import multiprocessing
 import os
 from pathlib import Path
-
-# import anndata  # type: ignore
 import numpy as np
 import pandas as pd  # type: ignore
 import polars
@@ -10,7 +8,6 @@ import rich
 from sklearn.linear_model import LogisticRegression  # type: ignore
 from sklearn.metrics import (  # type: ignore
     average_precision_score,
-    # f1_score,
     make_scorer,
     roc_auc_score,
 )
@@ -18,26 +15,10 @@ from sklearn.model_selection import GridSearchCV  # type: ignore
 from tap import Tap
 from tqdm import tqdm  # type: ignore
 
-"""
-export PYTHONPATH=$PYTHONPATH:'/g/scb/zeller/rhackett/GeneCat/src/'
 
-cd /g/scb/zeller/rhackett/bacbench/genecat_evaluations/bacformer_benchmarks
-
-#######################################
-TASKDIR="/g/scb/zeller/rhackett/bacbench/genecat_evaluations/data/bgc_membership/data/bgc_data.embeddings"
-TASKDIR="/home/ray/Documents/BacBench/genecat_evaluations/data/bacbench-essential-genes-protein-sequences/data/essential_genes.embeddings"
-MODEL=gene_multilabel_untied_o1fknuqz_v0_context_embedding
-DF=$TASKDIR/test.parquet
-python ../../bacbench/tasks/binary_task/run_linear_cls.py --input-df-file-path $DF --output-dir $TASKDIR/results/ --model-name ${MODEL}_l2 --contig-col sequence_id --label-col is_BGC --norm-type l2 --gridsearch --normalize
-
-"""
-
-def prepare_labeled_genes_df(
-        df: pd.DataFrame,
-        embeddings_col: str,
-        label_col: str
-    ) -> pd.DataFrame:
+def prepare_labeled_genes_df(df: pd.DataFrame, embeddings_col: str, label_col: str) -> pd.DataFrame:
     """Prepare the labeled genes DataFrame."""
+
     # check if the embeddings column is already in the correct format
     if isinstance(df[embeddings_col].iloc[0], np.ndarray):
         return df
@@ -51,6 +32,7 @@ def prepare_labeled_genes_df(
 
 def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
     """Returns an sklearn model you can fit"""
+
     if gridsearch:
         clf = LogisticRegression(
             solver="liblinear",
@@ -59,14 +41,9 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
             random_state=random_state,
         )
         param_grid = {
-            "penalty": ["l1", "l2"],
+            "l1_ratio": [0, 1],
             "C": [0.01, 0.1, 1, 10, 100, 1000],
         }
-        # score = make_scorer(
-        #     f1_score,
-        #     average="micro",
-        #     response_method="predict",
-        # )
         score = make_scorer(
             average_precision_score,
             average="macro",
@@ -85,14 +62,8 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
         )
 
     else:
-        # NOTE
-        # gridsearch of parameters showed that the optimal ones for BGC prediction were:
-        # l2-lorn, C=1, with l2 penalty.
-        # Possibly worth considering is the z-feature norm.
-        # Cuction: See Note on z-feature
-        # z-feature-norm, C=0.01, with l2 penalty.
         model = LogisticRegression(
-            penalty="l2",
+            l1_ratio=0,
             solver="liblinear",
             fit_intercept=True,
             max_iter=10000,
@@ -115,12 +86,9 @@ def calculate_metrics_per_genome(df: pd.DataFrame, contig_col: str) -> pd.DataFr
     """Calculate AUROC and AUPRC per genome."""
     gdf = df.groupby(contig_col)[["label", "probas"]].agg(list).reset_index()
 
-    gdf["auroc"] = gdf.apply(
-        lambda x: roc_auc_score(x["label"], x["probas"]), axis=1
-    )
-    gdf["auprc"] = gdf.apply(
-        lambda x: average_precision_score(x["label"], x["probas"]), axis=1
-    )
+    gdf["auroc"] = gdf.apply(lambda x: roc_auc_score(x["label"], x["probas"]), axis=1)
+    gdf["auprc"] = gdf.apply(lambda x: average_precision_score(x["label"], x["probas"]), axis=1)
+
     print("Per genome metrics:")
     print("Mean AUROC:", gdf["auroc"].mean(), "Median AUROC:", gdf["auroc"].median())
     print("Mean AUPRC:", gdf["auprc"].mean(), "Median AUPRC:", gdf["auprc"].median())
@@ -193,8 +161,7 @@ def main(
     contig_col: str = "genome_name",
 ):
     """Run the training of the Linear model."""
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     # read input file
     df = pd.read_parquet(input_df_file_path)
@@ -235,17 +202,12 @@ def main(
 
     ############################ train model ###########################################
 
-    model = get_linear_model(
-        gridsearch=gridsearch,
-        n_jobs=n_jobs,
-        random_state=random_state
-    )
+    model = get_linear_model(gridsearch=gridsearch, n_jobs=n_jobs, random_state=random_state)
+    rich.print("Training model...")
     model.fit(X=np.stack(train_df[embeddings_col].tolist()), y=train_df["label"].to_numpy())
 
     if gridsearch:
-        rich.print(
-            f"Best scores are {model.best_params_} with macro-ap score {model.best_score_}"
-        )
+        rich.print(f"Best scores are {model.best_params_} with macro-ap score {model.best_score_}")
         # write gridsearch results to tsv
         df = (
             polars.from_dict(
@@ -297,6 +259,7 @@ if __name__ == "__main__":
         multiprocessing.set_start_method("spawn")
     except RuntimeError:
         pass
+
     args = ArgumentParser().parse_args()
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
 
@@ -325,7 +288,6 @@ if __name__ == "__main__":
             output.append(test_df)
             output_genome.append(genome_df)
 
-
         genecat_results = pd.concat(output)
 
         # get all genes in test set
@@ -348,9 +310,6 @@ if __name__ == "__main__":
             .sort("sequence_id")
         )
 
-        labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_fold_{fold}.tsv", separator='\t')
+        labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{fold}.tsv", separator='\t')
         genecat_results.to_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
         rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
-
-        # output_genome_df = pd.concat(output_genome)
-        # output_genome_df.to_parquet(os.path.join(args.output_dir, f"linmodel_genome_metric_results_{args.model_name}_{fold}.parquet"))

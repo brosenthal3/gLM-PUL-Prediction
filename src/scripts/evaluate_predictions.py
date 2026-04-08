@@ -12,7 +12,8 @@ class PredictionEvaluator:
     Currently aggregates predictions across all folds.
     """
 
-    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k):
+    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name):
+        self.model_name = model_name
         self.classification_reports = []
         self.average_precision_scores = []
         labeled_results_list = []
@@ -97,28 +98,28 @@ class PredictionEvaluator:
         plt.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color)
 
 
-    def precision_recall_curve(self, model_name=""):
+    def precision_recall_curve(self):
         # standardize predicted probabilities to be between 0 and 1
         self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
 
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + model_name, colors[0])
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0])
         # for pulpy vs pred
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + model_name, colors[1])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1])
 
         # then filter by phylum and plot again
         self.filter_phylum("Bacteroidota")
-        self.plot_pr(self.true, self.p_pred, "True vs " + model_name + " (Bacteroidota)", colors[2])
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + model_name + " (Bacteroidota)", colors[3])
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name + " (Bacteroidota)", colors[2])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name + " (Bacteroidota)", colors[3])
 
         # add labels and legend
         plt.xlabel("Recall")
         plt.ylabel("Precision")
         plt.legend(loc="upper right")
         plt.title(f"Precision-Recall Curve {'(filtered by ' + self.filter + ')' if self.filter else ''}")
-        plt.savefig(f"src/data/plots/pr_curve_{model_name}_{self.filter}.png")
+        plt.savefig(f"src/data/plots/pr_curve_{self.model_name}_{self.filter}.png")
         plt.clf()
 
 
@@ -147,7 +148,7 @@ class PredictionEvaluator:
         plt.ylabel('Density (KDE)')
         plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
         plt.legend()
-        plt.savefig(f"src/data/plots/pul_length_kde_{self.filter}.png")
+        plt.savefig(f"src/data/plots/pul_length_kde_{self.model_name}_{self.filter}.png")
         plt.clf()
 
     
@@ -208,13 +209,13 @@ class PredictionEvaluator:
         f1_false = [score[0] for score in f1_scores_per_fold]
         f1_true = [score[1] for score in f1_scores_per_fold]
         plt.figure()
-        plt.plot(folds, self.average_precision_scores, label="Average Precision Score", marker='o', color='purple')
-        plt.plot(folds, f1_true, label="F1 Score (True)", marker='o')
+        plt.bar(folds - 0.2, self.average_precision_scores, width=0.4, label="Average Precision Score", color='purple')
+        plt.bar(folds + 0.2, f1_true, width=0.4, label="F1 Score (True)")
         plt.xlabel("Fold")
         plt.ylabel("Score")
-        plt.title("F1 and RC-AUC Scores per fold")
+        plt.title("F1 and RC-AUC Scores per fold (on test set)")
         plt.legend()
-        plt.savefig("src/data/plots/f1_scores_per_fold.png")
+        plt.savefig(f"src/data/plots/f1_scores_per_fold_{self.model_name}.png")
         plt.clf()
 
 
@@ -241,24 +242,32 @@ class PredictionEvaluator:
 #         .sort("protein_id")
 #         .sort("sequence_id")
 #     )
-#     labeled_table.write_csv("src/data/results/genecat/zero_shot_results/labeled_results_fold_0.tsv", separator='\t')
+#     labeled_table.write_csv("src/data/results/genecat/zero_shot_results/labeled_results_0.tsv", separator='\t')
 
 
 if __name__ == "__main__":
-    results_path = "src/data/results/genecat/zero_shot_results/labeled_results_fold"
-    pulpy_annotations_path = "src/data/results/pulpy_annotations.tsv"
+    parser = argparse.ArgumentParser(
+        description="Evaluate predictions of GECCO against experimental data and PULpy annotations"
+    )
+    parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
+    parser.add_argument("-k", type=int, default=1, help="Number of folds to evaluate")
+    args = parser.parse_args()
+    model_name = args.model
+
+    if model_name == "genecat":
+        results_path = "src/data/results/genecat/zero_shot_results/labeled_results"
+    elif model_name == "gecco":
+        results_path = "src/data/results/gecco/labeled_results"
+    else:
+        raise ValueError("Invalid model name.")
 
     evaluator = PredictionEvaluator(
         f"{results_path}",
         "src/data/results/cblaster_results.tsv",
-        f"{pulpy_annotations_path}",
-        k=1
+        "src/data/results/pulpy_annotations.tsv",
+        k=args.k,
+        model_name=model_name
     )
-    # evaluator.f1_per_fold()
-
-#    evaluator.filter_phylum("Bacteroidota")
-#    evaluator.lengths_histogram()
-    evaluator.precision_recall_curve(model_name="GeneCAT zero-shot")
-#    evaluator.evaluate()
-#    evaluator.f1_per_genome()
-#    evaluator.visualize_predictions("NC_008261")
+    evaluator.f1_per_fold()
+    evaluator.precision_recall_curve()
+    # evaluator.visualize_predictions("NC_008261")

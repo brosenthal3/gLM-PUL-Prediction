@@ -45,7 +45,7 @@ def prepare_labeled_genes_df(
     if isinstance(df[embeddings_col].iloc[0], list):
         df[embeddings_col] = df[embeddings_col].apply(lambda x: x[0])
     # explode the DF
-    df = df.explode([embeddings_col, label_col, "protein_id", "product", "start", "end"])
+    df = df.explode([embeddings_col, label_col, "protein_id"])
     return df
 
 
@@ -208,10 +208,12 @@ def main(
     df["genome_idx"] = df[contig_col].map(genome2idx)
 
     # TODO whatever it is! make it binary
-    if "true" in df[label_col].unique():
-        df["label"] = df[label_col].map({"true": 1, "false": 0})
+    if "True" in df[label_col].unique():
+        df["label"] = df[label_col].map({"True": 1, "False": 0})
     elif "Yes" in df[label_col].unique():
         df["label"] = df[label_col].map({"Yes": 1, "No": 0})
+    elif True in df[label_col].unique():
+        df['label'] = df[label_col].map({True: 1, False: 0})
     else:
         raise ValueError(f"unknown binary labels {df[label_col].unique()}")
 
@@ -316,7 +318,8 @@ if __name__ == "__main__":
             norm_type=args.norm_type,
             gridsearch=args.gridsearch,
         )
-        test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", "label", args.label_col]]
+        test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
+        print(test_df)
         test_df["random_state"] = random_state
         genome_df["random_state"] = random_state
         output.append(test_df)

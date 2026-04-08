@@ -34,14 +34,16 @@ class GenecatHandler:
 
         # join with genes
         train_genes = join_gene_and_PUL_table(self.genes, train_df).with_columns(
-            polars.lit("train").alias("label")
+            polars.lit("train").alias("split"),
+            polars.col("is_PUL").alias("label")
         )
         test_genes = join_gene_and_PUL_table(self.genes, test_df).with_columns(
-            polars.lit("test").alias("label")
+            polars.lit("test").alias("split"),
+            polars.col("is_PUL").alias("label")
         )
         fold_data = polars.concat([train_genes, test_genes])
         print(fold_data)
-        fold_data = fold_data.join(self.embeddings, on="protein_id", how="left").select("protein_id", "sequence_id", "embedding", "label") # add embeddings for each gene
+        fold_data = fold_data.join(self.embeddings, on="protein_id", how="left").select("protein_id", "sequence_id", "embeddings", "label", "split") # add embeddings for each gene
         print(fold_data.head())
         fold_output_path = f"{self.output_dir}/fold_{fold}_data.parquet"
         fold_data.write_parquet(fold_output_path)
@@ -66,7 +68,7 @@ def main():
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--embeddings", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
-    parser.add_argument("-k", type=int, default=1, help="Number of folds for cross-validation")
+    parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
     args = parser.parse_args()
 
     handler = GenecatHandler(args.genes, args.clusters_dir, args.embeddings, output_dir="src/data/results/genecat/fold_data")

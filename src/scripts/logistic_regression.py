@@ -331,3 +331,5 @@ if __name__ == "__main__":
 
         genecat_results.write_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
         rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
+
+# python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data --output-dir src/data/results/genecat/zero_shot_results --model-name pfam --contig-col sequence_id --label-col label --norm-type l2 --normalize

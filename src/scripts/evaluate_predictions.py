@@ -12,8 +12,9 @@ class PredictionEvaluator:
     Currently aggregates predictions across all folds.
     """
 
-    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name):
+    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name, split):
         self.model_name = model_name
+        self.split = split
         self.classification_reports = []
         self.average_precision_scores = []
         labeled_results_list = []
@@ -118,8 +119,8 @@ class PredictionEvaluator:
         plt.xlabel("Recall")
         plt.ylabel("Precision")
         plt.legend(loc="upper right")
-        plt.title(f"Precision-Recall Curve {'(filtered by ' + self.filter + ')' if self.filter else ''}")
-        plt.savefig(f"src/data/plots/pr_curve_{self.model_name}_{self.filter}.png")
+        plt.title(f"Precision-Recall Curve for {self.model_name} (on {self.split} set)")
+        plt.savefig(f"src/data/plots/pr_curve_{self.model_name}_{self.filter}_{self.split}.png")
         plt.clf()
 
 
@@ -148,7 +149,7 @@ class PredictionEvaluator:
         plt.ylabel('Density (KDE)')
         plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
         plt.legend()
-        plt.savefig(f"src/data/plots/pul_length_kde_{self.model_name}_{self.filter}.png")
+        plt.savefig(f"src/data/plots/pul_length_kde_{self.model_name}_{self.filter}_{self.split}.png")
         plt.clf()
 
     
@@ -179,7 +180,7 @@ class PredictionEvaluator:
         axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "Predicted", "PULpy"])
         plt.suptitle(f"PUL predictions for sequence {sequence_id}")
         plt.tight_layout()
-        plt.savefig(f"src/data/plots/predictions_{sequence_id}.png")
+        plt.savefig(f"src/data/plots/predictions_{sequence_id}_{self.split}.png")
         plt.clf()
 
 
@@ -213,9 +214,9 @@ class PredictionEvaluator:
         plt.bar(folds + 0.2, f1_true, width=0.4, label="F1 Score (True)")
         plt.xlabel("Fold")
         plt.ylabel("Score")
-        plt.title("F1 and RC-AUC Scores per fold (on test set)")
+        plt.title(f"F1 and RC-AUC Scores per fold (on {self.split} set)")
         plt.legend()
-        plt.savefig(f"src/data/plots/f1_scores_per_fold_{self.model_name}.png")
+        plt.savefig(f"src/data/plots/f1_scores_per_fold_{self.model_name}_{self.split}.png")
         plt.clf()
 
 
@@ -250,14 +251,15 @@ if __name__ == "__main__":
         description="Evaluate predictions of GECCO against experimental data and PULpy annotations"
     )
     parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
+    parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
     parser.add_argument("-k", type=int, default=1, help="Number of folds to evaluate")
     args = parser.parse_args()
     model_name = args.model
 
     if model_name == "genecat":
-        results_path = "src/data/results/genecat/zero_shot_results/labeled_results"
+        results_path = "src/data/results/genecat/zero_shot_results/labeled_results_" + args.split
     elif model_name == "gecco":
-        results_path = "src/data/results/gecco/labeled_results"
+        results_path = "src/data/results/gecco/labeled_results_" + args.split
     else:
         raise ValueError("Invalid model name.")
 
@@ -266,7 +268,8 @@ if __name__ == "__main__":
         "src/data/results/cblaster_results.tsv",
         "src/data/results/pulpy_annotations.tsv",
         k=args.k,
-        model_name=model_name
+        model_name=model_name,
+        split=args.split
     )
     evaluator.f1_per_fold()
     evaluator.precision_recall_curve()

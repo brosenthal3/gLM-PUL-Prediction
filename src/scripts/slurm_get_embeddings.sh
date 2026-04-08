@@ -20,7 +20,7 @@ IFS=$'\n\t'
 
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src'
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
-PULPATH=/exports/lucid-grpzeller-primary/brosenthal/gLM-PUL-Prediction
+PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 VOCAB=${BASEPATH}/BERT_train.fold_0.unique_domains.min50.Pfam37.1.vocab.txt
 MODEL=${BASEPATH}/models_multilabel_models/model_gene_multilabel_untied_march_s4spvlec_v0.pt
 GENES=${PULPATH}/src/data/genecat_output/genome.genes.parquet

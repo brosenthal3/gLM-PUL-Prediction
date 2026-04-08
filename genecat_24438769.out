@@ -1,0 +1,68 @@
+Checking platform devices
+┏━━┳━━━━━━┳━━━━━━┳━━━━━━━━┳━━━━━━━┓
+┃  ┃ Name ┃ CUDA ┃ Memory ┃ Cores ┃
+┡━━╇━━━━━━╇━━━━━━╇━━━━━━━━╇━━━━━━━┩
+└──┴──────┴──────┴────────┴───────┘
+Loading pretrained Model
+The modules hash 96496fdc2f944dae98f39ea188e4c11d is not identical to the recorded hash 3eb0deaa6ae639a0e904e2805b903558
+Got a model of type <class 
+'genecat.model.multilabel_encoder.GeneMultilabelModule'>
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/genecat/cli/__i │
+│ nit__.py:190 in run                                                          │
+│                                                                              │
+│   187 │   │   return validation_code                                         │
+│   188 │                                                                      │
+│   189 │   try:                                                               │
+│ ❱ 190 │   │   return args.run(args, console)                                 │
+│   191 │   except Exception as err:                                           │
+│   192 │   │   console.print_exception()                                      │
+│   193 │   │   return getattr(err, "code", 1)                                 │
+│                                                                              │
+│ /exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/genecat/cli/ext │
+│ ract_embeddings.py:243 in run                                                │
+│                                                                              │
+│   240 │                                                                      │
+│   241 │   # If the user passes a gene and a domain table then build the db i │
+│   242 │   if args.genes and args.features and args.vocab and not args.input: │
+│ ❱ 243 │   │   genes_table, train_genome_db = load_data(                      │
+│   244 │   │   │   gene_table=args.genes,                                     │
+│   245 │   │   │   domain_table=args.features,                                │
+│   246 │   │   │   vocab_path=args.vocab,                                     │
+│                                                                              │
+│ /exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/genecat/cli/ext │
+│ ract_embeddings.py:64 in load_data                                           │
+│                                                                              │
+│    61 │   if console is None:                                                │
+│    62 │   │   console = Console()  # prints to stdout. to supress pass a dum │
+│    63 │                                                                      │
+│ ❱  64 │   genes = GeneTable.load(gene_table)                                 │
+│    65 │   pfam_features = FeatureTable.load(domain_table)                    │
+│    66 │                                                                      │
+│    67 │   console.print("Loading Vocab")                                     │
+│                                                                              │
+│ /exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/genecat/databas │
+│ e/preprocessing.py:1166 in load                                              │
+│                                                                              │
+│   1163 │                                                                     │
+│   1164 │   @classmethod                                                      │
+│   1165 │   def load(cls, file: str | Path) -> GeneTable:                     │
+│ ❱ 1166 │   │   if is_parquet_file(Path(file)):                               │
+│   1167 │   │   │   genes = polars.scan_parquet(file)                         │
+│   1168 │   │   else:                                                         │
+│   1169 │   │   │   genes = polars.scan_csv(file, separator="\t", schema_over │
+│                                                                              │
+│ /exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/genecat/utils.p │
+│ y:40 in is_parquet_file                                                      │
+│                                                                              │
+│    37 def is_parquet_file(path: Path) -> bool:                               │
+│    38 │   # Check if the file exists                                         │
+│    39 │   if not path.is_file():                                             │
+│ ❱  40 │   │   raise FileNotFoundError(f"{path} does not exist.")             │
+│    41 │                                                                      │
+│    42 │   with open(path, "rb") as file:                                     │
+│    43 │   │   peek = file.peek(4)                                            │
+╰──────────────────────────────────────────────────────────────────────────────╯
+FileNotFoundError: 
+/exports/lucid-grpzeller-primary/brosenthal/gLM-PUL-Prediction/src/data/genecat_
+output/genome.genes.parquet does not exist.

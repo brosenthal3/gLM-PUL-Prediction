@@ -69,7 +69,7 @@ class GECCOHandler:
         subprocess.run(cmd, shell=True, check=True)
 
 
-    def _evaluate(self, predictions_path, fold, test_clusters):
+    def _evaluate(self, predictions_path, fold, test_clusters, train_clusters):
         pred_clusters = []
         pred_genes = []
         # collect all predicted clusters and genes from the predictions directory
@@ -92,10 +92,15 @@ class GECCOHandler:
         pred_clusters.write_csv(f"{self.output_dir}/predicted_clusters_{fold}.tsv", separator='\t')
 
         test_clusters = polars.read_csv(test_clusters, separator='\t')
-        print(f"Total predicted clusters: {pred_clusters.shape[0]}")
-        print(f"Total test clusters: {test_clusters.shape[0]}")
+        train_clusters = polars.read_csv(train_clusters, separator='\t')
+        self.save_labeled_table(test_clusters, pred_clusters, pred_genes, fold, split="test")
+        self.save_labeled_table(train_clusters, pred_clusters, pred_genes, fold, split="train")
 
-        # get all genes in test set
+        return pred_clusters, pred_genes
+
+
+    # get all genes in test set
+    def save_labeled_table(self, test_clusters, pred_clusters, pred_genes, fold, split):
         test_genes = (pred_genes.join(test_clusters, on="sequence_id", how="semi"))
 
         # join genes with test clusters and predicted clusters
@@ -115,7 +120,7 @@ class GECCOHandler:
             .sort("protein_id")
             .sort("sequence_id")
         )
-        labeled_table.write_csv(f"{self.output_dir}/labeled_results_{fold}.tsv", separator='\t')
+        labeled_table.write_csv(f"{self.output_dir}/labeled_results_{split}_{fold}.tsv", separator='\t')
 
 
     def _save_temp_table(self, table, clusters):
@@ -145,7 +150,13 @@ class GECCOHandler:
             output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
             self._predict(genome_path, model_path, output_path)
 
-        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters)
+        train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
+        for train_genome in train_genomes.to_series().to_list():
+            genome_path = f"src/data/genomes/selected_genomes/{train_genome}.fa"
+            output_path = f"{self.output_dir}/fold_{fold}/{train_genome}"
+            self._predict(genome_path, model_path, output_path)
+
+        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters, train_clusters)
         return results
 
 

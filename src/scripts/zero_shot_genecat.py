@@ -1,28 +1,18 @@
-# APPROACH:
-# 1. Load the trained model and the test data.
-# 2. Generate embeddings for each gene in the test set using the trained model.
-# 3. Save all embeddings in a single file, with protein_id and label (is_PUL) for each gene.
-# 4. Use these embeddings to train a simple classifier (e.g., logistic regression)
-# 5. Save classifier predictions and probabilities for each gene.
-# 6. use evaluate_predictions.py 
-
-
 import polars
 import subprocess
 import os
 from pathlib import Path
-import urllib.request
-import tempfile
 import argparse
 from utility_scripts import join_gene_and_PUL_table
 
 
 class GenecatHandler:
-    def __init__(self, genes, features, clusters_dir, output_dir, hmms):
+    def __init__(self, genes, clusters_dir, embeddings, output_dir):
         self.genes = self._validate_table(genes)
-        self.features = self._validate_table(features)
+        self.embeddings = self._validate_table(embeddings)
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
+        os.makedirs(self.output_dir, exist_ok=True)
 
 
     def _validate_table(self, table_path):
@@ -37,88 +27,25 @@ class GenecatHandler:
             raise ValueError(f"Invalid file format for {table_path}. Expected .csv or .parquet")
 
 
-    def _extract_embeddings(self):
-
-    
-    def _predict(self, genome_path, model_path, output_path):
-
-
-    def _evaluate(self, predictions_path, fold, test_clusters):
-        pred_clusters = []
-        pred_genes = []
-        # collect all predicted clusters and genes from the predictions directory
-        for output_dir in os.listdir(predictions_path):
-            for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
-                if output_file.endswith(".clusters.tsv"):
-                    pred_path = os.path.join(predictions_path, output_dir, output_file)
-                    pred_clusters.append(polars.read_csv(pred_path, separator='\t'))
-                elif output_file.endswith(".genes.tsv"):
-                    pred_path = os.path.join(predictions_path, output_dir, output_file)
-                    pred_genes.append(polars.read_csv(pred_path, separator='\t'))
-
-        # concat both into single tables, remove version num from sequence_id
-        pred_clusters = polars.concat(pred_clusters).with_columns(
-            polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
-        )
-        pred_genes = polars.concat(pred_genes).with_columns(
-            polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
-        )
-        pred_clusters.write_csv(f"{self.output_dir}/predicted_clusters_{fold}.tsv", separator='\t')
-
-        test_clusters = polars.read_csv(test_clusters, separator='\t')
-        print(f"Total predicted clusters: {pred_clusters.shape[0]}")
-        print(f"Total test clusters: {test_clusters.shape[0]}")
-
-        # get all genes in test set
-        test_genes = (pred_genes.join(test_clusters, on="sequence_id", how="semi"))
-
-        # join genes with test clusters and predicted clusters
-        cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
-        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols) 
-        labeled_prediction_genes = join_gene_and_PUL_table(test_genes, pred_clusters).select(cols)
-
-        # join gene tables of predicted clusters with test clusters
-        labeled_table = (
-            labeled_test_genes
-            .join(labeled_prediction_genes, on="protein_id", how="full", suffix="_pred")
-            .with_columns(
-                polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
-                polars.when(polars.col("is_PUL_pred").is_null()).then(False).otherwise(polars.col("is_PUL_pred")).alias("is_PUL_pred"),
-            )
-            .join(test_genes.select("protein_id", "average_p"), on="protein_id", how="left") # add predicted probability for each gene (for PR curve)
-            .sort("protein_id")
-            .sort("sequence_id")
-        )
-        labeled_table.write_csv(f"{self.output_dir}/labeled_results_{fold}.tsv", separator='\t')
-
-
-    def _save_temp_table(self, table, clusters):
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".tsv")
-        genes_table = (
-            table
-            .join(clusters, on="sequence_id", how="semi")
-            .write_csv(temp_file.name, separator='\t')
-        )
-        return temp_file
-
-
-    def run_fold(self, fold):
+    def save_fold_data(self, fold):
         train_clusters, test_clusters = self.get_training_data(fold)
-        train_genes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
+        train_df = polars.read_csv(train_clusters, separator='\t')
+        test_df = polars.read_csv(test_clusters, separator='\t')
 
-        temp_genes_file = self._save_temp_table(self.genes, train_genes)
-        temp_features_file = self._save_temp_table(self.features, train_genes)
-        self._get_embeddings(temp_genes_file.name, temp_features_file.name)
-
-        # get all genomes in test set, which are the sequences in the test_clusters table
-        test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
-        for test_genome in test_genomes.to_series().to_list():
-            genome_path = f"src/data/genomes/selected_genomes/{test_genome}.fa"
-            output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
-            self._predict(genome_path, model_path, output_path)
-
-        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters)
-        return results
+        # join with genes
+        train_genes = join_gene_and_PUL_table(self.genes, train_df).with_columns(
+            polars.lit("train").alias("label")
+        )
+        test_genes = join_gene_and_PUL_table(self.genes, test_df).with_columns(
+            polars.lit("test").alias("label")
+        )
+        fold_data = polars.concat([train_genes, test_genes])
+        print(fold_data)
+        fold_data = fold_data.join(self.embeddings, on="protein_id", how="left").select("protein_id", "sequence_id", "embedding", "label") # add embeddings for each gene
+        print(fold_data.head())
+        fold_output_path = f"{self.output_dir}/fold_{fold}_data.parquet"
+        fold_data.write_parquet(fold_output_path)
+        return fold_output_path
 
 
     def get_training_data(self, fold):
@@ -128,21 +55,22 @@ class GenecatHandler:
         return train_clusters, test_clusters
 
 
-    def run_cross_validation(self, k):
+    def save_folds(self, k):
         for fold in range(k):
-            print(f"Running fold {fold}...")
-            results = self.run_fold(fold)
+            print(f"Saving data for fold {fold}...")
+            results = self.save_fold_data(fold)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run Zero-shot Genecat cross-validation")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
-    parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
-    parser.add_argument("--output_dir", type=str, default="src/data/results/genecat", help="Directory to save results")
-    parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
-    parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
+    parser.add_argument("--embeddings", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
+    parser.add_argument("-k", type=int, default=1, help="Number of folds for cross-validation")
     args = parser.parse_args()
+
+    handler = GenecatHandler(args.genes, args.clusters_dir, args.embeddings, output_dir="src/data/results/genecat/fold_data")
+    handler.save_folds(args.k)
 
 
 

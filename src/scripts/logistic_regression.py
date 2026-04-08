@@ -228,11 +228,19 @@ def main(
     ########################## predict on test set #####################################
 
     test_probas = model.predict_proba(X=np.stack(test_df[embeddings_col].tolist()))[:, 1]
-    test_df["probas"] = test_probas
-    calculate_global_metrics(df=test_df)
-    genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
+    train_probas = model.predict_proba(X=np.stack(train_df[embeddings_col].tolist()))[:, 1]
 
-    return test_df, genome_df
+    test_df["probas"] = test_probas
+    train_df["probas"] = train_probas
+    rich.print("Test set evaluation:")
+    calculate_global_metrics(df=test_df)
+
+    rich.print("Train set evaluation:")
+    calculate_global_metrics(df=train_df)
+
+#    genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
+
+    return test_df, train_df
 
 
 class ArgumentParser(Tap):
@@ -255,6 +263,28 @@ class ArgumentParser(Tap):
     k: int = 5
 
 
+def save_results(clusters, genecat_results, genes, fold, split="test"):
+    test_genes = (genes.join(clusters, on="sequence_id", how="semi"))
+
+    # join genes with test clusters and predicted clusters
+    cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
+    labeled_test_genes = join_gene_and_PUL_table(test_genes, clusters).select(cols)
+
+    # join gene tables of predicted clusters with test clusters
+    labeled_table = (
+        labeled_test_genes
+        .join(genecat_results.select("protein_id", "probas").rename({"probas": "average_p"}), on="protein_id", how="left")
+        .with_columns(
+            polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
+            polars.when(polars.col("average_p").ge(0.5)).then(True).otherwise(False).alias("is_PUL_pred"),
+        )
+        .sort("protein_id")
+        .sort("sequence_id")
+    )
+
+    labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{split}_{fold}.tsv", separator='\t')
+
+
 if __name__ == "__main__":
     try:
         multiprocessing.set_start_method("spawn")
@@ -268,11 +298,11 @@ if __name__ == "__main__":
         rich.print(f"[bold blue]Running fold {fold}...[/]")
         input_df_file_path = args.input_df_file_path + f"/fold_{fold}_data.parquet"
         output = []
-        output_genome = []
+        output_train = []
 
         for random_state in tqdm([1]):
             print(f"Running state {random_state}")
-            test_df, genome_df = main(
+            test_df, train_df = main(
                 input_df_file_path=input_df_file_path,
                 output_dir=args.output_dir,
                 n_jobs=args.n_jobs,
@@ -285,33 +315,19 @@ if __name__ == "__main__":
             )
             test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
             test_df["random_state"] = random_state
-            genome_df["random_state"] = random_state
+            train_df["random_state"] = random_state
             output.append(test_df)
-            output_genome.append(genome_df)
+            output_train.append(train_df)
 
         genecat_results = pd.concat(output)
         genecat_results = polars.from_pandas(genecat_results)
 
         # get all genes in test set
         test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
-        test_genes = (genes.join(test_clusters, on="sequence_id", how="semi"))
+        save_results(test_clusters, genecat_results, genes, fold)
 
-        # join genes with test clusters and predicted clusters
-        cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
-        labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
+        train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
+        save_results(train_clusters, genecat_results, genes, fold, split="train")
 
-        # join gene tables of predicted clusters with test clusters
-        labeled_table = (
-            labeled_test_genes
-            .join(genecat_results.select("protein_id", "probas").rename({"probas": "average_p"}), on="protein_id", how="left")
-            .with_columns(
-                polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
-                polars.when(polars.col("average_p").ge(0.5)).then(True).otherwise(False).alias("is_PUL_pred"),
-            )
-            .sort("protein_id")
-            .sort("sequence_id")
-        )
-
-        labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{fold}.tsv", separator='\t')
         genecat_results.write_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
         rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")

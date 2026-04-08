@@ -97,25 +97,28 @@ class PredictionEvaluator:
         plt.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color)
 
 
-    def precision_recall_curve(self):
+    def precision_recall_curve(self, model_name=""):
+        # standardize predicted probabilities to be between 0 and 1
+        self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
+
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs Gecco", colors[0])
+        self.plot_pr(self.true, self.p_pred, "True vs " + model_name, colors[0])
         # for pulpy vs pred
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs Gecco", colors[1])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + model_name, colors[1])
 
         # then filter by phylum and plot again
         self.filter_phylum("Bacteroidota")
-        self.plot_pr(self.true, self.p_pred, "True vs Gecco (Bacteroidota)", colors[2])
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs Gecco (Bacteroidota)", colors[3])
+        self.plot_pr(self.true, self.p_pred, "True vs " + model_name + " (Bacteroidota)", colors[2])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + model_name + " (Bacteroidota)", colors[3])
 
         # add labels and legend
         plt.xlabel("Recall")
         plt.ylabel("Precision")
         plt.legend(loc="upper right")
         plt.title(f"Precision-Recall Curve {'(filtered by ' + self.filter + ')' if self.filter else ''}")
-        plt.savefig(f"src/data/plots/pr_curve{self.filter}.png")
+        plt.savefig(f"src/data/plots/pr_curve_{model_name}_{self.filter}.png")
         plt.clf()
 
 
@@ -144,7 +147,7 @@ class PredictionEvaluator:
         plt.ylabel('Density (KDE)')
         plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
         plt.legend()
-        plt.savefig(f"src/data/plots/pul_length_kde{self.filter}.png")
+        plt.savefig(f"src/data/plots/pul_length_kde_{self.filter}.png")
         plt.clf()
 
     
@@ -215,20 +218,47 @@ class PredictionEvaluator:
         plt.clf()
 
 
+# def process_genecat_zeroshot():
+#     genecat_results = polars.read_parquet("src/data/results/genecat/zero_shot_results/linmodel_results_pfam_embeddings_0.parquet")
+#     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+#     test_clusters = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t')
+
+#     # get all genes in test set
+#     test_genes = (genes.join(test_clusters, on="sequence_id", how="semi"))
+
+#     # join genes with test clusters and predicted clusters
+#     cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
+#     labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
+
+#     # join gene tables of predicted clusters with test clusters
+#     labeled_table = (
+#         labeled_test_genes
+#         .join(genecat_results.select("protein_id", "probas").rename({"probas": "average_p"}), on="protein_id", how="left")
+#         .with_columns(
+#             polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
+#             polars.when(polars.col("average_p").ge(0.5)).then(True).otherwise(False).alias("is_PUL_pred"),
+#         )
+#         .sort("protein_id")
+#         .sort("sequence_id")
+#     )
+#     labeled_table.write_csv("src/data/results/genecat/zero_shot_results/labeled_results_fold_0.tsv", separator='\t')
+
+
 if __name__ == "__main__":
-    results_path = "src/data/results/gecco"
+    results_path = "src/data/results/genecat/zero_shot_results/labeled_results_fold"
     pulpy_annotations_path = "src/data/results/pulpy_annotations.tsv"
 
     evaluator = PredictionEvaluator(
-        f"{results_path}/labeled_results",
+        f"{results_path}",
         "src/data/results/cblaster_results.tsv",
         f"{pulpy_annotations_path}",
-        k=5
+        k=1
     )
-    evaluator.f1_per_fold()
+    # evaluator.f1_per_fold()
+
 #    evaluator.filter_phylum("Bacteroidota")
 #    evaluator.lengths_histogram()
-#    evaluator.precision_recall_curve()
+    evaluator.precision_recall_curve(model_name="GeneCAT zero-shot")
 #    evaluator.evaluate()
 #    evaluator.f1_per_genome()
 #    evaluator.visualize_predictions("NC_008261")

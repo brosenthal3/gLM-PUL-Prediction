@@ -295,6 +295,7 @@ class ArgumentParser(Tap):
     contig_col: str = "genome_name"
     norm_type: str = "l2"
     gridsearch: bool = False
+    k: int = 5
 
 
 if __name__ == "__main__":
@@ -303,51 +304,37 @@ if __name__ == "__main__":
     except RuntimeError:
         pass
     args = ArgumentParser().parse_args()
-    output = []
-    output_genome = []
-    for random_state in tqdm([1]):
-        print(f"Running state {random_state}")
-        test_df, genome_df = main(
-            input_df_file_path=args.input_df_file_path,
-            output_dir=args.output_dir,
-            n_jobs=args.n_jobs,
-            normalize=args.normalize,
-            embeddings_col=args.embeddings_col,
-            label_col=args.label_col,
-            contig_col=args.contig_col,
-            norm_type=args.norm_type,
-            gridsearch=args.gridsearch,
-        )
-        test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
-        print(test_df)
-        test_df["random_state"] = random_state
-        genome_df["random_state"] = random_state
-        output.append(test_df)
-        output_genome.append(genome_df)
+    genes_table = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
 
-    output_df = pd.concat(output)
-    output_df.to_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}.parquet"))
+    for fold in range(args.k):
+        rich.print(f"[bold blue]Running fold {fold}...[/]")
+        input_df_file_path = args.input_df_file_path + f"/fold_{fold}_data.parquet"
+        output = []
+        output_genome = []
 
-    output_genome_df = pd.concat(output_genome)
-    output_genome_df.to_parquet(os.path.join(args.output_dir, f"linmodel_genome_metric_results_{args.model_name}.parquet"))
+        for random_state in tqdm([1]):
+            print(f"Running state {random_state}")
+            test_df, genome_df = main(
+                input_df_file_path=input_df_file_path,
+                output_dir=args.output_dir,
+                n_jobs=args.n_jobs,
+                normalize=args.normalize,
+                embeddings_col=args.embeddings_col,
+                label_col=args.label_col,
+                contig_col=args.contig_col,
+                norm_type=args.norm_type,
+                gridsearch=args.gridsearch,
+            )
+            test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
+            test_df["random_state"] = random_state
+            genome_df["random_state"] = random_state
+            output.append(test_df)
+            output_genome.append(genome_df)
 
 
-    # ########################## save test predictions ###################################
+        output_df = pd.concat(output)
+        output_df.to_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
+        rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
 
-    # adata_test = anndata.AnnData(
-    #     X=test_probas,
-    #     obs=test_df,
-    #     uns={
-    #         "label_type": label_col,
-    #         "linear_model_info": model.get_params(),
-    #         "data": input_df_file_path,
-    #     },
-    # )
-    # filename = Path(output_dir, f"results.{args.kegg_type}.test.h5ad")
-    # adata_test.write(
-    #     filename=filename,
-    #     compression="gzip",
-    # )
-    #
-
-    rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
+        # output_genome_df = pd.concat(output_genome)
+        # output_genome_df.to_parquet(os.path.join(args.output_dir, f"linmodel_genome_metric_results_{args.model_name}_{fold}.parquet"))

@@ -14,6 +14,7 @@ from sklearn.metrics import (  # type: ignore
 from sklearn.model_selection import GridSearchCV  # type: ignore
 from tap import Tap
 from tqdm import tqdm  # type: ignore
+from utility_scripts import join_gene_and_PUL_table
 
 
 def prepare_labeled_genes_df(df: pd.DataFrame, embeddings_col: str, label_col: str) -> pd.DataFrame:
@@ -289,6 +290,7 @@ if __name__ == "__main__":
             output_genome.append(genome_df)
 
         genecat_results = pd.concat(output)
+        genecat_results = polars.from_pandas(genecat_results)
 
         # get all genes in test set
         test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
@@ -311,5 +313,5 @@ if __name__ == "__main__":
         )
 
         labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{fold}.tsv", separator='\t')
-        genecat_results.to_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
+        genecat_results.write_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
         rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")

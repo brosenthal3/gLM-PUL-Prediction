@@ -8,7 +8,7 @@ eval "$(mamba shell hook --shell bash)"
 mamba activate
 mamba env create -f /exports/archive/lucid-grpzeller-primary/hackett/software/cayman/environment.yml
 mamba activate cayman
-pip install .
+pip install -r /exports/archive/lucid-grpzeller-primary/hackett/software/cayman/requirements.txt
 
 OUT=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/data/genecat_output/
 CUTOFFS=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/hmms/CAZy/Cayman/cutoffs.csv

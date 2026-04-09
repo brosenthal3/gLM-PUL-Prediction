@@ -21,4 +21,5 @@ IFS=$'\n\t'
 
 
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
-python src/scripts/gecco.py -k ${SLURM_ARRAY_TASK_ID}
+pwd
+python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID}

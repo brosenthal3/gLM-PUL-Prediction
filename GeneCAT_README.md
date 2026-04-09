@@ -133,3 +133,8 @@ export PYTHONPATH='/path/to/your/GeneCAT/src/'
 DB=
 MODEL=
 python -m genecat.cli extract-embeddings -i $DB --batch-size 16 -j 1 -o PUL_embs --outtypes df db
+
+```
+
+# OLD GENECAT MODEL
+`/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level/models_multilabel_models/jan_model`

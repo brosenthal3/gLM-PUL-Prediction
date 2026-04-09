@@ -274,3 +274,8 @@ if __name__ == "__main__":
     evaluator.f1_per_fold()
     evaluator.precision_recall_curve()
     # evaluator.visualize_predictions("NC_008261")
+
+    """
+    python src/scripts/evaluate_predictions.py --model genecat --split test -k 5
+    python src/scripts/evaluate_predictions.py --model gecco --split test -k 5
+    """

@@ -64,7 +64,8 @@ class GECCOHandler:
             print(f"Predictions for genome {Path(genome_path).stem} already exist, skipping prediction.\n")
             return
 
-        # gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
+        # example: gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
+        # TODO: find a way to run predictions with multiple HMM files
         cmd = f"gecco run --model {model_path} --hmm {self.hmms} --genome {genome_path} -o {output_path}"
         subprocess.run(cmd, shell=True, check=True)
 

@@ -16,8 +16,9 @@ class CblasterProcessor:
         cblaster_output_path: str, 
         email: str, 
         database: str,
+        gene_threshold: float,
         liberal_filters: bool = False,
-        force: bool = False
+        force: bool = False,
         ):
         
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
@@ -29,6 +30,7 @@ class CblasterProcessor:
         self.database = database
         self.liberal_filters = liberal_filters
         self.force = force
+        self.gene_threshold = gene_threshold
         if liberal_filters:
             print("Using more liberal filters for cblaster hits")
 
@@ -36,7 +38,7 @@ class CblasterProcessor:
     def write_genes_fasta(self):
         os.makedirs(self.pul_genes_path, exist_ok=True)
         # check if needed:
-        if len(os.listdir(self.pul_genes_path)) > 0:
+        if len(os.listdir(self.pul_genes_path)) > 0 and not self.force:
             print("PUL genes already extracted, skipping...")
             return
 
@@ -59,10 +61,10 @@ class CblasterProcessor:
     def run_cblaster(self, filename: str, cluster_id: str):
         output_file = f"{self.cblaster_output_path}/{cluster_id}"
         if self.liberal_filters:
-            filters = f"-mi 25 -mc 50 -g 20000 -mh 2"
+            filters = f"-mi 25 -mc 50 -g 20000 -mh 2 -u 2"
             csv_output = f"{self.cblaster_output_path}/liberal/{cluster_id}.csv"
         else:
-            filters = f"-me 1.0e-9 -mi 70 -mc 75 -g 5000 -mh 2"
+            filters = f"-me 1.0e-9 -mi 70 -mc 75 -g 5000 -mh 2 -u 2"
             csv_output = f"{output_file}.csv"
 
         cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {csv_output} -s {output_file}.json -bde ',' " + filters
@@ -101,11 +103,12 @@ class CblasterProcessor:
     def process_cblaster_output(self):
         # read all cblaster output files and concatenate into one dataframe
         cblaster_results = []
-        for filename in os.listdir(self.cblaster_output_path):
+        cblaster_output_path = f"{self.cblaster_output_path}{'/liberal' if self.liberal_filters else ''}"
+        for filename in os.listdir(cblaster_output_path):
             if not filename.endswith(".csv"):
                 continue
 
-            df = polars.read_csv(f"{self.cblaster_output_path}/{filename}", separator=',')
+            df = polars.read_csv(f"{cblaster_output_path}/{filename}", separator=',')
             num_genes = len(df.columns) - 5
             query_id = self.clusters_table.filter(polars.col("cluster_id") == filename.split(".")[0]).select("sequence_id")
             df = (
@@ -114,7 +117,7 @@ class CblasterProcessor:
                     polars.lit(f"cblaster_{filename.split("/")[-1].split(".")[0]}").alias("cluster_id"), 
                 )
                 .rename({"Organism": "sequence_id", "Start": "start", "End": "end"})
-                .filter(polars.col("total_hits").ge(num_genes * 0.7))
+                .filter(polars.col("total_hits").ge(num_genes * self.gene_threshold))
                 .select("sequence_id", "cluster_id", "start", "end")
                 .join(query_id, on="sequence_id", how="anti") # remove self-hits
             )
@@ -123,6 +126,12 @@ class CblasterProcessor:
 
         cblaster_results_df = polars.concat(cblaster_results)
         print(f"Total hits: {cblaster_results_df.shape[0]}")
+        # Stop here if using liberal filters, do not include in cluster table
+        if self.liberal_filters:
+            print("Saving cblaster results without merging with cluster table...")
+            cblaster_results_df.sort("sequence_id").write_csv(f"src/data/results/cblaster_results_liberal.tsv", separator='\t')
+            return
+
 
         sequence_info = (
             self.clusters_table
@@ -168,7 +177,8 @@ if __name__ == "__main__":
         email=args.email,
         database=args.database,
         liberal_filters=args.liberal_filters,
-        force=args.force
+        force=args.force,
+        gene_threshold=args.gene_threshold
     )
     if args.run_cblaster:
         # run cblaster on all genes in all clusters and save output files
@@ -179,3 +189,9 @@ if __name__ == "__main__":
     if args.process_output:
         # read cblaster output files, filter for hits with at least 70% of genes in cluster, and integrate into cluster table
         cblaster_processor.process_cblaster_output()
+
+"""
+EXAMPLE USAGE:
+python src/scripts/run_cblaster.py --liberal_filters --run_cblaster --process_output --gene_threshold 0.55 --force
+python src/scripts/run_cblaster.py --run_cblaster --process_output --force
+"""

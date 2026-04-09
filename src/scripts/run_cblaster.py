@@ -84,6 +84,9 @@ class CblasterProcessor:
     
     def run_cblaster_on_all_genes(self):
         os.makedirs(self.cblaster_output_path, exist_ok=True)
+        if self.liberal_filters:
+            os.makedirs(f"{self.cblaster_output_path}/liberal", exist_ok=True)
+
         for filename in tqdm(os.listdir(self.pul_genes_path), desc="Running cblaster on PUL genes"):
             cluster_id = filename.split("/")[-1].split(".")[0]
             # only run cblaster if output file doesn't already exist, to avoid rerunning on already processed clusters

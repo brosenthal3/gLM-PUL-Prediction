@@ -16,7 +16,8 @@ class CblasterProcessor:
         cblaster_output_path: str, 
         email: str, 
         database: str,
-        liberal_filters: bool = False        
+        liberal_filters: bool = False,
+        force: bool = False
         ):
         
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
@@ -27,6 +28,7 @@ class CblasterProcessor:
         self.pul_genes_path = "src/data/puls_genes"
         self.database = database
         self.liberal_filters = liberal_filters
+        self.force = force
         if liberal_filters:
             print("Using more liberal filters for cblaster hits")
 
@@ -85,9 +87,10 @@ class CblasterProcessor:
         for filename in tqdm(os.listdir(self.pul_genes_path), desc="Running cblaster on PUL genes"):
             cluster_id = filename.split("/")[-1].split(".")[0]
             # only run cblaster if output file doesn't already exist, to avoid rerunning on already processed clusters
-            if not filename.endswith(".fasta") or Path(f"{self.cblaster_output_path}/{cluster_id}.csv").exists():
-                print(f"Skipping {cluster_id}, already processed")
-                continue
+            if not self.force:
+                if not filename.endswith(".fasta") or Path(f"{self.cblaster_output_path}/{cluster_id}.csv").exists():
+                    print(f"Skipping {cluster_id}, already processed")
+                    continue
 
             self.run_cblaster(f"{self.pul_genes_path}/{filename}", cluster_id)
 
@@ -149,6 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--email", "-e", type=str, default="b.rosenthal@lumc.nl", help="Email address to use for cblaster configuration")
     parser.add_argument("--database", "-db", type=str, default="src/data/cblasterdb", help="Path to the cblaster database")
     parser.add_argument("--liberal_filters", "-lf", action="store_true", help="Whether to use more liberal filters for cblaster hits")
+    parser.add_argument("--force", "-f", action="store_true", help="Whether to force rerunning cblaster on all clusters, even if output files already exist")
     args = parser.parse_args()
     if not args.run_cblaster and not args.process_output:
         print("Please specify at least one of --run_cblaster or --process_output")
@@ -160,7 +164,8 @@ if __name__ == "__main__":
         cblaster_output_path=args.cblaster_output,
         email=args.email,
         database=args.database,
-        liberal_filters=args.liberal_filters
+        liberal_filters=args.liberal_filters,
+        force=args.force
     )
     if args.run_cblaster:
         # run cblaster on all genes in all clusters and save output files

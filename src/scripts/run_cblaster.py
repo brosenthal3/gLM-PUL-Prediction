@@ -61,14 +61,14 @@ class CblasterProcessor:
     def run_cblaster(self, filename: str, cluster_id: str):
         output_file = f"{self.cblaster_output_path}/{cluster_id}"
         if self.liberal_filters:
-            filters = f"-mi 25 -mc 50 -g 20000 -mh 2 -u 2"
+            filters = f"-mh 2 -u 2"
             csv_output = f"{self.cblaster_output_path}/liberal/{cluster_id}.csv"
         else:
             filters = f"-me 1.0e-9 -mi 70 -mc 75 -g 5000 -mh 2 -u 2"
             csv_output = f"{output_file}.csv"
 
-        cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {csv_output} -s {output_file}.json -bde ',' " + filters
         try:
+            cmd = f"cblaster search -m local -db {self.database}.dmnd -qf {filename} -b {csv_output} -s {output_file}.json -bde ',' " + filters
             subprocess.run(cmd, shell=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error running cblaster for cluster {cluster_id}: {e}")

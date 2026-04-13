@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_r
 import seaborn as sns
 from utility_scripts import join_gene_and_PUL_table
 from matplotlib_venn import venn3
+from tqdm import tqdm
 
 class PredictionEvaluator:
     """
@@ -34,6 +35,30 @@ class PredictionEvaluator:
         self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
         self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
         self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
+
+
+    def recompute_predictions(self, fold, threshold):
+        self.labeled_results[fold] = self.labeled_results[fold].with_columns(
+            polars.when(polars.col("average_p") >= threshold).then(True).otherwise(False).alias("is_PUL_pred")
+        )
+        self.set_evaluation_data(fold)
+
+
+    def aggregate_all_folds(self):
+        # aggregate all folds into one table for overall evaluation
+        print("Aggregating all folds for overall evaluation...")
+        all_labeled_tables = []
+        for fold in range(len(self.labeled_results)):
+            all_labeled_tables.append(
+                self.labeled_results[fold]
+                .join(self.clusters_table.select("sequence_id", "phylum", "species").unique(), on="sequence_id", how="left")
+                .with_columns(
+                    polars.col("start_pred").cast(polars.Int64, strict=False),
+                    polars.col("end_pred").cast(polars.Int64, strict=False),
+                )
+            )
+        self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
+        self.get_pulpy_annotations("src/data/results/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
 
 
     def get_pulpy_annotations(self, pulpy_annotations_path):
@@ -85,29 +110,32 @@ class PredictionEvaluator:
 
     def calculate_mmc(self, true, pred, thresholds):
         mmc_scores = []
-        for threshold in thresholds:
+        for threshold in tqdm(thresholds, desc="Calculating MCC for thresholds"):
             binary_pred = [1 if p >= threshold else 0 for p in pred]
             mmc = matthews_corrcoef(true, binary_pred)
             mmc_scores.append(mmc)
 
         best_mmc_idx = np.argmax(mmc_scores)
         best_threshold = thresholds[best_mmc_idx]
-        
-        return mmc_scores[best_mmc_idx], best_threshold, best_mmc_idx
+        binary_pred = [1 if p >= best_threshold else 0 for p in pred]
+        pr_mmc = precision_recall_curve(true, binary_pred, drop_intermediate=True)
+        return mmc_scores[best_mmc_idx], best_threshold, (pr_mmc[1][1], pr_mmc[0][1])
 
 
-    def plot_pr(self, true, pred, label, color, ax):
+    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False):
         if len(true) == 0 or len(pred) == 0:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
 
-        precision, recall, thresholds = precision_recall_curve(true, pred)
+        precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True)
         auc = average_precision_score(true, pred)
-        ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color)
+        ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color, alpha=0.8)
 
-        # Matthews correlation coefficient
-        # mcc, threshold, mmc_idx = self.calculate_mmc(true, pred, thresholds)        
-        # plt.scatter(recall[mmc_idx], precision[mmc_idx], label=label + " (Best MCC: {:.2f} at threshold {:.2f})".format(mcc, threshold), color=color, marker='X', s=100)
+        if plot_mcc:
+            # Matthews correlation coefficient
+            mcc_thresholds = np.linspace(0, 1, num=20)
+            mcc, threshold, pr_point = self.calculate_mmc(true, pred, mcc_thresholds)        
+            plt.scatter(pr_point[0], pr_point[1], label=f"Best MCC: {round(mcc, 2)}, threshold {round(threshold, 2)}", color=color, marker='X', s=100)
 
 
     def plot_pr_dot(self, true, pred, label, color, ax):
@@ -115,30 +143,32 @@ class PredictionEvaluator:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
 
-        precision, recall, thresholds = precision_recall_curve(true, pred)
+        precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True)
         auc = average_precision_score(true, pred)
         ax.scatter(recall[1], precision[1], label=label + " (AP: {:.2f})".format(auc), color=color)
 
 
     def precision_recall_curve(self, fold):
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-        self.set_evaluation_data(fold)
+        if fold == "all":
+            self.aggregate_all_folds()
+            self.set_evaluation_data(0)
+
         # standardize predicted probabilities to be between 0 and 1
         self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
 
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
 
-        # ----- PR CURVE ----- #
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax)
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax, plot_mcc=True)
         # for pulpy vs pred
         self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
         self.plot_pr_dot(self.true, self.pulpy_pred, "True vs PULpy", colors[4], ax)
         baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
 
         # then filter by phylum and plot again
-        self.filter_phylum("Bacteroidota", fold)
+        self.filter_phylum("Bacteroidota", fold if fold != "all" else 0)
         self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name + " (Bacteroidota)", colors[2], ax)
         self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name + " (Bacteroidota)", colors[3], ax)
 
@@ -152,6 +182,7 @@ class PredictionEvaluator:
         ax.set_title(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
         plt.savefig(f"{self.output_path}/pr_curve_{self.model_name}_{self.split}_{fold}.png")
         plt.clf()
+
 
     def roc_curve(self, true, p_pred, label, color):
         if len(true) == 0 or len(p_pred) == 0:
@@ -207,7 +238,9 @@ class PredictionEvaluator:
         plt.clf()
 
     
-    def visualize_predictions_in_genome(self, sequence_id, fold):
+    def visualize_predictions_in_genome(self, sequence_id, fold, threshold):
+        self.recompute_predictions(fold, threshold)
+
         # get all genes of this sequence
         genes = self.labeled_results[fold].filter(polars.col("sequence_id") == sequence_id)
         sequence_length = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
@@ -234,7 +267,7 @@ class PredictionEvaluator:
             axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
 
         axs.set_ylim(0, 3)
-        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "PULpy", self.model_name])
+        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "PULpy", f"{self.model_name} (Threshold: {threshold})"])
         plt.suptitle(f"PUL predictions for sequence {sequence_id} (species: {species}, phylum: {phylum})")
         plt.tight_layout()
         os.makedirs(f"{self.output_path}/predictions_in_genome/", exist_ok=True)
@@ -316,11 +349,12 @@ if __name__ == "__main__":
     #evaluator.venn_diagram()
     #evaluator.f1_per_fold()
 
-    for fold in range(args.k):
-        evaluator.precision_recall_curve(fold)
-        evaluator.plot_roc_curves(fold)
+    # for fold in range(args.k):
+    #     evaluator.precision_recall_curve(fold)
+    #     evaluator.plot_roc_curves(fold)
+    #evaluator.precision_recall_curve("all")
 
-    evaluator.visualize_predictions_in_genome("AE015928", 0)
+    evaluator.visualize_predictions_in_genome("AE015928", 0, 0.21)
 
 
     """

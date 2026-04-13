@@ -152,6 +152,7 @@ class GECCOHandler:
             self._predict(genome_path, model_path, output_path)
 
         train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
+        # TODO: create HMMs file for these domains
         for train_genome in train_genomes.to_series().to_list():
             genome_path = f"src/data/genomes/selected_genomes/{train_genome}.fa"
             output_path = f"{self.output_dir}/fold_{fold}/{train_genome}"

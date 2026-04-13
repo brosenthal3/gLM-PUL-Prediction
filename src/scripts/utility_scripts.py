@@ -167,8 +167,6 @@ def report_pul_statistics():
         print(f"  Test: {test_joined['is_PUL'].mean()}")
 
 
-
-
 class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
     def __init__(
         self,

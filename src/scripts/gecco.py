@@ -5,7 +5,7 @@ from pathlib import Path
 import urllib.request
 import tempfile
 import argparse
-from utility_scripts import join_gene_and_PUL_table
+from utility_scripts import join_gene_and_PUL_table, HMMLoader
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
 
 
@@ -15,24 +15,24 @@ class GECCOHandler:
         self.features = self._validate_table(features)
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
-        self.hmms = self._validate_hmm_dir(hmms)
+        self.hmms = hmms # directory containing HMM files
 
 
-    def _validate_hmm_dir(self, hmms):
-        if not os.path.exists(hmms):
-            print("HMM file not found, downloading...")
-            # create dir 
-            os.makedirs(os.path.dirname(hmms), exist_ok=True)
-            # dowload hmms
-            url = "ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam35.0/Pfam-A.hmm.gz"
-            try:
-                urllib.request.urlretrieve(url, hmms)
-            except Exception as e:
-                raise Exception(f"Failed to download HMMs from {url}: {str(e)}")
-        else:
-            print("HMM file found, skipping download.")
+    # def _validate_hmm_dir(self, hmms):
+    #     if not os.path.exists(hmms):
+    #         print("HMM file not found, downloading...")
+    #         # create dir 
+    #         os.makedirs(os.path.dirname(hmms), exist_ok=True)
+    #         # dowload hmms
+    #         url = "ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.1/Pfam-A.hmm.gz"
+    #         try:
+    #             urllib.request.urlretrieve(url, hmms)
+    #         except Exception as e:
+    #             raise Exception(f"Failed to download HMMs from {url}: {str(e)}")
+    #     else:
+    #         print("HMM file found, skipping download.")
     
-        return hmms
+    #     return hmms
 
 
     def _validate_table(self, table_path):
@@ -53,7 +53,7 @@ class GECCOHandler:
             print(f"Model path {model_path} already exists, skipping training.")
             return
         # example: gecco -vv train --genes genes.tsv --features features.tsv --clusters clusters.tsv -o model
-        cmd = f"gecco -vv train --genes {genes} --features {features} --clusters {train_clusters} -o {model_path}"
+        cmd = f"gecco -vv train --genes {genes} --features {features} --clusters {train_clusters} -o {model_path} --select 0.5"
         subprocess.run(cmd, shell=True, check=True)
 
     
@@ -65,8 +65,7 @@ class GECCOHandler:
             return
 
         # example: gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
-        # TODO: find a way to run predictions with multiple HMM files
-        cmd = f"gecco run --model {model_path} --hmm {self.hmms} --genome {genome_path} -o {output_path}"
+        cmd = f"gecco run --model {model_path} --hmm {model_path}/features.h3m --genome {genome_path} -o {output_path}"
         subprocess.run(cmd, shell=True, check=True)
 
 
@@ -132,6 +131,17 @@ class GECCOHandler:
             .write_csv(temp_file.name, separator='\t')
         )
         return temp_file
+    
+    
+    def _save_hmm_file(self, model_path):
+        # filter hmms to only include those in the model
+        hmm_out_file = f"{model_path}/features"
+        model_features = polars.read_csv(f"{model_path}/domains.tsv", separator='\t')
+        # open and save hmms
+        hmms_to_save = HMMloader.read_hmms(hmmdb=self.hmms, whitelist=model_features.to_series().to_list())
+        hmms_to_save.write_to_h3m_file(hmm_out_file)
+
+        return hmm_out_file + ".selected.h3m"
 
 
     def run_fold(self, fold):
@@ -152,7 +162,7 @@ class GECCOHandler:
             self._predict(genome_path, model_path, output_path)
 
         train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
-        # TODO: create HMMs file for these domains
+        self._save_hmm_file(model_path)
         for train_genome in train_genomes.to_series().to_list():
             genome_path = f"src/data/genomes/selected_genomes/{train_genome}.fa"
             output_path = f"{self.output_dir}/fold_{fold}/{train_genome}"
@@ -181,7 +191,7 @@ def main():
     parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--output_dir", type=str, default="src/data/results/gecco", help="Directory to save results")
-    parser.add_argument("--hmms", type=str, default="src/data/hmms/Pfam35.hmm.gz", help="Path to HMM file (will be downloaded if not found)")
+    parser.add_argument("--hmms", type=str, default="src/data/hmms", help="Path to directory containing HMM files used to annotate data")
     parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
     args = parser.parse_args()

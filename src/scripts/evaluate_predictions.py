@@ -1,10 +1,12 @@
 import polars
 import numpy as np
 import argparse
+import os
 import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, average_precision_score
+from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, average_precision_score,  roc_curve, auc, matthews_corrcoef
 import seaborn as sns
 from utility_scripts import join_gene_and_PUL_table
+from matplotlib_venn import venn3
 
 class PredictionEvaluator:
     """
@@ -12,38 +14,26 @@ class PredictionEvaluator:
     Currently aggregates predictions across all folds.
     """
 
-    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name, split):
+    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name, split, output_path):
         self.model_name = model_name
         self.split = split
-        self.classification_reports = []
-        self.average_precision_scores = []
-        labeled_results_list = []
+        self.output_path = output_path
+        self.labeled_results = []
 
         for i in range(k):
             labeled_results = polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t')
-            labeled_results_list.append(labeled_results)
-            self.labeled_results = labeled_results
-            self.get_pulpy_annotations(pulpy_annotations_path)
-            self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
-            self.set_evaluation_data()
-            self.filter = None
-            print("Fold ", i)
-            self.confusion_matrix()
-            self.classification_reports.append(classification_report(self.true, self.pred, output_dict=True))
-            self.average_precision_scores.append(average_precision_score(self.true, self.p_pred))
+            self.labeled_results.append(labeled_results)
 
-        self.labeled_results = polars.concat(labeled_results_list)
         self.get_pulpy_annotations(pulpy_annotations_path)
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
-        self.set_evaluation_data()
         self.filter = None
 
 
-    def set_evaluation_data(self):
-        self.true = self.labeled_results.select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
-        self.pred = self.labeled_results.select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
-        self.p_pred = self.labeled_results.select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
-        self.pulpy_pred = self.labeled_results.select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
+    def set_evaluation_data(self, fold):
+        self.true = self.labeled_results[fold].select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
+        self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
+        self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
+        self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
 
 
     def get_pulpy_annotations(self, pulpy_annotations_path):
@@ -52,20 +42,20 @@ class PredictionEvaluator:
             .select("genome", "pulid", "start", "end")
             .rename({"genome": "sequence_id", "pulid": "cluster_id"})
         )
-        pulpy_annotations = (
-            join_gene_and_PUL_table(self.labeled_results, pulpy_annotations)
-            .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_pulpy", "cluster_id": "cluster_id_pulpy"})
-        )
-        self.labeled_results = self.labeled_results.join(
-            pulpy_annotations,
-            on="protein_id",
-            how="left"
-        )
+        for fold in range(len(self.labeled_results)):
+            self.labeled_results[fold] = self.labeled_results[fold].join(
+                (
+                    join_gene_and_PUL_table(self.labeled_results[fold], pulpy_annotations)
+                    .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_pulpy", "cluster_id": "cluster_id_pulpy"})
+                ),
+                on="protein_id",
+                how="left"
+            )
 
     
-    def filter_phylum(self, phylum):
-        self.labeled_results = (
-            self.labeled_results
+    def filter_phylum(self, phylum, fold):
+        self.labeled_results[fold] = (
+            self.labeled_results[fold]
             .join(
                 self.clusters_table.select("sequence_id", "phylum").unique(),
                 on="sequence_id",
@@ -73,7 +63,7 @@ class PredictionEvaluator:
             )
             .filter(polars.col("phylum") == phylum)
         )
-        self.set_evaluation_data()
+        self.set_evaluation_data(fold)
         self.filter = phylum
 
     
@@ -93,34 +83,98 @@ class PredictionEvaluator:
         print(classification_report(self.pulpy_pred, self.pred))
 
 
-    def plot_pr(self, true, pred, label, color):
+    def calculate_mmc(self, true, pred, thresholds):
+        mmc_scores = []
+        for threshold in thresholds:
+            binary_pred = [1 if p >= threshold else 0 for p in pred]
+            mmc = matthews_corrcoef(true, binary_pred)
+            mmc_scores.append(mmc)
+
+        best_mmc_idx = np.argmax(mmc_scores)
+        best_threshold = thresholds[best_mmc_idx]
+        
+        return mmc_scores[best_mmc_idx], best_threshold, best_mmc_idx
+
+
+    def plot_pr(self, true, pred, label, color, ax):
+        if len(true) == 0 or len(pred) == 0:
+            print(f"Warning: No data to plot for {label}. Skipping PR curve.")
+            return
+
         precision, recall, thresholds = precision_recall_curve(true, pred)
         auc = average_precision_score(true, pred)
-        plt.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color)
+        ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color)
+
+        # Matthews correlation coefficient
+        # mcc, threshold, mmc_idx = self.calculate_mmc(true, pred, thresholds)        
+        # plt.scatter(recall[mmc_idx], precision[mmc_idx], label=label + " (Best MCC: {:.2f} at threshold {:.2f})".format(mcc, threshold), color=color, marker='X', s=100)
 
 
-    def precision_recall_curve(self):
+    def plot_pr_dot(self, true, pred, label, color, ax):
+        if len(true) == 0 or len(pred) == 0:
+            print(f"Warning: No data to plot for {label}. Skipping PR curve.")
+            return
+
+        precision, recall, thresholds = precision_recall_curve(true, pred)
+        auc = average_precision_score(true, pred)
+        ax.scatter(recall[1], precision[1], label=label + " (AP: {:.2f})".format(auc), color=color)
+
+
+    def precision_recall_curve(self, fold):
+        fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+        self.set_evaluation_data(fold)
         # standardize predicted probabilities to be between 0 and 1
         self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
 
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
+
+        # ----- PR CURVE ----- #
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0])
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax)
         # for pulpy vs pred
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
+        self.plot_pr_dot(self.true, self.pulpy_pred, "True vs PULpy", colors[4], ax)
+        baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
 
         # then filter by phylum and plot again
-        self.filter_phylum("Bacteroidota")
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name + " (Bacteroidota)", colors[2])
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name + " (Bacteroidota)", colors[3])
+        self.filter_phylum("Bacteroidota", fold)
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name + " (Bacteroidota)", colors[2], ax)
+        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name + " (Bacteroidota)", colors[3], ax)
+
+        # plot baseline
+        ax.plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
 
         # add labels and legend
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.legend(loc="upper right")
-        plt.title(f"Precision-Recall Curve for {self.model_name} (on {self.split} set)")
-        plt.savefig(f"src/data/plots/pr_curve_{self.model_name}_{self.filter}_{self.split}.png")
+        ax.set_xlabel("Recall")
+        ax.set_ylabel("Precision")
+        ax.legend(loc="upper right")
+        ax.set_title(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
+        plt.savefig(f"{self.output_path}/pr_curve_{self.model_name}_{self.split}_{fold}.png")
+        plt.clf()
+
+    def roc_curve(self, true, p_pred, label, color):
+        if len(true) == 0 or len(p_pred) == 0:
+            print(f"Warning: No data to plot for ROC curve. Skipping.")
+            return
+
+        fpr, tpr, thresholds = roc_curve(true, p_pred)
+        roc_auc = auc(fpr, tpr)
+        plt.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
+
+    def plot_roc_curves(self, fold):
+        self.set_evaluation_data(fold)
+        self.roc_curve(self.true, self.p_pred, "True vs " + self.model_name, 'blue')
+        self.roc_curve(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, 'green')
+
+        plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title(f'ROC Curve for {self.model_name} (on {self.split} set, fold {fold})')
+        plt.legend(loc="lower right")
+        plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
         plt.clf()
 
 
@@ -135,10 +189,10 @@ class PredictionEvaluator:
         return lengths
 
 
-    def lengths_histogram(self):
-        predicted_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL_pred", "cluster_id_pred")
-        true_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL", "cluster_id")
-        pulpy_lengths = self.get_prediction_lengths(self.labeled_results, "is_PUL_pulpy", "cluster_id_pulpy")
+    def lengths_histogram(self, fold):
+        predicted_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL_pred", "cluster_id_pred")
+        true_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL", "cluster_id")
+        pulpy_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL_pulpy", "cluster_id_pulpy")
         lengths = [predicted_lengths, true_lengths, pulpy_lengths]
 
         plt.figure()
@@ -149,24 +203,27 @@ class PredictionEvaluator:
         plt.ylabel('Density (KDE)')
         plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
         plt.legend()
-        plt.savefig(f"src/data/plots/pul_length_kde_{self.model_name}_{self.filter}_{self.split}.png")
+        plt.savefig(f"{self.output_path}/pul_length_kde_{self.model_name}_{self.filter}_{fold}.png")
         plt.clf()
 
     
-    def visualize_predictions(self, sequence_id):
+    def visualize_predictions_in_genome(self, sequence_id, fold):
         # get all genes of this sequence
-        genes = self.labeled_results.filter(polars.col("sequence_id") == sequence_id)
+        genes = self.labeled_results[fold].filter(polars.col("sequence_id") == sequence_id)
         sequence_length = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
+        phylum = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("phylum").to_series().to_list()[0]
+        species = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("species").to_series().to_list()[0]
+        # create fig
         fig, axs = plt.subplots(figsize=(10, 3))
         features = []
         # top ax: called genes
         for row in genes.iter_rows(named=True):
             if row["is_PUL"]:
                 features.append((row["start"], row["end"], 0, "Experimental"))
-            if row["is_PUL_pred"]:
-                features.append((row["start"], row["end"], 1, "Predicted"))
             if row["is_PUL_pulpy"]:
-                features.append((row["start"], row["end"], 2, "PULpy"))
+                features.append((row["start"], row["end"], 1, "PULpy"))
+            if row["is_PUL_pred"]:
+                features.append((row["start"], row["end"], 2, "Predicted"))
 
         colors = {
             "Experimental": "blue",
@@ -177,73 +234,55 @@ class PredictionEvaluator:
             axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
 
         axs.set_ylim(0, 3)
-        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "Predicted", "PULpy"])
-        plt.suptitle(f"PUL predictions for sequence {sequence_id}")
+        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "PULpy", self.model_name])
+        plt.suptitle(f"PUL predictions for sequence {sequence_id} (species: {species}, phylum: {phylum})")
         plt.tight_layout()
-        plt.savefig(f"src/data/plots/predictions_{sequence_id}_{self.split}.png")
+        os.makedirs(f"{self.output_path}/predictions_in_genome/", exist_ok=True)
+        plt.savefig(f"{self.output_path}/predictions_in_genome/{sequence_id}_{self.split}_{fold}.png")
         plt.clf()
 
 
-    def f1_per_genome(self):
-        all_labels = self.labeled_results
-        unique_genomes = all_labels.select("sequence_id").unique().to_series().to_list()
-        for genome in unique_genomes:
-            genome_labels = all_labels.filter(polars.col("sequence_id") == genome)
-            true = genome_labels.select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
-            pred = genome_labels.select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
-            report = classification_report(true, pred, output_dict=True, zero_division=0)
-            f1_score_false = report["False"]["f1-score"]
-            f1_score_true = report["True"]["f1-score"]
-            print(f"Genome: {genome}, F1 Score (False): {f1_score_false:.2f}, F1 Score (True): {f1_score_true:.2f}")
-            print(f"Total predicted: {sum(pred)}, Total true: {sum(true)}\n")
+    def venn_diagram(self):
+        fig, axs = plt.subplots(2, 4, figsize=(20, 10))
+        for i in range(7):
+            ax = axs[i//4, i%4]
+            true_set = set(self.labeled_results[i].filter(polars.col("is_PUL") == True).select("protein_id").to_series().to_list())
+            pred_set = set(self.labeled_results[i].filter(polars.col("is_PUL_pred") == True).select("protein_id").to_series().to_list())
+            pulpy_set = set(self.labeled_results[i].filter(polars.col("is_PUL_pulpy") == True).select("protein_id").to_series().to_list())
+            venn3([true_set, pred_set, pulpy_set], ("Experimental", self.model_name, "PULpy"), ax=ax)
+            ax.set_title(f"PUL predictions ({self.split} set, fold {i})")
+
+        axs[1, 3].axis('off')
+        plt.tight_layout()
+        plt.savefig(f"{self.output_path}/venn_diagram_{self.model_name}_{self.split}.png")
+        plt.clf()
 
     
     def f1_per_fold(self):
         f1_scores_per_fold = []
-        for i, report in enumerate(self.classification_reports):
+        average_precision_scores = []
+        # get f1 score and AP for each fold
+        for i in range(len(self.labeled_results)):
+            self.set_evaluation_data(i)
+            average_precision_scores.append(average_precision_score(self.true, self.p_pred))
+            report = classification_report(self.true, self.pred, output_dict=True)
             f1_score_false = report["False"]["f1-score"]
             f1_score_true = report["True"]["f1-score"]
             f1_scores_per_fold.append((f1_score_false, f1_score_true))
 
         # plot the F1 scores per fold
-        folds = np.arange(len(self.classification_reports))
+        folds = np.arange(len(self.labeled_results))
         f1_false = [score[0] for score in f1_scores_per_fold]
         f1_true = [score[1] for score in f1_scores_per_fold]
         plt.figure()
-        plt.bar(folds - 0.2, self.average_precision_scores, width=0.4, label="Average Precision Score", color='purple')
+        plt.bar(folds - 0.2, average_precision_scores, width=0.4, label="Average Precision Score", color='purple')
         plt.bar(folds + 0.2, f1_true, width=0.4, label="F1 Score (True)")
         plt.xlabel("Fold")
         plt.ylabel("Score")
-        plt.title(f"F1 and RC-AUC Scores per fold (on {self.split} set)")
+        plt.title(f"F1 and PR-AUC Scores per fold (on {self.split} set)")
         plt.legend()
-        plt.savefig(f"src/data/plots/f1_scores_per_fold_{self.model_name}_{self.split}.png")
+        plt.savefig(f"{self.output_path}/f1_scores_per_fold_{self.model_name}_{self.split}.png")
         plt.clf()
-
-
-# def process_genecat_zeroshot():
-#     genecat_results = polars.read_parquet("src/data/results/genecat/zero_shot_results/linmodel_results_pfam_embeddings_0.parquet")
-#     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
-#     test_clusters = polars.read_csv("src/data/splits/test_fold_0.tsv", separator='\t')
-
-#     # get all genes in test set
-#     test_genes = (genes.join(test_clusters, on="sequence_id", how="semi"))
-
-#     # join genes with test clusters and predicted clusters
-#     cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
-#     labeled_test_genes = join_gene_and_PUL_table(test_genes, test_clusters).select(cols)
-
-#     # join gene tables of predicted clusters with test clusters
-#     labeled_table = (
-#         labeled_test_genes
-#         .join(genecat_results.select("protein_id", "probas").rename({"probas": "average_p"}), on="protein_id", how="left")
-#         .with_columns(
-#             polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
-#             polars.when(polars.col("average_p").ge(0.5)).then(True).otherwise(False).alias("is_PUL_pred"),
-#         )
-#         .sort("protein_id")
-#         .sort("sequence_id")
-#     )
-#     labeled_table.write_csv("src/data/results/genecat/zero_shot_results/labeled_results_0.tsv", separator='\t')
 
 
 if __name__ == "__main__":
@@ -255,6 +294,8 @@ if __name__ == "__main__":
     parser.add_argument("-k", type=int, default=1, help="Number of folds to evaluate")
     args = parser.parse_args()
     model_name = args.model
+    output_path = f"src/data/plots/{model_name}"
+    os.makedirs(output_path, exist_ok=True)
 
     if model_name == "genecat":
         results_path = "src/data/results/genecat/zero_shot_results/labeled_results_" + args.split
@@ -269,11 +310,18 @@ if __name__ == "__main__":
         "src/data/results/pulpy_annotations.tsv",
         k=args.k,
         model_name=model_name,
-        split=args.split
+        split=args.split,
+        output_path=output_path
     )
-    evaluator.f1_per_fold()
-    evaluator.precision_recall_curve()
-    # evaluator.visualize_predictions("NC_008261")
+    #evaluator.venn_diagram()
+    #evaluator.f1_per_fold()
+
+    for fold in range(args.k):
+        evaluator.precision_recall_curve(fold)
+        evaluator.plot_roc_curves(fold)
+
+    evaluator.visualize_predictions_in_genome("AE015928", 0)
+
 
     """
     python src/scripts/evaluate_predictions.py --model genecat --split test -k 5

@@ -16,24 +16,7 @@ class GECCOHandler:
         self.features = self._validate_table(features)
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
-        self.hmms = hmms # directory containing HMM files
-
-
-    # def _validate_hmm_dir(self, hmms):
-    #     if not os.path.exists(hmms):
-    #         print("HMM file not found, downloading...")
-    #         # create dir 
-    #         os.makedirs(os.path.dirname(hmms), exist_ok=True)
-    #         # dowload hmms
-    #         url = "ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam37.1/Pfam-A.hmm.gz"
-    #         try:
-    #             urllib.request.urlretrieve(url, hmms)
-    #         except Exception as e:
-    #             raise Exception(f"Failed to download HMMs from {url}: {str(e)}")
-    #     else:
-    #         print("HMM file found, skipping download.")
-    
-    #     return hmms
+        self.hmms = Path(hmms) # directory containing HMM files
 
 
     def _validate_table(self, table_path):
@@ -137,9 +120,9 @@ class GECCOHandler:
     def _save_hmm_file(self, model_path):
         # filter hmms to only include those in the model
         hmm_out_file = f"{model_path}/features"
-        model_features = polars.read_csv(f"{model_path}/domains.tsv", separator='\t')
+        model_features = polars.read_csv(f"{model_path}/domains.tsv", separator='\t').to_series().to_list()
         # open and save hmms
-        hmms_to_save = HMMloader.read_hmms(hmmdb=self.hmms, whitelist=model_features.to_series().to_list())
+        hmms_to_save = HMMLoader.read_hmms(hmmdb_path=self.hmms, whitelist=model_features)
         hmms_to_save.write_to_h3m_file(hmm_out_file)
 
         return hmm_out_file + ".selected.h3m"

@@ -19,12 +19,9 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
-#CAZYHMMS=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/hmms/CAZy/Cayman/hmms_bin/cayman.v3.seed42_selected.h3m
 HMMs=src/data/hmms
-OUT=src/data/results/gecco
+OUT=src/data/results/gecco_with_dbcan
+FEATURES=src/data/genecat_output/dbcan.pfam.features.parquet
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 
-python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --hmms ${HMMs} --output_dir ${OUT}
-
-# SHOULD BE FIXED TO RUN WITH MULTIPLE HMMs
-# python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --hmms ${CAZYHMMS} --output_dir ${OUT}_cazy
+python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --hmms ${HMMs} --output_dir ${OUT} --features ${FEATURES}

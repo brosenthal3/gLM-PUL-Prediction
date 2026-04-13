@@ -1,7 +1,6 @@
 import json
 import polars
 from Bio import Entrez
-from __future__ import annotations
 from typing import Iterable, Optional, List, Iterator
 import itertools
 import os

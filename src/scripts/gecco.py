@@ -1,3 +1,4 @@
+from __future__ import annotations
 import polars
 import subprocess
 import os
@@ -132,7 +133,7 @@ class GECCOHandler:
         )
         return temp_file
     
-    
+
     def _save_hmm_file(self, model_path):
         # filter hmms to only include those in the model
         hmm_out_file = f"{model_path}/features"

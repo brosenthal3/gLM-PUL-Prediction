@@ -1,5 +1,12 @@
+from __future__ import annotations
 from utility_scripts import HMMLoader
-
+import polars
+import subprocess
+import os
+from pathlib import Path
+import urllib.request
+import tempfile
+import argparse
 
 def _save_hmm_file(model_path, hmms):
     # filter hmms to only include those in the model

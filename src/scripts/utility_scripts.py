@@ -1,3 +1,4 @@
+import __future__
 import json
 import polars
 from Bio import Entrez
@@ -166,107 +167,107 @@ def report_pul_statistics():
         print(f"  Test: {test_joined['is_PUL'].mean()}")
 
 
-class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
-    def __init__(
-        self,
-        hmms: Iterable[pyhmmer.plan7.HMM],
-        whitelist: Optional[List[str]] = None,
-    ):  
-        if whitelist is not None:
-            # We need to materialize hmms since we iterate twice by necessity
-            hmms = list(hmms)
-            hmms.sort(key=lambda x: x.name)
-            self.hmms = (
-                hmm
-                for hmm in hmms
-                if hmm.name in whitelist
-            )
-            if not self.hmms:
-                raise ValueError(
-                    "No hmms passed the selection!"
-                )
-        else:
-            self.hmms = hmms
+# class HMMLoader(Iterable[pyhmmer.plan7.HMM]):
+#     def __init__(
+#         self,
+#         hmms: Iterable[pyhmmer.plan7.HMM],
+#         whitelist: Optional[List[str]] = None,
+#     ):  
+#         if whitelist is not None:
+#             # We need to materialize hmms since we iterate twice by necessity
+#             hmms = list(hmms)
+#             hmms.sort(key=lambda x: x.name)
+#             self.hmms = (
+#                 hmm
+#                 for hmm in hmms
+#                 if hmm.name in whitelist
+#             )
+#             if not self.hmms:
+#                 raise ValueError(
+#                     "No hmms passed the selection!"
+#                 )
+#         else:
+#             self.hmms = hmms
 
-    def __iter__(self) -> Iterator[pyhmmer.plan7.HMM]:
-        return iter(self.hmms)
+#     def __iter__(self) -> Iterator[pyhmmer.plan7.HMM]:
+#         return iter(self.hmms)
 
-    @staticmethod
-    def _read_hmm_from_file(path: Path|str) -> Iterator[pyhmmer.plan7.HMM]:
-        """
-        Read HMM from file
-        :param path: path to the HMM file
-        :return: None
-        """
-        with pyhmmer.plan7.HMMFile(path) as hmm_file:
-            for hmm in hmm_file:
-                yield hmm
+#     @staticmethod
+#     def _read_hmm_from_file(path: Path|str) -> Iterator[pyhmmer.plan7.HMM]:
+#         """
+#         Read HMM from file
+#         :param path: path to the HMM file
+#         :return: None
+#         """
+#         with pyhmmer.plan7.HMMFile(path) as hmm_file:
+#             for hmm in hmm_file:
+#                 yield hmm
 
-    @staticmethod
-    def md5_of_file(path: Path) -> str:
-        hasher = hashlib.md5()
-        with path.open("rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()
+#     @staticmethod
+#     def md5_of_file(path: Path) -> str:
+#         hasher = hashlib.md5()
+#         with path.open("rb") as f:
+#             for chunk in iter(lambda: f.read(8192), b""):
+#                 hasher.update(chunk)
+#         return hasher.hexdigest()
 
-    @classmethod
-    def read_hmms(
-        self,
-        file_with_paths: Optional[Path]=None,
-        hmmdb_path: Optional[Path]=None,
-        whitelist: Optional[List[str]] = None,
-    ) -> HMMLoader:
-        """
-        Read HMMs from a either a file with paths to HMM files
-        Or from a directory containing HMM files
-        Or from a single HMM file
-        :param file_with_paths: path to the file with paths
-        :param hmmdb_path: path to directory of HMMs or single HMM file
-        :return: 'HMMLoader'
-        """
+#     @classmethod
+#     def read_hmms(
+#         self,
+#         file_with_paths: Optional[Path]=None,
+#         hmmdb_path: Optional[Path]=None,
+#         whitelist: Optional[List[str]] = None,
+#     ) -> HMMLoader:
+#         """
+#         Read HMMs from a either a file with paths to HMM files
+#         Or from a directory containing HMM files
+#         Or from a single HMM file
+#         :param file_with_paths: path to the file with paths
+#         :param hmmdb_path: path to directory of HMMs or single HMM file
+#         :return: 'HMMLoader'
+#         """
 
-        if file_with_paths is None and hmmdb_path is not None:
-            if hmmdb_path.is_file():
-                return HMMLoader(
-                    self._read_hmm_from_file(hmmdb_path),
-                    whitelist=whitelist,
-                )
-            elif hmmdb_path.is_dir():
-                return HMMLoader(
-                    itertools.chain.from_iterable(
-                        self._read_hmm_from_file(os.path.join(hmmdb_path, f))
-                        for f in os.listdir(hmmdb_path)
-                    ),
-                    whitelist=whitelist,
-                )
-            else:
-                raise ValueError(
-                    f"Encounterd path which isnt a file or a dir at {str(hmmdb_path)}"
-                )
+#         if file_with_paths is None and hmmdb_path is not None:
+#             if hmmdb_path.is_file():
+#                 return HMMLoader(
+#                     self._read_hmm_from_file(hmmdb_path),
+#                     whitelist=whitelist,
+#                 )
+#             elif hmmdb_path.is_dir():
+#                 return HMMLoader(
+#                     itertools.chain.from_iterable(
+#                         self._read_hmm_from_file(os.path.join(hmmdb_path, f))
+#                         for f in os.listdir(hmmdb_path)
+#                     ),
+#                     whitelist=whitelist,
+#                 )
+#             else:
+#                 raise ValueError(
+#                     f"Encounterd path which isnt a file or a dir at {str(hmmdb_path)}"
+#                 )
 
-        elif hmmdb_path is None and file_with_paths is not None:
-            with open(file_with_paths, 'r') as _in:
-                return HMMLoader(
-                    itertools.chain.from_iterable(
-                        self._read_hmm_from_file(f.strip())
-                        for f in _in
-                    ),
-                    whitelist=whitelist,
-                )
+#         elif hmmdb_path is None and file_with_paths is not None:
+#             with open(file_with_paths, 'r') as _in:
+#                 return HMMLoader(
+#                     itertools.chain.from_iterable(
+#                         self._read_hmm_from_file(f.strip())
+#                         for f in _in
+#                     ),
+#                     whitelist=whitelist,
+#                 )
 
-        else:
-            raise ValueError(
-                "Pass either a file with paths or a path to HMMLoader.read_hmms()"
-            )
+#         else:
+#             raise ValueError(
+#                 "Pass either a file with paths or a path to HMMLoader.read_hmms()"
+#             )
 
-    def write_to_h3m_file(
-        self,
-        output: Path,
-    ):
-        """Write the hmms to a single h3m binary file"""
-        output = Path(output).with_suffix(".selected.h3m")
-        output.parent.mkdir(parents=True, exist_ok=True)
-        with open(output, "wb") as f:
-            for hmm in self.hmms:
-                hmm.write(f, binary=True)
+#     def write_to_h3m_file(
+#         self,
+#         output: Path,
+#     ):
+#         """Write the hmms to a single h3m binary file"""
+#         output = Path(output).with_suffix(".selected.h3m")
+#         output.parent.mkdir(parents=True, exist_ok=True)
+#         with open(output, "wb") as f:
+#             for hmm in self.hmms:
+#                 hmm.write(f, binary=True)

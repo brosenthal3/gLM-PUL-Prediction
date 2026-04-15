@@ -1,11 +1,16 @@
 .vscode
+__pycache__
+
+# Data files
 src/data/DBCAN-PUL/*
 src/data/depr/*
 src/data/genomes/*
 src/data/genecat_output/*
 src/data/preprocessed/*
 src/data/puls_genes/*
-__pycache__
+src/data/hmms
+
+# PULpy intermediary files
 src/PULpy-master/genomes/*
 src/PULpy-master/pfam
 src/PULpy-master/.snakemake/*
@@ -16,7 +21,11 @@ src/PULpy-master/pfam/*
 src/PULpy-master/pfam_data/*
 src/PULpy-master/proteins/*
 src/PULpy-master/tmp.prodigal.stdin.617147*
+
+# cblaster db
 cblasterdb.*
+
+# model training data and stuff
 src/data/puls_genes
 src/data/results/gecco/model_*
 src/data/results/gecco/fold_*
@@ -24,10 +33,14 @@ src/data/results/gecco_pfam/model_*
 src/data/results/gecco_pfam/fold_*
 src/data/results/gecco_with_dbcan/model_*
 src/data/results/gecco_with_dbcan/fold_*
-src/data/hmms
+src/data/results/genecat/fold_data/*
+src/data/results/genecat/PUL_embs/*
+
+# SLURM output stuff
 orthoANI_*.err
 orthoANI_*.out
 gecco_*.err
 gecco_*.out
-src/data/results/genecat/*
+genecat_*.out
+genecat_*.err
 

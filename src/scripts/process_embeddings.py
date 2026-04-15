@@ -69,9 +69,10 @@ def main():
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--embeddings", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
     parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
+    parser.add_argument("--output_dir", "-o", type=str, default="src/data/results/genecat/fold_data", help="Directory to save fold data")
     args = parser.parse_args()
 
-    handler = GenecatHandler(args.genes, args.clusters_dir, args.embeddings, output_dir="src/data/results/genecat/fold_data")
+    handler = GenecatHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir)
     handler.save_folds(args.k)
 
 

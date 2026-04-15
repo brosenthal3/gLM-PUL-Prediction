@@ -331,9 +331,9 @@ if __name__ == "__main__":
     os.makedirs(output_path, exist_ok=True)
 
     if model_name == "genecat":
-        results_path = "src/data/results/genecat/zero_shot_results/labeled_results_" + args.split
-    elif model_name == "gecco":
-        results_path = "src/data/results/gecco/labeled_results_" + args.split
+        results_path = f"src/data/results/genecat/zero_shot_results/labeled_results_{args.split}"
+    elif "gecco" in model_name:
+        results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     else:
         raise ValueError("Invalid model name.")
 

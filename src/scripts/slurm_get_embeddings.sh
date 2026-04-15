@@ -18,13 +18,21 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
+# EXTRACT EMBEDDINGS #
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src'
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
-VOCAB=${BASEPATH}/BERT_train.fold_0.unique_domains.min50.Pfam37.1.vocab.txt
-MODEL=${BASEPATH}/models_multilabel_models/model_gene_multilabel_untied_march_s4spvlec_v0.pt
+VOCAB=${BASEPATH}/models_multilabel_models/jan_model/BERT_train.fold_0.all_domains.min50.vocab.txt
+MODEL_NAME=model_gene_multilabel_untied_jan_za9lmkbs_v0
+MODEL=${BASEPATH}/models_multilabel_models/jan_model/${MODEL_NAME}.pt
 GENES=${PULPATH}/src/data/genecat_output/genome.genes.parquet
 FEATURES=${PULPATH}/src/data/genecat_output/genome.features.parquet
 OUT=${PULPATH}/src/data/results/genecat/PUL_embs
 
-python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES -m $MODEL --vocab $VOCAB --batch-size 16 -j 1 -o $OUT --outtypes df db
+python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES -m $MODEL --vocab $VOCAB --batch-size 16 -j 1 -o $OUT --outtypes df
+
+# PROCESS EMBEDDINGS INTO SEPARATE TABLES FOR EACH FOLD #
+EMBS=${OUT}/${MODEL_NAME}_context_embedding.embeddings.parquet
+cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
+
+python src/scripts/process_embeddings.py --genes $GENES --embeddings $EMBS -k 7

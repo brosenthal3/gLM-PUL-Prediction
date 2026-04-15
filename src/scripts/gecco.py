@@ -41,7 +41,7 @@ class GECCOHandler:
         subprocess.run(cmd, shell=True, check=True)
 
     
-    def _predict(self, test_clusters, genes, features, model_path):
+    def _predict(self, genomes, genes, features, model_path):
         # print(f"Starting prediction for genome {Path(genome_path).stem}...")
         # # check output path
         # if os.path.exists(output_path):
@@ -53,9 +53,8 @@ class GECCOHandler:
         # subprocess.run(cmd, shell=True, check=True)
 
         fold = model_path.split('_')[-1]
-        all_genomes = "src/data/genomes/combined_genomes.gb"
         print(f"Starting prediction for fold {fold}...")
-        cmd = f"gecco -vv predict --genes {genes} --features {features} --clusters {test_clusters} --model {model_path} -o {self.output_dir}/fold_{fold} --genome {all_genomes}"
+        cmd = f"gecco -vv predict --genes {genes} --features {features} --clusters {test_clusters} --model {model_path} -o {self.output_dir}/fold_{fold} --genome {genomes}"
         subprocess.run(cmd, shell=True, check=True)
 
 
@@ -133,40 +132,45 @@ class GECCOHandler:
 
     #     return hmm_out_file + ".selected.h3m"
 
+    def save_genomes(self, genomes_df, output_path):
+        print(f"Saving {len(genomes_df)} genomes to {output_path}...")
+        for genome in genomes_df.to_series().to_list():
+            genome_path = f"src/data/genomes/selected_genomes/{genome}.fa"
+            with open(output_path, 'a') as out_f:
+                with open(genome_path, 'r') as in_f:
+                    out_f.write(in_f.read())
+
 
     def run_fold(self, fold):
         train_clusters, test_clusters = self.get_training_data(fold)
         model_path = f"{self.output_dir}/model_{fold}"
         # filter gene and feature tables to only include genes in training set
-        train_genes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
+        train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
 
-        temp_genes_file = self._save_temp_table(self.genes, train_genes)
-        temp_features_file = self._save_temp_table(self.features, train_genes)
+        temp_genes_file = self._save_temp_table(self.genes, train_genomes)
+        temp_features_file = self._save_temp_table(self.features, train_genomes)
         self._train(train_clusters, temp_genes_file.name, temp_features_file.name, model_path)
 
-        test_genes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
-        temp_test_genes_file = self._save_temp_table(self.genes, test_genes)
-        temp_test_features_file = self._save_temp_table(self.features, test_genes)
-        self._predict(test_clusters, temp_test_genes_file.name, temp_test_features_file.name, model_path) # predict on test set
-        self._predict(train_clusters, temp_genes_file.name, temp_features_file.name, model_path) # predict on train set
+        test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
+        temp_test_genes_file = self._save_temp_table(self.genes, test_genomes)
+        temp_test_features_file = self._save_temp_table(self.features, test_genomes)
+
+
+        # save all genomes in one fasta file for prediction
+        test_genomes_path = f"{self.output_dir}/fold_{fold}/test_genomes.fa"
+        self.save_genomes(test_genomes, test_genomes_path)
+
+        train_genomes_path = f"{self.output_dir}/fold_{fold}/train_genomes.fa"
+        self.save_genomes(train_genomes, train_genomes_path)
+
+        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path) # predict on test set
+        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path) # predict on train set
 
         temp_features_file.unlink()
         temp_genes_file.unlink()
         temp_test_genes_file.unlink()
         temp_test_features_file.unlink()
 
-        # # get all genomes in test set, which are the sequences in the test_clusters table
-        # for test_genome in test_genomes.to_series().to_list():
-        #     genome_path = f"src/data/genomes/selected_genomes/{test_genome}.fa"
-        #     output_path = f"{self.output_dir}/fold_{fold}/{test_genome}"
-        #     self._predict(genome_path, model_path, output_path)
-
-        # train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
-        # self._save_hmm_file(model_path)
-        # for train_genome in train_genomes.to_series().to_list():
-        #     genome_path = f"src/data/genomes/selected_genomes/{train_genome}.fa"
-        #     output_path = f"{self.output_dir}/fold_{fold}/{train_genome}"
-        #     self._predict(genome_path, model_path, output_path)
         raise NotImplementedError("Evaluation not implemented yet")
         results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters, train_clusters)
         return results

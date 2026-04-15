@@ -156,13 +156,13 @@ class PredictionEvaluator:
             self.set_evaluation_data(0)
 
         # standardize predicted probabilities to be between 0 and 1
-        self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
+        #self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
 
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
 
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax, plot_mcc=True)
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax, plot_mcc=False)
         # for pulpy vs pred
         self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
         self.plot_pr_dot(self.true, self.pulpy_pred, "True vs PULpy", colors[4], ax)
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
     parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
-    parser.add_argument("-k", type=int, default=1, help="Number of folds to evaluate")
+    parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
     args = parser.parse_args()
     model_name = args.model
     output_path = f"src/data/plots/{model_name}"
@@ -347,16 +347,25 @@ if __name__ == "__main__":
         split=args.split,
         output_path=output_path
     )
-    evaluator.f1_per_fold()
 
+    evaluator.venn_diagram()
+    evaluator.f1_per_fold()
     for fold in range(args.k):
          evaluator.precision_recall_curve(fold)
          evaluator.plot_roc_curves(fold)
 
-    if args.k == 5:
-         evaluator.precision_recall_curve("all")
-    elif args.k == 7:
-        evaluator.venn_diagram()
+    if args.k == 7:
+        # new evaluator class for aggregating 5 folds instead of 7
+        evaluator = PredictionEvaluator(
+            f"{results_path}",
+            "src/data/results/cblaster_results.tsv",
+            "src/data/results/pulpy_annotations.tsv",
+            k=5,
+            model_name=model_name,
+            split=args.split,
+            output_path=output_path
+        )
+        evaluator.precision_recall_curve("all")
 
     #evaluator.visualize_predictions_in_genome("AE015928", 0, 0.21)
 

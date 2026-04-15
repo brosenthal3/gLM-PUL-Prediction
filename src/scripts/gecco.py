@@ -119,6 +119,8 @@ class GECCOHandler:
     #     return hmm_out_file + ".selected.h3m"
 
     def save_genomes(self, genomes_df, output_path):
+        if os.path.exists(output_path):
+            return
         print(f"Saving {len(genomes_df)} genomes to {output_path}...")
         for genome in genomes_df.to_series().to_list():
             genome_path = f"src/data/genomes/selected_genomes/{genome}.fa"
@@ -151,14 +153,14 @@ class GECCOHandler:
         self.save_genomes(train_genomes, train_genomes_path)
 
         # predict on test set and train set
-        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path)
-        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path)
+#        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path)
+#        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path)
 
         # remove temporary files
-        temp_features_file.unlink()
-        temp_genes_file.unlink()
-        temp_test_genes_file.unlink()
-        temp_test_features_file.unlink()
+        temp_features_file.close()
+        temp_genes_file.close()
+        temp_test_genes_file.close()
+        temp_test_features_file.close()
 
         print(f"Evaluating fold {fold}...")
         self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters, split="test")

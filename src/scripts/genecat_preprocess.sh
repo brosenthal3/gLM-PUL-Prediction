@@ -11,3 +11,6 @@ GENOMES=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/data/gen
 python -m genecat.cli preprocess -i $GENOMES --hmms $PFAM -o $OUT --write-tables --call-genes --hmm-type pfam --output-name pfam
 python -m genecat.cli preprocess -i $GENOMES --hmms $CAZY -o $OUT --write-tables --call-genes --hmm-type cazy --output-name dbcan
 python -m genecat.cli call-genes -i $GENOMES -o $OUT --type faa+gff
+
+cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
+python src/scripts/combine_features.py

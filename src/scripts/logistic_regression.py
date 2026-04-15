@@ -321,6 +321,7 @@ if __name__ == "__main__":
 
         genecat_results = pd.concat(output)
         genecat_results = polars.from_pandas(genecat_results)
+        rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
 
         # get all genes in test set
         test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
@@ -329,7 +330,6 @@ if __name__ == "__main__":
         train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
         save_results(train_clusters, genecat_results, genes, fold, split="train")
 
-        genecat_results.write_parquet(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.parquet"))
-        rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
+#        genecat_results.write_csv(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.tsv"), separator='\t')
 
 # python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data --output-dir src/data/results/genecat/zero_shot_results --model-name pfam --contig-col sequence_id --label-col label --norm-type l2 --normalize

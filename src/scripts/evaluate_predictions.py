@@ -15,17 +15,25 @@ class PredictionEvaluator:
     Currently aggregates predictions across all folds.
     """
 
-    def __init__(self, labeled_results_path, clusters_table_path, pulpy_annotations_path, k, model_name, split, output_path):
+    def __init__(self, labeled_results_path, 
+                clusters_table_path, 
+                pulpy_annotations_path,
+                cblaster_annotations_path, 
+                k, model_name, split, output_path):
+
         self.model_name = model_name
         self.split = split
         self.output_path = output_path
+        self.labeled_results_raw = []
         self.labeled_results = []
 
         for i in range(k):
             labeled_results = polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t')
             self.labeled_results.append(labeled_results)
+            self.labeled_results_raw.append(labeled_results) # keep a copy of the raw results before joining with annotations
 
         self.get_pulpy_annotations(pulpy_annotations_path)
+        self.get_cblaster_annotations(cblaster_annotations_path)
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.filter = None
 
@@ -35,7 +43,17 @@ class PredictionEvaluator:
         self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
         self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
         self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
-
+        # weight down genes with PULpy or cblaster annotations but no experimental data (likely cryptic puls)
+        self.sample_weights = (
+            self.labeled_results[fold]
+            .with_columns(
+                polars.when(((polars.col("is_PUL_pulpy") == True) | (polars.col("is_PUL_cblaster") == True)) & (polars.col("is_PUL") == False))
+                .then(0.01)
+                .otherwise(1.0)
+                .alias("sample_weight")
+            )
+            .select("sample_weight").to_series().to_list()
+        )
 
     def recompute_predictions(self, fold, threshold):
         self.labeled_results[fold] = self.labeled_results[fold].with_columns(
@@ -70,8 +88,23 @@ class PredictionEvaluator:
         for fold in range(len(self.labeled_results)):
             self.labeled_results[fold] = self.labeled_results[fold].join(
                 (
-                    join_gene_and_PUL_table(self.labeled_results[fold], pulpy_annotations)
+                    join_gene_and_PUL_table(self.labeled_results_raw[fold], pulpy_annotations)
                     .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_pulpy", "cluster_id": "cluster_id_pulpy"})
+                ),
+                on="protein_id",
+                how="left"
+            )
+
+    def get_cblaster_annotations(self, cblaster_annotations_path):
+        cblaster_annotations = (
+            polars.read_csv(cblaster_annotations_path, separator='\t')
+            .select("sequence_id", "start", "end")
+        )
+        for fold in range(len(self.labeled_results)):
+            self.labeled_results[fold] = self.labeled_results[fold].join(
+                (
+                    join_gene_and_PUL_table(self.labeled_results_raw[fold], cblaster_annotations)
+                    .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_cblaster", "cluster_id": "cluster_id_cblaster"})
                 ),
                 on="protein_id",
                 how="left"
@@ -123,13 +156,13 @@ class PredictionEvaluator:
         return mmc_scores[best_mmc_idx], best_threshold, (pr_mmc[1][1], pr_mmc[0][1])
 
 
-    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False):
+    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False, weights=None):
         if len(true) == 0 or len(pred) == 0:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
 
-        precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True)
-        auc = average_precision_score(true, pred)
+        precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True, sample_weight=weights)
+        auc = average_precision_score(true, pred, sample_weight=weights)
         ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color, alpha=0.8)
 
         if plot_mcc:
@@ -139,14 +172,14 @@ class PredictionEvaluator:
             plt.scatter(pr_point[0], pr_point[1], label=f"Best MCC: {round(mcc, 2)}, threshold {round(threshold, 2)}", color=color, marker='X', s=100)
 
 
-    def plot_pr_dot(self, true, pred, label, color, ax):
+    def plot_pr_dot(self, true, pred, color, ax):
         if len(true) == 0 or len(pred) == 0:
-            print(f"Warning: No data to plot for {label}. Skipping PR curve.")
+            print(f"Warning: No data to plot. Skipping PR dot.")
             return
 
         precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True)
         auc = average_precision_score(true, pred)
-        ax.scatter(recall[1], precision[1], label=label + " (AP: {:.2f})".format(auc), color=color)
+        ax.scatter(recall[1], precision[1], color=color)
 
 
     def precision_recall_curve(self, fold):
@@ -162,10 +195,12 @@ class PredictionEvaluator:
         colors = plt.cm.tab20.colors
 
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax, plot_mcc=False)
+        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax)
+        if fold == "all":
+            self.plot_pr(self.true, self.p_pred, f"True vs {self.model_name} (Weighted)", colors[5], ax, weights=self.sample_weights)
         # for pulpy vs pred
         self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
-        self.plot_pr_dot(self.true, self.pulpy_pred, "True vs PULpy", colors[4], ax)
+        self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax)
         baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
 
         # then filter by phylum and plot again
@@ -342,17 +377,18 @@ if __name__ == "__main__":
         f"{results_path}",
         "src/data/results/cblaster_results.tsv",
         "src/data/results/pulpy_annotations.tsv",
+        "src/data/results/cblaster_results_liberal.tsv",
         k=args.k,
         model_name=model_name,
         split=args.split,
         output_path=output_path
     )
 
-    evaluator.venn_diagram()
-    evaluator.f1_per_fold()
-    for fold in range(args.k):
-         evaluator.precision_recall_curve(fold)
-         evaluator.plot_roc_curves(fold)
+    # evaluator.venn_diagram()
+    # evaluator.f1_per_fold()
+    # for fold in range(args.k):
+    #      evaluator.precision_recall_curve(fold)
+    #      evaluator.plot_roc_curves(fold)
 
     if args.k == 7:
         # new evaluator class for aggregating 5 folds instead of 7
@@ -360,6 +396,7 @@ if __name__ == "__main__":
             f"{results_path}",
             "src/data/results/cblaster_results.tsv",
             "src/data/results/pulpy_annotations.tsv",
+            "src/data/results/cblaster_results_liberal.tsv",
             k=5,
             model_name=model_name,
             split=args.split,

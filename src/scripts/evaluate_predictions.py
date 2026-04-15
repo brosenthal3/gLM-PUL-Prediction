@@ -87,6 +87,7 @@ class PredictionEvaluator:
                 how="left"
             )
             .filter(polars.col("phylum") == phylum)
+            .drop("phylum")
         )
         self.set_evaluation_data(fold)
         self.filter = phylum
@@ -346,15 +347,18 @@ if __name__ == "__main__":
         split=args.split,
         output_path=output_path
     )
-    #evaluator.venn_diagram()
-    #evaluator.f1_per_fold()
+    evaluator.f1_per_fold()
 
-    # for fold in range(args.k):
-    #     evaluator.precision_recall_curve(fold)
-    #     evaluator.plot_roc_curves(fold)
-    #evaluator.precision_recall_curve("all")
+    for fold in range(args.k):
+         evaluator.precision_recall_curve(fold)
+         evaluator.plot_roc_curves(fold)
 
-    evaluator.visualize_predictions_in_genome("AE015928", 0, 0.21)
+    if args.k == 5:
+         evaluator.precision_recall_curve("all")
+    elif args.k == 7:
+        evaluator.venn_diagram()
+
+    #evaluator.visualize_predictions_in_genome("AE015928", 0, 0.21)
 
 
     """

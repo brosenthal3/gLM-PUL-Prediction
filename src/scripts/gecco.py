@@ -54,35 +54,20 @@ class GECCOHandler:
 
         fold = model_path.split('_')[-1]
         print(f"Starting prediction for fold {fold}...")
-        cmd = f"gecco -vv predict --genes {genes} --features {features} --clusters {test_clusters} --model {model_path} -o {self.output_dir}/fold_{fold} --genome {genomes}"
+        cmd = f"gecco -vv predict --genes {genes} --features {features} --model {model_path} -o {self.output_dir}/fold_{fold} --genome {genomes}"
         subprocess.run(cmd, shell=True, check=True)
 
 
-    def _evaluate(self, predictions_path, fold, test_clusters, train_clusters):
-        # pred_clusters = []
-        # pred_genes = []
-        # # collect all predicted clusters and genes from the predictions directory
-        # for output_dir in os.listdir(predictions_path):
-        #     for output_file in os.listdir(os.path.join(predictions_path, output_dir)):
-        #         if output_file.endswith(".clusters.tsv"):
-        #             pred_path = os.path.join(predictions_path, output_dir, output_file)
-        #             pred_clusters.append(polars.read_csv(pred_path, separator='\t'))
-        #         elif output_file.endswith(".genes.tsv"):
-        #             pred_path = os.path.join(predictions_path, output_dir, output_file)
-        #             pred_genes.append(polars.read_csv(pred_path, separator='\t'))
-
-        # concat both into single tables, remove version num from sequence_id
-        pred_clusters = polars.read_csv(pred_clusters, separator='\t').with_columns(
+    def _evaluate(self, predictions_path, fold, clusters, split="test"):
+        # read in predicted clusters and genes, and test clusters
+        pred_clusters = polars.read_csv(f"{predictions_path}/{split}.clusters.tsv", separator='\t').with_columns(
             polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
         )
-        pred_genes = polars.read_csv(pred_genes, separator='\t').with_columns(
+        pred_genes = polars.read_csv(f"{predictions_path}/{split}.genes.tsv", separator='\t').with_columns(
             polars.col("sequence_id").map_elements(lambda x: x.split('.')[0]).alias("sequence_id")
         )
-
-        test_clusters = polars.read_csv(test_clusters, separator='\t')
-        train_clusters = polars.read_csv(train_clusters, separator='\t')
-        self.save_labeled_table(test_clusters, pred_clusters, pred_genes, fold, split="test")
-        self.save_labeled_table(train_clusters, pred_clusters, pred_genes, fold, split="train")
+        clusters_table = polars.read_csv(clusters, separator='\t')
+        self.save_labeled_table(clusters_table, pred_clusters, pred_genes, fold, split=split)
 
         return pred_clusters, pred_genes
 
@@ -147,33 +132,37 @@ class GECCOHandler:
         # filter gene and feature tables to only include genes in training set
         train_genomes = polars.read_csv(train_clusters, separator='\t').select("sequence_id").unique()
 
+        # Train model
         temp_genes_file = self._save_temp_table(self.genes, train_genomes)
         temp_features_file = self._save_temp_table(self.features, train_genomes)
         self._train(train_clusters, temp_genes_file.name, temp_features_file.name, model_path)
 
+        # save temporary files for test set
         test_genomes = polars.read_csv(test_clusters, separator='\t').select("sequence_id").unique()
         temp_test_genes_file = self._save_temp_table(self.genes, test_genomes)
         temp_test_features_file = self._save_temp_table(self.features, test_genomes)
 
-
         # save all genomes in one fasta file for prediction
-        test_genomes_path = f"{self.output_dir}/fold_{fold}/test_genomes.fa"
+        test_genomes_path = f"{self.output_dir}/fold_{fold}/test.fa"
+        train_genomes_path = f"{self.output_dir}/fold_{fold}/train.fa"
         self.save_genomes(test_genomes, test_genomes_path)
-
-        train_genomes_path = f"{self.output_dir}/fold_{fold}/train_genomes.fa"
         self.save_genomes(train_genomes, train_genomes_path)
 
-        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path) # predict on test set
-        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path) # predict on train set
+        # predict on test set and train set
+        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path)
+        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path)
 
+        # remove temporary files
         temp_features_file.unlink()
         temp_genes_file.unlink()
         temp_test_genes_file.unlink()
         temp_test_features_file.unlink()
 
-        raise NotImplementedError("Evaluation not implemented yet")
-        results = self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters, train_clusters)
-        return results
+        print(f"Evaluating fold {fold}...")
+        self._evaluate(f"{self.output_dir}/fold_{fold}", fold, test_clusters, split="test")
+        self._evaluate(f"{self.output_dir}/fold_{fold}", fold, train_clusters, split="train")
+
+        return
 
 
     def get_training_data(self, fold):

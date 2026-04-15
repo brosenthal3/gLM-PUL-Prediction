@@ -8,6 +8,7 @@ import tempfile
 import argparse
 from utility_scripts import join_gene_and_PUL_table
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
+from Bio import SeqIO
 
 
 class GECCOHandler:
@@ -122,8 +123,9 @@ class GECCOHandler:
         for genome in genomes_df.to_series().to_list():
             genome_path = f"src/data/genomes/selected_genomes/{genome}.fa"
             with open(output_path, 'a') as out_f:
-                with open(genome_path, 'r') as in_f:
-                    out_f.write(in_f.read())
+                for record in SeqIO.parse(genome_path, "fasta"):
+                    record.id = record.id.split('.')[0] # remove version number from sequence id to match with genes table
+                    SeqIO.write(record, out_f, "fasta")
 
 
     def run_fold(self, fold):

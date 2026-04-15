@@ -147,14 +147,15 @@ class GECCOHandler:
         temp_test_features_file = self._save_temp_table(self.features, test_genomes)
 
         # save all genomes in one fasta file for prediction
+        os.makedirs(f"{self.output_dir}/fold_{fold}", exist_ok=True)
         test_genomes_path = f"{self.output_dir}/fold_{fold}/test.fa"
         train_genomes_path = f"{self.output_dir}/fold_{fold}/train.fa"
         self.save_genomes(test_genomes, test_genomes_path)
         self.save_genomes(train_genomes, train_genomes_path)
 
         # predict on test set and train set
-#        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path)
-#        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path)
+        self._predict(test_genomes_path, temp_test_genes_file.name, temp_test_features_file.name, model_path)
+        self._predict(train_genomes_path, temp_genes_file.name, temp_features_file.name, model_path)
 
         # remove temporary files
         temp_features_file.close()

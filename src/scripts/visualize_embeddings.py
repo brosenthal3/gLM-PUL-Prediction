@@ -8,22 +8,30 @@ embeddings = (
     .select("embeddings", "label")
     .sort("label")
 )
-embeddings_puls = embeddings.filter(polars.col("label") == True)
-embeddings_non_puls = embeddings.filter(polars.col("label") == False)
+# convert to matrix
+embedding_matrix = np.stack(embeddings["embeddings"].to_list())
+# fit umap
+reducer = umap.UMAP()
+embedding_2d = reducer.fit_transform(embedding_matrix)
+x = embedding_2d[:, 0]
+y = embedding_2d[:, 1]
+reduced_embeddings = polars.DataFrame({
+    "x": x,
+    "y": y,
+    "label": embeddings["label"]
+})
 
 colors = plt.cm.tab20.colors
-for i, embeddings in enumerate([embeddings_non_puls, embeddings_puls]):
-    embedding_matrix = np.stack(embeddings.select("embeddings").to_series().to_list())
-    reducer = umap.UMAP()
-    embedding_2d = reducer.fit_transform(embedding_matrix)
-    plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.4, s=3, color=colors[i])
+for i, label in [True, False]:
+    embedding_2d = reduced_embeddings.filter(pl.col("label") == label)
+    plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.5, s=1, color=colors[i])
 
 plt.legend(handles=[
-    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=5, label='Non-PUL gene'),
-    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=5, label='PUL gene')
+    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=5, label='PUL gene'),
+    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=5, label='Non-PUL gene')
 ])
 plt.xticks([])
 plt.yticks([])
 plt.title("UMAP projection of gene embeddings")
-plt.savefig("src/data/plots/embedding_umap.png")
+plt.savefig("src/data/plots/genecat/embedding_umap.png")
 plt.clf()

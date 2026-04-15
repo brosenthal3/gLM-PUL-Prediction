@@ -67,14 +67,19 @@ class PredictionEvaluator:
         print("Aggregating all folds for overall evaluation...")
         all_labeled_tables = []
         for fold in range(len(self.labeled_results)):
-            all_labeled_tables.append(
+            df = (
                 self.labeled_results[fold]
                 .join(self.clusters_table.select("sequence_id", "phylum", "species").unique(), on="sequence_id", how="left")
-                .with_columns(
+            )
+            # cast types to prevent issues
+            if "start_pred" in df.columns: 
+                df = df.with_columns(
                     polars.col("start_pred").cast(polars.Int64, strict=False),
                     polars.col("end_pred").cast(polars.Int64, strict=False),
                 )
-            )
+            all_labeled_tables.append(df)
+
+
         self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
         self.get_pulpy_annotations("src/data/results/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
 
@@ -384,13 +389,15 @@ if __name__ == "__main__":
         output_path=output_path
     )
 
-    # evaluator.venn_diagram()
-    # evaluator.f1_per_fold()
-    # for fold in range(args.k):
-    #      evaluator.precision_recall_curve(fold)
-    #      evaluator.plot_roc_curves(fold)
-
     if args.k == 7:
+        evaluator.venn_diagram()
+
+    evaluator.f1_per_fold()
+    for fold in range(args.k):
+         evaluator.precision_recall_curve(fold)
+         evaluator.plot_roc_curves(fold)
+
+    if args.k >= 5:
         # new evaluator class for aggregating 5 folds instead of 7
         evaluator = PredictionEvaluator(
             f"{results_path}",

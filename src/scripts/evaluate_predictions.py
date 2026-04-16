@@ -19,13 +19,14 @@ class PredictionEvaluator:
                 clusters_table_path, 
                 pulpy_annotations_path,
                 cblaster_annotations_path, 
-                k, model_name, split, output_path):
+                k, model_name, split, output_path, weight):
 
         self.model_name = model_name
         self.split = split
         self.output_path = output_path
         self.labeled_results_raw = []
         self.labeled_results = []
+        self.weight = weight
 
         for i in range(k):
             labeled_results = polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t')
@@ -48,7 +49,7 @@ class PredictionEvaluator:
             self.labeled_results[fold]
             .with_columns(
                 polars.when(((polars.col("is_PUL_pulpy") == True) | (polars.col("is_PUL_cblaster") == True)) & (polars.col("is_PUL") == False))
-                .then(0.01)
+                .then(self.weight)
                 .otherwise(1.0)
                 .alias("sample_weight")
             )
@@ -202,7 +203,7 @@ class PredictionEvaluator:
         # for true vs pred
         self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax)
         if fold == "all":
-            self.plot_pr(self.true, self.p_pred, f"True vs {self.model_name} (Weighted)", colors[5], ax, weights=self.sample_weights)
+            self.plot_pr(self.true, self.p_pred, f"True vs {self.model_name} (Weighted {self.weight})", colors[5], ax, weights=self.sample_weights)
         # for pulpy vs pred
         self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
         self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax)
@@ -366,6 +367,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
     parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
     parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
+    parser.add_argument("--weight", type=float, default=0.01, help="Weight for uncertain negative examples.")
     args = parser.parse_args()
     model_name = args.model
     output_path = f"src/data/plots/{model_name}"
@@ -386,7 +388,8 @@ if __name__ == "__main__":
         k=args.k,
         model_name=model_name,
         split=args.split,
-        output_path=output_path
+        output_path=output_path,
+        weight=args.weight
     )
 
     if args.k == 7:
@@ -407,11 +410,14 @@ if __name__ == "__main__":
             k=5,
             model_name=model_name,
             split=args.split,
-            output_path=output_path
+            output_path=output_path,
+            weight=args.weight
         )
         evaluator.precision_recall_curve("all")
 
-    #evaluator.visualize_predictions_in_genome("AE015928", 0, 0.21)
+    # two heaily annoated bacteroidetes
+    evaluator.visualize_predictions_in_genome("AE015928", 0, 0.25)
+    evaluator.visualize_predictions_in_genome("JH724241", 0, 0.25)
 
 
     """

@@ -6,7 +6,7 @@ import argparse
 from utility_scripts import join_gene_and_PUL_table
 
 
-class GenecatHandler:
+class EmbeddingsHandler:
     def __init__(self, genes, clusters_dir, embeddings, output_dir):
         self.genes = self._validate_table(genes)
         self.embeddings = self._validate_table(embeddings)
@@ -67,15 +67,24 @@ def main():
     parser = argparse.ArgumentParser(description="Run Zero-shot Genecat cross-validation")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
-    parser.add_argument("--embeddings", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
-    parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
+    parser.add_argument("--embeddings", "-e", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
+    parser.add_argument("-k", type=int, default=7, help="Number of folds for cross-validation")
     parser.add_argument("--output_dir", "-o", type=str, default="src/data/results/genecat/fold_data", help="Directory to save fold data")
     args = parser.parse_args()
 
-    handler = GenecatHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir)
+    handler = EmbeddingsHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir)
     handler.save_folds(args.k)
 
 
 
 if __name__ == "__main__":
     main()
+
+"""
+    For genecat:
+    python src/scripts/process_embeddings.py
+
+    For esmc:
+    python src/scripts/process_embeddings.py -e src/data/results/esmc/esmc_embeddings.parquet -o src/data/results/esmc/fold_data
+
+"""

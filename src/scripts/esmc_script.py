@@ -9,8 +9,16 @@ from tqdm import tqdm
 import torch
 
 faa_path = "src/data/genecat_output/genome.genes.faa"
-#sequences = polars.read_csv("src/data/results/cblaster_results.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique().to_series().to_list()
-client = ESMC.from_pretrained("esmc_300m").to("cpu") # or "cpu"
+sequences = polars.read_csv("src/data/results/cblaster_results.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
+genes = (
+    polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+    .select("protein_id", "sequence_id").unique()
+    .join(sequences, on="sequence_id", how="semi")
+    .select("protein_id")
+    .unique().to_series().to_list()
+)
+
+client = ESMC.from_pretrained("esmc_300m").to("gpu") # or "cpu"
 
 with open(faa_path, "r") as f:
     faa_iter = SimpleFastaParser(f)
@@ -19,9 +27,9 @@ with open(faa_path, "r") as f:
     seq_length = []
     embeddings = []
 
-    for gene_id, seq in tqdm(faa_iter, total=772451):
-#        if gene_id.split("_")[0] not in sequences:
-#            continue
+    for gene_id, seq in tqdm(faa_iter, total=len(genes)):
+        if gene_id not in sequences:
+            continue
 
         protein = ESMProtein(sequence=seq)
         protein_tensor = client.encode(protein)

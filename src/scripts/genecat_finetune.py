@@ -4,6 +4,7 @@ import multiprocessing
 from argparse import ArgumentParser, Namespace
 from dataclasses import asdict
 from pathlib import Path
+from rich.console import Console
 
 import anndata
 import polars
@@ -25,10 +26,11 @@ from genecat.model.finetuning import (FineTuneBinaryModel,
                                       _BaseFineTuneModel)
 from genecat.model.model_registry import load_model
 
-from ._parser import (configure_bgc_finetuneing_test,
+from scripts._genecat_parser import (configure_bgc_finetuneing_test,
                       configure_bgc_finetuning_input, configure_FineTuneModel,
                       configure_general_arguments, configure_WeightsAndBiases)
-from ._utils import create_versioned_path, show_device_summary
+from scripts._genecat_utils import create_versioned_path, show_device_summary
+from utility_scripts import join_gene_and_PUL_table
 
 """
 export PYTHONPATH='/home/ray/Documents/GeneCAT/src/'
@@ -38,9 +40,14 @@ GENES='/home/ray/Documents/GeneCAT/data/bgc_cluster_data/mibig-1.3.proG2.fna.top
 DOMAINS='/home/ray/Documents/GeneCAT/data/bgc_cluster_data/mibig-1.3.proG2.fna.top_features.tsv'
 CLUSTERS='/home/ray/Documents/GeneCAT/data/bgc_cluster_data/mibig-1.3.proG2.clusters.tsv'
 
-python -m genecat.cli bgc-finetune -g $GENES -d $DOMAINS -c $CLUSTERS --vocab $VOCAB -m $MODEL -o bgc_model --batch-size 10 -j 1 --offline --name somebs --middle-focus --test-gene-table $GENES --test-domain-table $DOMAINS --test-cluster-table $CLUSTERS
+python -m genecat.cli bgc-finetune -g $GENES -d $DOMAINS -c $CLUSTERS --vocab $VOCAB\
+     -m $MODEL -o bgc_model --batch-size 10 -j 1 --offline --name test --test-gene-table\
+        $GENES --test-domain-table $DOMAINS --test-cluster-table $CLUSTERS
 
-python -m genecat.cli bgc-finetune -g $GENES -d $DOMAINS -c $CLUSTERS --vocab $VOCAB -m $MODEL -o bgc_model --batch-size 10 -j 1 --offline --name test --test-gene-table $GENES --test-domain-table $DOMAINS --test-cluster-table $CLUSTERS
+## PULS ##
+export PYTHONPATH='/home/benr/thesis/genecat/src/:/home/benr/thesis/gLM-PUL-Prediction/src/'
+python src/scripts/genecat_finetune.py -g src/data/genecat_output/genome.genes.parquet -d src/data/genecat_output/genome.features.parquet 
+-c src/data/splits/train_fold_0.tsv --vocab src/data/genecat_output/test_vocab.txt -m src/data/models/model_test.pt -o src/data/results/genecat/fine_tuned --batch-size 10 -j 1 --offline --name test
 """
 
 
@@ -48,52 +55,62 @@ def configure_parser(parser: ArgumentParser):
     """Configure the main parser with argument groups for different namespaces"""
 
     configure_general_arguments(parser)
-
     configure_bgc_finetuning_input(parser)
-
     configure_bgc_finetuneing_test(parser)
-
     configure_WeightsAndBiases(parser)
-
     configure_FineTuneModel(parser)
-
     parser.set_defaults(run=run)
 
+def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
+    return table.with_columns(
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("start")).otherwise(polars.col("end")).alias("start"),
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("end")).otherwise(polars.col("start")).alias("end"),
+    )
 
 def join_gene_and_cluster_table(
     gene_table: GeneTable,
     cluster_table: polars.LazyFrame,
-    label_col_name: str,
+    label_col_name: str = "is_PUL",
+    buffer: int = 100 # allow for buffer around PUL boundaries
 ) -> LabeledGeneTable:
-    """
-    Join a gene table with a BGC cluster table.
+    gene_table = reset_start_end(gene_table.table)
+    cluster_table = reset_start_end(cluster_table)
 
-    Note:
-        For the BGC benchmark we get a regular gene table and a regular feature table.
-        Then we get a special cluster table which is organized by contig.
-        In the Cluster table Start and End coordinates of the contig indicate
-        which genes blong to a BGC. Additionally there is a single BGC type label.
-    """
     labled_gene_table = (
         cluster_table
-        # to avoid conflict with start and end in gene table!
-        .rename({"start": "cluster_start", "end": "cluster_end"})
+        .rename({"start": "pul_start", "end": "pul_end"}) # avoid column name conflicts
         .join(
-            gene_table.table,
+            gene_table,
             on="sequence_id",
             how="inner",
-            validate="1:m",
+            validate="m:m",
         )
         .with_columns(
-            # TODO there might be a minor error here if the cluster table is 1-based
             polars.when(
-                polars.col("start") >= polars.col("cluster_start"),
-                polars.col("end") <= polars.col("cluster_end"),
+                polars.col("start") >= polars.col("pul_start") - buffer, # allow for some buffer around the PUL boundaries
+                polars.col("end") <= polars.col("pul_end") + buffer,
+            )
+            .then(polars.col("cluster_id"))
+            .otherwise(None)
+            .alias("cluster_id"),
+            polars.when(
+                polars.col("start") >= polars.col("pul_start") - buffer,
+                polars.col("end") <= polars.col("pul_end") + buffer,
             )
             .then(True)
             .otherwise(False)
-            .cast(polars.String)
-            .alias("is_BGC")
+            .cast(polars.Boolean)
+            .alias("is_PUL")
+        )
+        # aggregate by protein_id to determine if protein is in any PUL
+        .group_by("protein_id")
+        .agg(
+            polars.col("is_PUL").any().alias("is_PUL"),
+            polars.col("sequence_id").first().alias("sequence_id"),
+            polars.col("start").first().alias("start"),
+            polars.col("end").first().alias("end"),
+            polars.col("cluster_id").drop_nulls().first().alias("cluster_id"),
+            polars.col("strand").first().alias("strand")
         )
         .sort(by=["sequence_id", "start", "end"])
         .with_row_index(name="gene_id", offset=0)  # important
@@ -107,11 +124,8 @@ def run(args: Namespace, console: Console) -> int:
     """Run function for the CLI."""
 
     multiprocessing.set_start_method("spawn")
-
     lightning.seed_everything(42)
-
     torch.set_float32_matmul_precision(args.matmul_precision)
-
     show_device_summary()
 
     if args.untrained:
@@ -135,7 +149,7 @@ def run(args: Namespace, console: Console) -> int:
     train_gene_table = GeneTable.load(args.gene_table)
     train_domain_table = FeatureTable.load(args.domain_table)
     train_cluster_table = polars.scan_csv(args.cluster_table, separator="\t").select(
-        ["sequence_id", "start", "end", "type"]
+        ["sequence_id", "start", "end", "cluster_id"]
     )
 
     finetune_model: _BaseFineTuneModel
@@ -147,25 +161,9 @@ def run(args: Namespace, console: Console) -> int:
             config=config,
         )
         early_stopping_metric = "val_auroc"
-        label_col_name = "is_BGC"
-
-    elif args.task_type == "multiclass":
-
-        raise NotImplementedError(
-            "Before doing multiclass, figure out if you want to do binary prediction of BGCs first. Or if you want to filter out non-BGC genes!"
-        )
-        console.print("Initializing multiclass Finetuning Model")
-        train_cluster_table = (
-            train_cluster_table.with_columns(
-                polars.col("type")
-                .str.split(";")
-                .list.first()  # NOTE the crude handling to force multiclass!
-            )
-            .filter(polars.col("type") != "Unknown")
-            .unique("type")
-        )
-        early_stopping_metric = "val_macro_f1"
-        label_col_name = "type"
+        label_col_name = "is_PUL"
+    else: 
+        raise NotImplementedError("Only binary classification available")
 
     train_labeled_genes = join_gene_and_cluster_table(
         train_gene_table,
@@ -173,14 +171,6 @@ def run(args: Namespace, console: Console) -> int:
         label_col_name=label_col_name,
     )
     label_vocab = train_labeled_genes.build_label_vocab()
-
-    if args.task_type == "multiclass":
-        finetune_model = FineTuneMultiClassModel(
-            pretrained_model=pretrained_model,
-            middle_focus=args.middle_focus,
-            n_classes=len(label_vocab),
-            config=config,
-        )
 
     with args.vocab.open() as f:
         vocab = Vocab.load(f)
@@ -214,13 +204,7 @@ def run(args: Namespace, console: Console) -> int:
         test_domain_table = FeatureTable.load(args.test_domain_table)
         test_cluster_table = (
             polars.scan_csv(args.cluster_table, separator="\t")
-            .select(["sequence_id", "start", "end", "type"])
-            .with_columns(
-                # NOTE the crude handling to force multiclass!
-                polars.col("type")
-                .str.split(";")
-                .list.first()
-            )
+            .select(["sequence_id", "start", "end", "cluster_id"])
         )
         test_labeled_genes = join_gene_and_cluster_table(
             gene_table=test_gene_table,
@@ -266,7 +250,7 @@ def run(args: Namespace, console: Console) -> int:
 
     wandb_logger = WandbLogger(
         name=args.name,
-        project="GeneCAT_BGC",
+        project="GeneCAT_PUL",
         log_model=(False if args.offline else "all"),
         prefix="finetune",
         save_dir=log_save_dir,
@@ -340,11 +324,8 @@ def run(args: Namespace, console: Console) -> int:
     best_model: _BaseFineTuneModel
     if args.task_type == "binary":
         best_model = FineTuneBinaryModel.load_from_checkpoint(
-            checkpoint_callback.best_model_path
-        )
-    elif args.task_type == "multiclass":
-        best_model = FineTuneMultiClassModel.load_from_checkpoint(
-            checkpoint_callback.best_model_path
+            checkpoint_callback.best_model_path,
+            weights_only=False,
         )
     model_info = dict(wandb_logger.experiment.config)
 
@@ -357,8 +338,6 @@ def run(args: Namespace, console: Console) -> int:
         trainer.test(model=best_model, datamodule=datamodule)
 
         adata = anndata.AnnData(
-            # TODO if you do multiclass you need to fix this too
-            # because X needs to be 2dimensional
             X=best_model.test_probas.reshape(-1, 1),  # type: ignore
             obs=test_labeled_genes.table.collect().to_pandas(),
             uns={
@@ -371,15 +350,24 @@ def run(args: Namespace, console: Console) -> int:
                 "test_cluster_table": str(args.test_cluster_table.resolve()),
             },
         )
-        filename = Path(wandb_logger.experiment.dir, "bgc_predictions.h5ad")
+        filename = Path(wandb_logger.experiment.dir, "pul_predictions.h5ad")
         adata.write(
             filename=filename,
             compression="gzip",
         )
         console.print(
-            f"[bold blue]{'Saving middle gene BGC prediction to':>12}[/] to {filename.resolve()}"
+            f"[bold blue]{'Saving middle gene PUL prediction to':>12}[/] to {filename.resolve()}"
         )
 
     console.print(f"[bold green]{'Finished':>12}[/] finetuning model.")
 
     return 0
+
+
+if __name__ == "__main__":
+    console = Console()
+    parser = ArgumentParser(description="Fine-tune a pretrained GeneCAT model on BGC data")
+    configure_parser(parser)
+    args = parser.parse_args()
+
+    run(args, console)

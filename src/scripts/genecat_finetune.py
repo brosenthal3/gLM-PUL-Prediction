@@ -87,29 +87,21 @@ def join_gene_and_cluster_table(
         )
         .with_columns(
             polars.when(
-                polars.col("start") >= polars.col("pul_start") - buffer, # allow for some buffer around the PUL boundaries
-                polars.col("end") <= polars.col("pul_end") + buffer,
-            )
-            .then(polars.col("cluster_id"))
-            .otherwise(None)
-            .alias("cluster_id"),
-            polars.when(
                 polars.col("start") >= polars.col("pul_start") - buffer,
                 polars.col("end") <= polars.col("pul_end") + buffer,
             )
             .then(True)
             .otherwise(False)
             .cast(polars.Boolean)
-            .alias("is_PUL")
+            .alias(label_col_name)
         )
         # aggregate by protein_id to determine if protein is in any PUL
         .group_by("protein_id")
         .agg(
-            polars.col("is_PUL").any().alias("is_PUL"),
+            polars.col(label_col_name).any().alias(label_col_name),
             polars.col("sequence_id").first().alias("sequence_id"),
             polars.col("start").first().alias("start"),
             polars.col("end").first().alias("end"),
-            polars.col("cluster_id").drop_nulls().first().alias("cluster_id"),
             polars.col("strand").first().alias("strand")
         )
         .sort(by=["sequence_id", "start", "end"])
@@ -371,3 +363,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run(args, console)
+

@@ -23,34 +23,38 @@ proteins = []
 protein_ids = []
 with open(faa_path, "r") as f:
     faa_iter = SimpleFastaParser(f)
-    for gene_id, seq in tqdm(faa_iter, total=len(genes), desc="Reading FASTA genes"):
-        if gene_id not in sequences:
+    for gene_id, seq in tqdm(faa_iter, desc="Reading FASTA genes"):
+        if gene_id not in genes:
             continue
 
         proteins.append(seq)
         protein_ids.append(gene_id)
+print(len(proteins), " proteins to process...")
 
-def embed_sequence(client, gene_id, seq):
+
+client = ESMC.from_pretrained("esmc_300m").to("cuda") # or "cpu"
+
+def embed_sequence(seq):
     protein = ESMProtein(sequence=seq)
     protein_tensor = client.encode(protein)
     logits_output = client.logits(
         protein_tensor, LogitsConfig(sequence=True, return_embeddings=True)
     )
-    embedding = logits_output.embeddings.mean(dim=1).squeeze(0).type(torch.float32).cpu().numpy()
+    emb_tensor = logits_output.embeddings.mean(dim=1).squeeze(0).type(torch.float32)
+    embedding = emb_tensor.detach().cpu().numpy()
+    del protein_tensor, logits_output, emb_tensor
 
-    return gene_id, len(seq), embedding
-
-
-client = ESMC.from_pretrained("esmc_300m").to("cuda") # or "cpu"
-with batch_executor() as executor:
-    outputs = executor.execute_batch(user_func=embed_sequence, client=client, seq=proteins, gene_id=protein_ids)
+    return len(seq), embedding
 
 
-emb_series = polars.Series("embeddings", [output[2] for output in outputs])
-seq_length_series = polars.Series("protein_length", [output[1] for output in outputs])
-gene_series = polars.Series("protein_id", [output[0] for output in outputs])
+outputs = []
+for protein in tqdm(proteins, total=len(proteins), desc="Embedding proteins..."):
+    outputs.append(embed_sequence(protein))
+
+emb_series = polars.Series("embeddings", [output[1] for output in outputs])
+seq_length_series = polars.Series("protein_length", [output[0] for output in outputs])
+gene_series = polars.Series("protein_id", protein_ids)
 df = polars.DataFrame([gene_series, seq_length_series, emb_series])
 os.makedirs("src/data/results/esmc", exist_ok=True)
 print(df)
-print(df.schema)
 df.write_parquet("src/data/results/esmc/esmc_embeddings.parquet")

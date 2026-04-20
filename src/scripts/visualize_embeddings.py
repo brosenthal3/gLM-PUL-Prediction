@@ -22,13 +22,13 @@ reduced_embeddings = polars.DataFrame({
 })
 
 colors = plt.cm.tab20.colors
-for i, label in [True, False]:
-    embedding_2d = reduced_embeddings.filter(pl.col("label") == label)
+for i, label in enumerate([False, True]):
+    embedding_2d = reduced_embeddings.filter(polars.col("label") == label)
     plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.5, s=1, color=colors[i])
 
 plt.legend(handles=[
-    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=5, label='PUL gene'),
-    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=5, label='Non-PUL gene')
+    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=5, label='PUL gene'),
+    plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=5, label='Non-PUL gene')
 ])
 plt.xticks([])
 plt.yticks([])

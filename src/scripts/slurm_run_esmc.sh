@@ -7,6 +7,7 @@
 #SBATCH --cpus-per-task 16
 #SBATCH -o esm_embeddings_%j.out
 #SBATCH -e esm_embeddings_%j.err
+#SBATCH --mail-user="benrosenthal03@gmail.com"
 
 set -euo pipefail
 IFS=$'\n\t'

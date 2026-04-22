@@ -73,22 +73,6 @@ def join_gene_and_cluster_table(
     label_col_name: str = "is_PUL",
     buffer: int = 100 # allow for buffer around PUL boundaries
 ) -> LabeledGeneTable:
-    gene_table = (
-        gene_table.table.with_columns(
-            polars.lit(False).alias(label_col_name)
-        )
-        .select(["sequence_id", "protein_id", "start", "end", "strand", label_col_name])
-    )
-
-    return LabeledGeneTable(gene_table, label_column=label_col_name)
-
-
-def _join_gene_and_cluster_table(
-    gene_table: GeneTable,
-    cluster_table: polars.LazyFrame,
-    label_col_name: str = "is_PUL",
-    buffer: int = 100 # allow for buffer around PUL boundaries
-) -> LabeledGeneTable:
     gene_table = reset_start_end(gene_table.table)
     cluster_table = reset_start_end(cluster_table)
 
@@ -195,6 +179,8 @@ def run(args: Namespace, console: Console) -> int:
         output=":memory:",
         console=console,
     )
+
+    print(train_domain_table.table.collect().select("sequence_id", "protein_id", "domain").head(20))
 
     finetune_model.check_model_params()
 

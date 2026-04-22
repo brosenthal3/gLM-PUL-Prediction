@@ -35,15 +35,17 @@ print(len(proteins), " proteins to process...")
 client = ESMC.from_pretrained("esmc_300m").to("cuda") # or "cpu"
 
 def embed_sequence(seq):
-    protein = ESMProtein(sequence=seq)
-    protein_tensor = client.encode(protein)
-    logits_output = client.logits(
-        protein_tensor, LogitsConfig(sequence=True, return_embeddings=True)
-    )
-    emb_tensor = logits_output.embeddings.mean(dim=1).squeeze(0).type(torch.float32)
+    with torch.no_grad():
+        protein = ESMProtein(sequence=seq)
+        protein_tensor = client.encode(protein)
+        logits_output = client.logits(
+            protein_tensor, LogitsConfig(sequence=True, return_embeddings=True)
+        )
+        emb_tensor = logits_output.embeddings.mean(dim=1).squeeze(0).type(torch.float32)
+
     embedding = emb_tensor.detach().cpu().numpy()
     del protein_tensor, logits_output, emb_tensor
-
+    torch.cuda.empty_cache()
     return len(seq), embedding
 
 

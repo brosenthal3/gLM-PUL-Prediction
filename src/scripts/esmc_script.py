@@ -21,24 +21,31 @@ genes_df = (
 )
 genes_dict = dict(zip(genes_df["sequence_id"], genes_df["protein_id"].to_list()))
 
+def write_genes_fasta(self):
+    os.makedirs("src/data/genecat_output/genes", exist_ok=True)
+    all_genes = SeqIO.index("src/data/genecat_output/genome.genes.faa", "fasta")
+    
+    for contig in genes_dict.keys():
+        genes = genes_dict.get(contig)
+        out_file = f"src/data/genecat_output/genes/{contig}.faa"
+
+        genes_faa = []
+        for gene in genes:
+            gene = all_genes[gene]
+            genes_faa.append(gene)
+
+        with open(out_file, "w") as handle:
+            SeqIO.write(genes_faa, handle, "fasta")
+
 model = AutoModelForMaskedLM.from_pretrained('Synthyra/ESMplusplus_small', trust_remote_code=True)
 
 # get embeddings per contig
-for contig in genes_dict.keys():
-    save_path = f"{output_path}_{contig}.pth"
-    if os.path.exists(save_path):
-        print("Found embeddings, skipping contig: ", {contig})
-        continue
-
-    genes = set(genes_dict.get(contig))
+for contig in os.listdir("src/data/genecat_output/genes"):
     proteins = []
     protein_ids = {}
-    with open(faa_path, "r") as f:
+    with open(f"src/data/genecat_output/genes/{contig}", "r") as f:
         faa_iter = SimpleFastaParser(f)
         for gene_id, seq in tqdm(faa_iter, desc="Reading FASTA genes"):
-            if gene_id not in genes:
-                continue
-
             proteins.append(str(seq))
             protein_ids.update({str(seq): gene_id})
 

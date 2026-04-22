@@ -8,6 +8,7 @@
 #SBATCH -o esm_embeddings_%j.out
 #SBATCH -e esm_embeddings_%j.err
 #SBATCH --mail-user="benrosenthal03@gmail.com"
+#SBATCH --mail-type="ALL"
 
 set -euo pipefail
 IFS=$'\n\t'

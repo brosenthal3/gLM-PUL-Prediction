@@ -31,6 +31,7 @@ from scripts._genecat_parser import (configure_bgc_finetuneing_test,
                       configure_general_arguments, configure_WeightsAndBiases)
 from scripts._genecat_utils import create_versioned_path, show_device_summary
 from utility_scripts import join_gene_and_PUL_table
+anndata.settings.allow_write_nullable_strings = True
 
 """
 export PYTHONPATH='/home/ray/Documents/GeneCAT/src/'

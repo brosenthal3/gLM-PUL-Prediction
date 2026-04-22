@@ -8,17 +8,16 @@
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
-#SBATCH --array=0-6
 #SBATCH -o genecat_%j.out
 #SBATCH -e genecat_%j.err
 
 source ~/.bashrc
-#module load system/python/3.12.6
+module load system/python/3.12.6
 
-#mkdir -p $TMPDIR/genecat_env
-#python -m venv $TMPDIR/genecat_env --system-site-packages
-#source $TMPDIR/genecat_env/bin/activate
-#pip install wandb polars pysqlite3 rich-argparse sqlite-vec scikit-learn rich numpy pytorch_lightning pandas anndata hvplot pyarrow gb_io pyhmmer pyrodigal
+mkdir -p $TMPDIR/genecat_env
+python -m venv $TMPDIR/genecat_env --system-site-packages
+source $TMPDIR/genecat_env/bin/activate
+pip install wandb polars pysqlite3 rich-argparse sqlite-vec scikit-learn rich numpy pytorch_lightning pandas anndata hvplot pyarrow gb_io pyhmmer pyrodigal
 
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
@@ -50,6 +49,7 @@ export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT}/genecat_fine_tuned\
  --batch-size 10 -j 1 --offline --name fold_${SLURM_ARRAY_TASK_ID}\
- --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}
+ --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
+ --middle-focus --epochs 30

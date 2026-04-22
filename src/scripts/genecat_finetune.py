@@ -144,9 +144,6 @@ def run(args: Namespace, console: Console) -> int:
         ["sequence_id", "start", "end", "cluster_id"]
     )
 
-    print(train_gene_table.table)
-    print(train_domain_table.table)
-
     finetune_model: _BaseFineTuneModel
     if args.task_type == "binary":
         console.print("Initializing binary Finetuning Model")
@@ -180,8 +177,6 @@ def run(args: Namespace, console: Console) -> int:
         console=console,
     )
 
-    print(train_domain_table.table.collect().select("sequence_id", "protein_id", "domain").head(20))
-
     finetune_model.check_model_params()
 
     console.print("Building SQLFinetuneDataset for testing!")
@@ -200,7 +195,7 @@ def run(args: Namespace, console: Console) -> int:
         test_gene_table = GeneTable.load(args.test_gene_table)
         test_domain_table = FeatureTable.load(args.test_domain_table)
         test_cluster_table = (
-            polars.scan_csv(args.cluster_table, separator="\t")
+            polars.scan_csv(args.test_cluster_table, separator="\t")
             .select(["sequence_id", "start", "end", "cluster_id"])
         )
         test_labeled_genes = join_gene_and_cluster_table(
@@ -208,6 +203,7 @@ def run(args: Namespace, console: Console) -> int:
             cluster_table=test_cluster_table,
             label_col_name=label_col_name,
         )
+        print(test_labeled_genes.table.collect())
 
         console.print("Building LabeledGenomeDatabase for testing!")
         test_labeled_genome_db = LabeledGenomeDatabase.build_labeled_database(

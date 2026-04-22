@@ -20,8 +20,6 @@ source ~/.bashrc
 #source $TMPDIR/genecat_env/bin/activate
 #pip install wandb polars pysqlite3 rich-argparse sqlite-vec scikit-learn rich numpy pytorch_lightning pandas anndata hvplot pyarrow gb_io pyhmmer pyrodigal
 
-mamba activate genecat
-
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
@@ -29,21 +27,29 @@ IFS=$'\n\t'
 SLURM_ARRAY_TASK_ID=0
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
+# MODEL
 VOCAB=${BASEPATH}/models_multilabel_models/jan_model/BERT_train.fold_0.all_domains.min50.vocab.txt
 MODEL_NAME=model_gene_multilabel_untied_jan_za9lmkbs_v0
 MODEL=${BASEPATH}/models_multilabel_models/jan_model/${MODEL_NAME}.pt
 
-GENES=${PULPATH}/src/data/genecat_output/pfam.genes.parquet
-DOMAINS=${PULPATH}/src/data/genecat_output/pfam.features.parquet
-CLUSTERS=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}.tsv
+# GENES
+GENES_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.genes.parquet
+GENES_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.genes.parquet
+# DOMAINS
+DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.pfam.parquet
+DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.pfam.parquet
+# CLUSTERS
+CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}.tsv
 CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}.tsv
-OUT=${PULPATH}/src/data/results/genecat/fine_tuned
+# OUTPUT
+OUT=${PULPATH}/src/data/results/genecat_fine_tuned
+mkdir -p ${OUT}
 
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/:/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/'
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
-#python -m genecat.cli build-database -g $GENES -f $DOMAINS --vocab $VOCAB -o database_test.sqlite3 --unique-domains
-
-python $PULPATH/src/scripts/genecat_finetune.py -g ${GENES} -d ${DOMAINS} -c ${CLUSTERS} --vocab ${VOCAB} -m ${MODEL} -o ${OUT}\
- --batch-size 10 -j 1 --offline --name genecat_fold_${SLURM_ARRAY_TASK_ID}\
- --test-gene-table ${GENES} --test-domain-table ${DOMAINS} --test-cluster-table ${CLUSTERS_TEST}
+python $PULPATH/src/scripts/genecat_finetune.py\
+ -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT}\
+ --batch-size 10 -j 1 --offline --name fold_${SLURM_ARRAY_TASK_ID}\
+ --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}

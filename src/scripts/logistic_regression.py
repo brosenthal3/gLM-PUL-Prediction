@@ -15,6 +15,7 @@ from sklearn.model_selection import GridSearchCV  # type: ignore
 from tap import Tap
 from tqdm import tqdm  # type: ignore
 from utility_scripts import join_gene_and_PUL_table
+import pickle
 
 
 def prepare_labeled_genes_df(df: pd.DataFrame, embeddings_col: str, label_col: str) -> pd.DataFrame:
@@ -240,7 +241,7 @@ def main(
 
 #    genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
 
-    return test_df, train_df
+    return test_df, train_df, model
 
 
 class ArgumentParser(Tap):
@@ -285,6 +286,25 @@ def save_results(clusters, genecat_results, genes, fold, split="test"):
     labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{split}_{fold}.tsv", separator='\t')
 
 
+def save_model(model, fold):
+    output_dir = "src/data/results/genecat/zero_shot_results/models"
+    os.mkdirs(output_dir, exist_ok=True)
+
+    # if gridsearch, save best estimator
+    if hasattr(model, "best_estimator_"):
+        model_to_save = model.best_estimator_
+    else:
+        model_to_save = model
+
+    # pickle model
+    model_path = f"{output_dir}/fold_{fold}.pkl"
+    with open(model_path, "wb") as f:
+        pickle.dump(model_to_save, f)
+
+    # save coeffs and intercept
+    np.save(f"{output_dir}/coef_fold_{fold}.npy", model_to_save.coef_)
+    np.save(f"{output_dir}/intercept_fold{fold}.npy", model_to_save.intercept_)
+
 if __name__ == "__main__":
     try:
         multiprocessing.set_start_method("spawn")
@@ -302,7 +322,7 @@ if __name__ == "__main__":
 
         for random_state in tqdm([1]):
             print(f"Running state {random_state}")
-            test_df, train_df = main(
+            test_df, train_df, model = main(
                 input_df_file_path=input_df_file_path,
                 output_dir=args.output_dir,
                 n_jobs=args.n_jobs,
@@ -318,6 +338,12 @@ if __name__ == "__main__":
             train_df["random_state"] = random_state
             output.append(test_df)
             output_train.append(train_df)
+
+        try:
+            save_model(model, fold)
+        except Exception as e:
+            print("model could not be saved for some reason:")
+            print(e)
 
         genecat_results = pd.concat(output)
         genecat_results = polars.from_pandas(genecat_results)

@@ -85,3 +85,8 @@ Order of scripts is currently as follows:
 - GeneCAT finetuned
 - pLM embeddings
 - Bacformer emnbeddings
+
+# TODO:
+- finish genecat end-to-end finetuning
+- finish Bacformer and ESM-C embeddings stuff
+- handle negatives in training: add weights for logistic regression, add masks for finetuning, remove from training in gecco (???).

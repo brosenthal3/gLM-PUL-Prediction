@@ -235,11 +235,11 @@ if __name__ == "__main__":
     parser.add_argument("--input", "-i", help="Path to the ANI table file", default="src/data/results/orthoANI_output.txt")
     parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/combined_clusters_blasted_gtdb.tsv")
     parser.add_argument("--output", "-o", help="Path to save the deduplicated cluster table", default="src/data/results/clusters_deduplicated.tsv")
-    parser.add_argument("--check", action="store_true", help="Check the deduplicated cluster table")
+    parser.add_argument("--check_only", action="store_true", help="Only check the deduplicated cluster table")
 
     args = parser.parse_args()
 
-    if args.check:
+    if args.check_only:
         new_cluster_table = polars.read_csv(args.output, separator='\t', infer_schema_length=1000)
         orthoANI_processor = orthoANIProcessor(args.input, args.clusters_table)
         ani_table = orthoANI_processor.filter_ani_table()

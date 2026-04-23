@@ -31,14 +31,10 @@ Then there are 358 PULs from 44 unique accession IDs.
 
 ## Preprocessing
 Cluster tables from dbCAN and PULDB were merged to a single table. 
-After observing that some parent sequences are very short, and consist mainly of the desired PUL, the dataset was filtered such that the sequence is larger than 100kbp:
-```
-sequence_length > 100000
-```
-This resulted in 131 sequences being filtered out. To potentially keep these PULs, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99%) and sequence length (max taken). Replaced 67 sequences, to a new total of 384 sequences. 
+After observing that some parent sequences are very short (131 with `sequence_length < 100kbp`), and consist mainly of the desired PUL, we used BLAST with the MegaBlast setting to find these shorter sequences in full genomes or larger contigs. BLAST results were filtered based on self-hits, identity percentage (>99%) and sequence length (max taken). 48 longer sequences were identified, and 16 of these were merged with sequences in the original dataset. Resulting in a new total of 386 genomes.
 
 All-vs-all **OrthoANI** was used to find any overly similar sequences, so they can be de-duplicated. The ANI table is also used for train/test splitting. 
-92 sequences de-duplicated.
+98 sequences with ANI > 99% were de-duplicated, leaving 288 genomes in the dataset.
 
 ### PULpy
 PULpy used as extra annotations for bacteriodata sequences. The tool did not run immediately and some adaptations were made to the code:
@@ -46,29 +42,46 @@ PULpy used as extra annotations for bacteriodata sequences. The tool did not run
 2. `run_pulpy.sh` script was written, including all preparation scripts from the original `README.md`. Changes: all wget commands were added a `--no-check-certificate` flag, download links for dbCAN HMMs was updated to the current domain where the data is hosted (http://pro.unl.edu instead of depracated http://bcb.unl.edu).
 3. Dependencies (snakemake and misceallaneous perl dependencies) were added to the environment definition at `envs/PULpy.yaml`.
 
-### cblaster
-cblaster used to generate additional annotations for homologous PULs across the sequences in the dataset. The search is done using the following filters:
+PULpy identified 1753 PULs (many overlapping with existing annotations).
+
+### Cblaster
+Cblaster used to generate additional annotations for homologous PULs across the sequences in the dataset. The search is done using the following filters:
 ``` 
--min_eval 1.0e-9 -min_identity 70 -min_coverage 75 --gap_size 5000 --min_hits 2
+-min_eval 1.0e-9 -min_identity 70 -min_coverage 75 --gap_size 5000 --min_hits 2 --unique 2
 ``` 
-All hits were filtered based on the number of genes from the query that were also in the hit, requiring a mimimum of `70%` of the genes to be present.
+All hits were filtered based on the number of genes from the query that were also in the hit, requiring a mimimum of `70%` of the genes to be present. With this search, 376 new homologous PULs were identified and added to the dataset.
+
+An additional, more liberal, Cblaster search was performed to identify any "cryptic PULs" - regions in the genome that can possibly constitute a PUL but do not have any annotations. The default Cblaster filters were used, except for two changes (to account for PULs being possibly 2 genes):
+```
+--min_hits 2 --unique 2"
+```
+A threshold of `55%` of genes being present in the hit was used, to enforce the 2 gene minimum, but also include any hits of 2 genes from longer query PULs.
+
+### GTDB-tk annotations
+GTDB-tk (version 226) was used to generate taxonomic annotations for all of the genomes in the dataset. 
 
 ### Train-test split
-Train-test splits are created in the `train_test_split.py` script. 
+Train-test splits are created in the `train_test_split.py` script. StratifiedGroupedKFold on taxonomic annotations, grouped by genus. 
 
-The script uses the ANI-table to perform HDBSCAN clustering, with a threshold of `90%`. Then grouped k-folds are created using `GroupKFold` from `sklearn.model_selection`.
+Two additional splits were created, to test the generalizability of the models from bacteroidota to other phyla. One with only bacteroidota in the training set vice versa. 
 
-## Running preprocessing scripts:
+### Running preprocessing scripts:
 Order of scripts is currently as follows:
 ```bash
 1) data_collection.py
 2) slurm_run_gtdbtk.sh # potentially configuration required for hpc
 3) data_collection.py # again... still need to fix is so that these two can be ran sequentially
-4) orthoANI.py
-5) deduplicate.py
-6) genecat_preprocess.sh
-8) run_cblaster.py -rc -po
-8) PULpy-master # need to run snakemake inside directory
+4) slurm_run_orthoANI.sh
+5) genecat_preprocess.sh
+6) run_cblaster.py -rc -po, run_cblaster.py --liberal_filters -rc -po -gene_threshold 0.55
+7) PULpy-master # need to run snakemake inside directory
 9) integrate_pulpy.py
 10) train_test_split.py
 ```
+
+## Classifiers
+- Gecco as baseline
+- GeneCAT zeroshot (logistic regression on embeddings)
+- GeneCAT finetuned
+- pLM embeddings
+- Bacformer emnbeddings

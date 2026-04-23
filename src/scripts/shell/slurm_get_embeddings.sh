@@ -35,4 +35,4 @@ python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES -m $MODEL --voca
 EMBS=${OUT}/${MODEL_NAME}_context_embedding.embeddings.parquet
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 
-python src/scripts/process_embeddings.py --genes $GENES --embeddings $EMBS -k 7
+python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS -k 7

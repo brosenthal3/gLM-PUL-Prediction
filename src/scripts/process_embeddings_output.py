@@ -64,7 +64,7 @@ class EmbeddingsHandler:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run Zero-shot Genecat cross-validation")
+    parser = argparse.ArgumentParser(description="Process encoder embeddings output, by saving train and test tables of the embeddings for each fold.")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to genes table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--embeddings", "-e", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")

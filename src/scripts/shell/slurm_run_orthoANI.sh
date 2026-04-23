@@ -17,7 +17,11 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
-OUT="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/results/orthoANI_output_new.txt"
+OUT="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/results/orthoANI_output.txt"
 GENOME_DIR="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/genomes/selected_genomes/"
 
+# run orthoANI script to generate matrix
 python /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/scripts/orthoANI.py -i $GENOME_DIR -o $OUT
+
+# run deduplicate script to generate deduplicated cluster table
+python /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/scripts/deduplicate.py

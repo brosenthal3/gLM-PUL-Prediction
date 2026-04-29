@@ -5,9 +5,62 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_curve, average_precision_score,  roc_curve, auc, matthews_corrcoef
 import seaborn as sns
-from utility_scripts import join_gene_and_PUL_table
+#from utility_scripts import join_gene_and_PUL_table
 from matplotlib_venn import venn3
 from tqdm import tqdm
+
+
+def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
+    return table.with_columns(
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("start")).otherwise(polars.col("end")).alias("start"),
+        polars.when(polars.col("start") < polars.col("end")).then(polars.col("end")).otherwise(polars.col("start")).alias("end"),
+    )
+
+def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 100,) -> polars.DataFrame:
+    gene_table = reset_start_end(gene_table)
+    cluster_table = reset_start_end(cluster_table)
+
+    labled_gene_table = (
+        cluster_table
+        .rename({"start": "pul_start", "end": "pul_end"}) # avoid column name conflicts
+        .join(
+            gene_table,
+            on="sequence_id",
+            how="inner",
+            validate="m:m",
+        )
+        .with_columns(
+            polars.when(
+                polars.col("start") >= polars.col("pul_start") - buffer, # allow for some buffer around the PUL boundaries
+                polars.col("end") <= polars.col("pul_end") + buffer,
+            )
+            .then(polars.col("cluster_id"))
+            .otherwise(None)
+            .alias("cluster_id"),
+            polars.when(
+                polars.col("start") >= polars.col("pul_start") - buffer,
+                polars.col("end") <= polars.col("pul_end") + buffer,
+            )
+            .then(True)
+            .otherwise(False)
+            .cast(polars.Boolean)
+            .alias("is_PUL")
+        )
+        # aggregate by protein_id to determine if protein is in any PUL
+        .group_by("protein_id")
+        .agg(
+            polars.col("is_PUL").any().alias("is_PUL"),
+            polars.col("sequence_id").first().alias("sequence_id"),
+            polars.col("start").first().alias("start"),
+            polars.col("end").first().alias("end"),
+            polars.col("cluster_id").drop_nulls().first().alias("cluster_id")
+        )
+        .sort(by=["sequence_id", "start", "end"])
+        .with_row_index(name="gene_id", offset=0)  # important
+        .select(["sequence_id", "protein_id", "start", "end", "is_PUL", "cluster_id"])
+    )
+
+    return labled_gene_table
 
 class PredictionEvaluator:
     """
@@ -375,6 +428,8 @@ if __name__ == "__main__":
 
     if model_name == "genecat":
         results_path = f"src/data/results/genecat/zero_shot_results/labeled_results_{args.split}"
+    elif model_name == "genecat_fine_tuned":
+        results_path = f"src/data/results/genecat_fine_tuned/labeled_results_{args.split}"
     elif "gecco" in model_name:
         results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     else:
@@ -421,6 +476,6 @@ if __name__ == "__main__":
 
 
     """
-    python src/scripts/evaluate_predictions.py --model genecat --split test -k 5
-    python src/scripts/evaluate_predictions.py --model gecco --split test -k 5
+    python src/scripts/visualization/evaluate_predictions.py --model genecat --split test -k 5
+    python src/scripts/visualization/evaluate_predictions.py --model gecco --split test -k 5
     """

@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 import os
 from palettable.cartocolors.qualitative import Bold_10
 
-out_path = "src/data/plots/genecat_finetuned"
+out_path = "src/data/plots/genecat_fine_tuned"
 os.makedirs(out_path, exist_ok=True)
 no_mf = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260422_112843-4q8y8k1i/files/fold_0_finetune_log_4q8y8k1i/version_0/metrics.csv"
 mf = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/latest-run/files/fold_0_finetune_log_pctk1581/version_0/metrics.csv"
 no_mf_2 = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/latest-run/files/fold_0_finetune_log_m7a3tdpa/version_0/metrics.csv"
-df = polars.read_csv(no_mf_2)
+
+latest = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/latest-run/files/fold_0_finetune_log_8u8eckt4/version_0/metrics.csv"
+df = polars.read_csv(latest)
 
 # Figure size in inches
 cm = 1 / 2.54  # centimeters in inches

@@ -6,7 +6,7 @@ import os
 import polars
 from tqdm import tqdm
 import torch
-from transformers import AutoModel
+from transformers import AutoModel, logging
 from bacformer.pp import protein_seqs_to_bacformer_inputs
 
 """
@@ -14,9 +14,10 @@ pip3 install torch torchvision --force-reinstall --index-url https://download.py
 """
 
 device = "cuda:0"
+logging.set_verbosity_error()
 model = AutoModel.from_pretrained("macwiatrak/bacformer-large-masked-MAG", trust_remote_code=True).to(device).eval().to(torch.bfloat16)
 
-output_path = "src/data/results/esmc/esmc_embeddings"
+output_path = "src/data/results/esmc/esmc_bacformer_embeddings"
 os.makedirs(output_path, exist_ok=True)
 faa_path = "src/data/genecat_output/genome.genes.faa"
 sequences = polars.read_csv("src/data/results/cblaster_results.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
@@ -48,16 +49,16 @@ def write_genes_fasta():
             SeqIO.write(genes_faa, handle, "fasta")
 
 # get embeddings per contig
-for contig in tqdm(os.listdir("src/data/genecat_output/genes")[:3]):
+for contig in tqdm(os.listdir("src/data/genecat_output/genes")):
     proteins = []
     protein_ids = []
     genes_file = f"src/data/genecat_output/genes/{contig}"
     contig_genes_index = SeqIO.index(genes_file, "fasta")
     contig_genes_list = genes_dict.get(contig.split(".")[0])
     save_path = f"{output_path}/{contig.replace('faa', 'parquet')}"
-    # if os.path.exists(save_path):
-    #     print(f"Found embeddings for {contig}, continuing")
-    #     continue
+    if os.path.exists(save_path):
+        print(f"Found embeddings for {contig}, continuing")
+        continue
 
     for gene_id in contig_genes_list:
         seq = str(contig_genes_index[gene_id])
@@ -76,28 +77,31 @@ for contig in tqdm(os.listdir("src/data/genecat_output/genes")[:3]):
         max_n_proteins=6000,  # the maximum number of proteins Bacformer was trained with
         bacformer_model_type="large", # Bacformer Large 300M
     )
-    embs = bacformer_input["protein_embeddings"][0].detach().cpu().numpy()
+    print(bacformer_input["protein_embeddings"].shape)
+    embs = bacformer_input["protein_embeddings"].squeeze(0).to(torch.float32).detach().cpu().numpy()
     assert len(embs) == len(proteins), "not all proteins got embeddings, something went wrong."
     
     # save ESM-C embeddings for later logistic regression and comparison
-    embeddings_df_dict = {"protein_id": [], "embedding_esmc": [], "embedding_bacformer": []}
+    embeddings_df_dict = {"protein_id": [], "embedding_esmc": []}
     for i, embedding in enumerate(embs):
         embeddings_df_dict["protein_id"].append(protein_ids[i])
         embeddings_df_dict["embedding_esmc"].append(embedding)
+    esmc_df = polars.DataFrame(embeddings_df_dict).sort("protein_id")
 
     # compute contextualised protein embeddings with Bacformer
     with torch.no_grad():
-        outputs = model(**inputs, return_dict=True)
+        outputs = model(**bacformer_input, return_dict=True)
 
-    # outputs["last_hidden_state"] will be of shape(batch_size, n, 480), 480 is emb dim.
-    mask = inputs["special_tokens_mask"] == 4
-    bacformer_emb_series = outputs["last_hidden_state"][mask]
+    # outputs["last_hidden_state"] will be of shape(batch_size, n, 960), 960 is emb dim.
+    bacformer_embs = outputs["last_hidden_state"].squeeze(0).to(torch.float32).detach().cpu().numpy()
 
+    bacformer_embeddings_df_dict = {"protein_id": [], "embedding_bacformer": []}
     # save bacformer embeddings for comparison
     for i, embedding in enumerate(bacformer_embs):
-        embeddings_df_dict["protein_id"].append(protein_ids[i])
-        embeddings_df_dict["embedding_bacformer"].append(embedding)
+        bacformer_embeddings_df_dict["protein_id"].append(protein_ids[i])
+        bacformer_embeddings_df_dict["embedding_bacformer"].append(embedding)
+    bacformer_df = polars.DataFrame(bacformer_embeddings_df_dict).sort("protein_id")
 
-    df = polars.DataFrame(embeddings_df_dict).sort("protein_id")
-    print(df)
-    #df.write_parquet(save_path)
+    joined_df = esmc_df.join(bacformer_df, on="protein_id", how="inner")
+    print(joined_df)
+    df.write_parquet(save_path)

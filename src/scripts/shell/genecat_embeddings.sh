@@ -3,11 +3,11 @@
 #SBATCH -J genecat_extract_embs
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
-#SBATCH --mem=54G
+#SBATCH --mem=256G
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
-#SBATCH -o genecat_%j.out
-#SBATCH -e genecat_%j.err
+#SBATCH -o genecat_embs_%j.out
+#SBATCH -e genecat_embs_%j.err
 
 source ~/.bashrc
 # Activate the genecat environment

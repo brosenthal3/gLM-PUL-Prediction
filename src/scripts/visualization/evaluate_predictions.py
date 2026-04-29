@@ -432,6 +432,8 @@ if __name__ == "__main__":
         results_path = f"src/data/results/genecat_fine_tuned/labeled_results_{args.split}"
     elif "gecco" in model_name:
         results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
+    elif "esm" in model_name:
+        results_path = f"src/data/results/esmc/linear_regression_results/labeled_results_{args.split}"
     else:
         raise ValueError("Invalid model name.")
 
@@ -478,4 +480,5 @@ if __name__ == "__main__":
     """
     python src/scripts/visualization/evaluate_predictions.py --model genecat --split test -k 5
     python src/scripts/visualization/evaluate_predictions.py --model gecco --split test -k 5
+    python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 5
     """

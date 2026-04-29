@@ -20,7 +20,7 @@ import pickle
 
 def prepare_labeled_genes_df(df: pd.DataFrame, embeddings_col: str, label_col: str) -> pd.DataFrame:
     """Prepare the labeled genes DataFrame."""
-
+    df = df.dropna(subset=embeddings_col)    
     # check if the embeddings column is already in the correct format
     if isinstance(df[embeddings_col].iloc[0], np.ndarray):
         return df
@@ -166,7 +166,8 @@ def main(
     os.makedirs(output_dir, exist_ok=True)
 
     # read input file
-    df = pd.read_parquet(input_df_file_path)
+    df_polars = polars.read_parquet(input_df_file_path)
+    df = df_polars.to_pandas()
     # explode the embeddings column as after embedding it is a list of lists
     df = prepare_labeled_genes_df(df, embeddings_col=embeddings_col, label_col=label_col)
 
@@ -257,14 +258,14 @@ class ArgumentParser(Tap):
     normalize: bool = False
     embeddings_col: str = "embedding"
     model_name: str | None = None
-    label_col: str = "essential"
-    contig_col: str = "genome_name"
+    label_col: str = "label"
+    contig_col: str = "sequence_id"
     norm_type: str = "l2"
     gridsearch: bool = False
     k: int = 5
 
 
-def save_results(clusters, genecat_results, genes, fold, split="test"):
+def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
     test_genes = (genes.join(clusters, on="sequence_id", how="semi"))
 
     # join genes with test clusters and predicted clusters
@@ -283,12 +284,12 @@ def save_results(clusters, genecat_results, genes, fold, split="test"):
         .sort("sequence_id")
     )
 
-    labeled_table.write_csv(f"src/data/results/genecat/zero_shot_results/labeled_results_{split}_{fold}.tsv", separator='\t')
+    labeled_table.write_csv(output_dir + f"/labeled_results_{split}_{fold}.tsv", separator='\t')
 
 
-def save_model(model, fold):
-    output_dir = "src/data/results/genecat/zero_shot_results/models"
-    os.mkdirs(output_dir, exist_ok=True)
+def save_model(model, fold, output_dir):
+    output_dir = output_dir + "/models"
+    os.makedirs(output_dir, exist_ok=True)
 
     # if gridsearch, save best estimator
     if hasattr(model, "best_estimator_"):
@@ -313,6 +314,7 @@ if __name__ == "__main__":
 
     args = ArgumentParser().parse_args()
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+    output_dir = args.output_dir
 
     for fold in range(args.k):
         rich.print(f"[bold blue]Running fold {fold}...[/]")
@@ -320,27 +322,27 @@ if __name__ == "__main__":
         output = []
         output_train = []
 
-        for random_state in tqdm([1]):
-            print(f"Running state {random_state}")
-            test_df, train_df, model = main(
-                input_df_file_path=input_df_file_path,
-                output_dir=args.output_dir,
-                n_jobs=args.n_jobs,
-                normalize=args.normalize,
-                embeddings_col=args.embeddings_col,
-                label_col=args.label_col,
-                contig_col=args.contig_col,
-                norm_type=args.norm_type,
-                gridsearch=args.gridsearch,
-            )
-            test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
-            test_df["random_state"] = random_state
-            train_df["random_state"] = random_state
-            output.append(test_df)
-            output_train.append(train_df)
+        random_state = 1
+        print(f"Running state {random_state}")
+        test_df, train_df, model = main(
+            input_df_file_path=input_df_file_path,
+            output_dir=output_dir,
+            n_jobs=args.n_jobs,
+            normalize=args.normalize,
+            embeddings_col=args.embeddings_col,
+            label_col=args.label_col,
+            contig_col=args.contig_col,
+            norm_type=args.norm_type,
+            gridsearch=args.gridsearch,
+        )
+        test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
+        test_df["random_state"] = random_state
+        train_df["random_state"] = random_state
+        output.append(test_df)
+        output_train.append(train_df)
 
         try:
-            save_model(model, fold)
+            save_model(model, fold, output_dir)
         except Exception as e:
             print("model could not be saved for some reason:")
             print(e)
@@ -351,11 +353,15 @@ if __name__ == "__main__":
 
         # get all genes in test set
         test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
-        save_results(test_clusters, genecat_results, genes, fold)
+        save_results(test_clusters, genecat_results, genes, fold, output_dir)
 
         train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
-        save_results(train_clusters, genecat_results, genes, fold, split="train")
+        save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train")
 
-#        genecat_results.write_csv(os.path.join(args.output_dir, f"linmodel_results_{args.model_name}_{fold}.tsv"), separator='\t')
+"""
+# for genecat:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data --output-dir src/data/results/genecat/zero_shot_results --model-name pfam --norm-type l2 --normalize
 
-# python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data --output-dir src/data/results/genecat/zero_shot_results --model-name pfam --contig-col sequence_id --label-col label --norm-type l2 --normalize
+# for ESM-C:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc/linear_regression_results --model-name esmc --norm-type l2 --normalize --embeddings-col embeddings
+"""

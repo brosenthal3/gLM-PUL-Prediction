@@ -158,7 +158,7 @@ def main(
     norm_type: str = "l2",
     gridsearch: bool = False,
     random_state: int = 1,
-    embeddings_col: str = "embeddings",
+    embeddings_col: str = "embedding",
     label_col: str = "label",
     contig_col: str = "genome_name",
 ):
@@ -255,7 +255,7 @@ class ArgumentParser(Tap):
     output_dir: str
     n_jobs: int = max(0, len(os.sched_getaffinity(0)) - 1)
     normalize: bool = False
-    embeddings_col: str = "embeddings"
+    embeddings_col: str = "embedding"
     model_name: str | None = None
     label_col: str = "essential"
     contig_col: str = "genome_name"

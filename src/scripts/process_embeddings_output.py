@@ -7,7 +7,8 @@ from utility_scripts import join_gene_and_PUL_table
 
 
 class EmbeddingsHandler:
-    def __init__(self, genes, clusters_dir, embeddings, output_dir):
+    def __init__(self, genes, clusters_dir, embeddings, output_dir, dir=False):
+        self.dir = dir
         self.genes = self._validate_table(genes)
         self.embeddings = self._validate_table(embeddings)
         self.clusters_dir = clusters_dir
@@ -19,12 +20,19 @@ class EmbeddingsHandler:
         file_path = Path(table_path)
         if file_path.suffix == ".csv":
             table = polars.read_csv(table_path, separator='\t')
-            return table
         elif file_path.suffix == ".parquet":
             table = polars.read_parquet(table_path)
-            return table
+        elif self.dir:
+            print("Input in directory format, processing to one dataframe")
+            embs = []
+            for embs_file in os.listdir(table_path):
+                embs.append(polars.read_parquet(f"{table_path}/{embs_file}"))
+            table = polars.concat(embs)
+            print(f"Found embeddings for {len(table)} genes.")
         else:
-            raise ValueError(f"Invalid file format for {table_path}. Expected .csv or .parquet")
+            raise ValueError(f"Invalid file format for {table_path}. Expected .csv or .parquet. If the embeddings are in a directory, specify the --dir flag.")
+
+        return table.rename({"embeddings": "embedding"}, strict=False)
 
 
     def save_fold_data(self, fold):
@@ -42,10 +50,10 @@ class EmbeddingsHandler:
             polars.col("is_PUL").alias("label")
         )
         fold_data = polars.concat([train_genes, test_genes])
-        print(fold_data)
-        fold_data = fold_data.join(self.embeddings, on="protein_id", how="left").select("protein_id", "sequence_id", "embeddings", "label", "split") # add embeddings for each gene
-        print(fold_data.head())
+        fold_data = fold_data.join(self.embeddings, on="protein_id", how="left").select("protein_id", "sequence_id", "embedding", "label", "split") # add embeddings for each gene
+
         fold_output_path = f"{self.output_dir}/fold_{fold}_data.parquet"
+        print(f"Saving table to {fold_output_path}")
         fold_data.write_parquet(fold_output_path)
         return fold_output_path
 
@@ -70,9 +78,10 @@ def main():
     parser.add_argument("--embeddings", "-e", type=str, default="src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_march_s4spvlec_v0_context_embedding.embeddings.parquet", help="Path to trained model embeddings")
     parser.add_argument("-k", type=int, default=7, help="Number of folds for cross-validation")
     parser.add_argument("--output_dir", "-o", type=str, default="src/data/results/genecat/fold_data", help="Directory to save fold data")
+    parser.add_argument("--dir", action='store_true', help="Whether the input embeddings are a directory containing .parquet files")
     args = parser.parse_args()
 
-    handler = EmbeddingsHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir)
+    handler = EmbeddingsHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir, dir=args.dir)
     handler.save_folds(args.k)
 
 
@@ -82,9 +91,9 @@ if __name__ == "__main__":
 
 """
     For genecat:
-    python src/scripts/process_embeddings.py
+    python src/scripts/process_embeddings_output.py
 
     For esmc:
-    python src/scripts/process_embeddings.py -e src/data/results/esmc/esmc_embeddings.parquet -o src/data/results/esmc/fold_data
+    python src/scripts/process_embeddings_output.py -e src/data/results/esmc/esmc_embeddings -o src/data/results/esmc/fold_data --dir
 
 """

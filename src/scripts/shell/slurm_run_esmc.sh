@@ -10,16 +10,18 @@
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
 
+source ~/.bashrc
+mamba activate genecat
+
 set -euo pipefail
 IFS=$'\n\t'
 
-module load system/python/3.12.6
+#module load system/python/3.12.6
 
-mkdir -p $TMPDIR/esm_env
-python -m venv $TMPDIR/esm_env --system-site-packages
-source $TMPDIR/esm_env/bin/activate
-
-pip install biopython polars numpy torch esm
+# mkdir -p $TMPDIR/esm_env
+# python -m venv $TMPDIR/esm_env --system-site-packages
+# source $TMPDIR/esm_env/bin/activate
+#pip install biopython polars numpy torch esm
 
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 python src/scripts/esmc_script.py

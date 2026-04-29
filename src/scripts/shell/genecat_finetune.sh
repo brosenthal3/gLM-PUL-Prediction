@@ -1,5 +1,4 @@
 #!/bin/bash                                                                                                                                                                                                      
-
 #SBATCH -t 12:00:00
 #SBATCH -J genecat_finetune
 #SBATCH --mail-user="benrosenthal03@gmail.com"
@@ -27,9 +26,9 @@ SLURM_ARRAY_TASK_ID=0
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 # MODEL
-VOCAB=${BASEPATH}/models_multilabel_models/jan_model/BERT_train.fold_0.all_domains.min50.vocab.txt
-MODEL_NAME=model_gene_multilabel_untied_jan_za9lmkbs_v0
-MODEL=${BASEPATH}/models_multilabel_models/jan_model/${MODEL_NAME}.pt
+VOCAB=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1.vocab.txt
+MODEL_NAME=model_gene_multilabel_untied_april_sriqcx3c_v0.pt
+MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
 
 # GENES
 GENES_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.genes.parquet
@@ -47,9 +46,27 @@ mkdir -p ${OUT}
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/:/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/'
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
+# TRAIN PFAM ONLY MODEL #
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
  --vocab ${VOCAB} -m ${MODEL} -o ${OUT}/genecat_fine_tuned\
- --batch-size 128 -j 1 --offline --name fold_${SLURM_ARRAY_TASK_ID}\
+ --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
+ --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
+ --middle-focus --epochs 30
+
+
+# DO THE SAME FOR PFAM+CAZY MODEL # 
+# DOMAINS
+DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.dbcan.pfam.parquet
+DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.dbcan.pfam.parquet
+# MODEL
+VOCAB=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1_cazy_cayman_v0.12.vocab.txt
+MODEL_NAME=model_gene_multilabel_pfam_cazy_april_goycr91w_v0.pt
+MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
+
+python $PULPATH/src/scripts/genecat_finetune.py\
+ -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT}/genecat_fine_tuned\
+ --batch-size 128 -j 1 --offline --name pfam_cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30

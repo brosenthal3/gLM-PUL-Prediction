@@ -104,4 +104,4 @@ for contig in tqdm(os.listdir("src/data/genecat_output/genes")):
 
     joined_df = esmc_df.join(bacformer_df, on="protein_id", how="inner")
     print(joined_df)
-    df.write_parquet(save_path)
+    joined_df.write_parquet(save_path)

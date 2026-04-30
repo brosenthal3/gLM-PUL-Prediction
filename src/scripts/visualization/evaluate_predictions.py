@@ -242,39 +242,47 @@ class PredictionEvaluator:
 
 
     def precision_recall_curve(self, fold):
-        fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
         if fold == "all":
             self.aggregate_all_folds()
             self.set_evaluation_data(0)
-
-        # standardize predicted probabilities to be between 0 and 1
-        #self.p_pred = (self.p_pred - np.min(self.p_pred)) / (np.max(self.p_pred) - np.min(self.p_pred)) 
+        else:
+            self.set_evaluation_data(fold)
 
         # use similar colors for associated curves
         colors = plt.cm.tab20.colors
 
         # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name, colors[0], ax)
-        if fold == "all":
-            self.plot_pr(self.true, self.p_pred, f"True vs {self.model_name} (Weighted {self.weight})", colors[5], ax, weights=self.sample_weights)
+        self.plot_pr(self.true, self.p_pred, "All taxa", colors[0], ax[0])
+        #self.plot_pr(self.true, self.p_pred, f"All taxa, weighted {self.weight}", colors[5], ax[0], weights=self.sample_weights)
+
         # for pulpy vs pred
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, colors[1], ax)
-        self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax)
+        self.plot_pr(self.pulpy_pred, self.p_pred, "All taxa", colors[1], ax[1])
+        # dot for pulpy vs experimental
+        self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax[0])
+        # compute baselines
         baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
+        baseline_pulpy = sum(self.pulpy_pred) / len(self.pulpy_pred) if len(self.pulpy_pred) > 0 else 0
 
         # then filter by phylum and plot again
         self.filter_phylum("Bacteroidota", fold if fold != "all" else 0)
-        self.plot_pr(self.true, self.p_pred, "True vs " + self.model_name + " (Bacteroidota)", colors[2], ax)
-        self.plot_pr(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name + " (Bacteroidota)", colors[3], ax)
+        self.plot_pr(self.true, self.p_pred, "Bacteroidota", colors[2], ax[0])
+        self.plot_pr(self.pulpy_pred, self.p_pred, "Bacteroidota", colors[3], ax[1])
 
-        # plot baseline
-        ax.plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
+        # plot baselines
+        ax[0].plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
+        ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', label="Baseline", color='gray')
 
         # add labels and legend
-        ax.set_xlabel("Recall")
-        ax.set_ylabel("Precision")
-        ax.legend(loc="upper right")
-        ax.set_title(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
+        for i in range(2):
+            ax[i].set_xlabel("Recall")
+            ax[i].set_ylabel("Precision")
+            ax[i].legend(loc="upper right")
+        ax[0].set_title(self.model_name + " tested on experimental annotations")
+        ax[1].set_title(self.model_name + " tested on PULpy annotations")
+
+        fig.suptitle(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
+        plt.tight_layout()
         plt.savefig(f"{self.output_path}/pr_curve_{self.model_name}_{self.split}_{fold}.png")
         plt.clf()
 
@@ -421,15 +429,16 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
     parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
     parser.add_argument("--weight", type=float, default=0.01, help="Weight for uncertain negative examples.")
+    parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
     args = parser.parse_args()
     model_name = args.model
     output_path = f"src/data/plots/{model_name}"
     os.makedirs(output_path, exist_ok=True)
 
-    if model_name == "genecat":
-        results_path = f"src/data/results/genecat/zero_shot_results/labeled_results_{args.split}"
+    if model_name == "genecat_zero_shot":
+        results_path = f"src/data/results/genecat/zero_shot_results/{args.features}_labeled_results_{args.split}"
     elif model_name == "genecat_fine_tuned":
-        results_path = f"src/data/results/genecat_fine_tuned/labeled_results_{args.split}"
+        results_path = f"src/data/results/genecat_fine_tuned/{args.features}_labeled_results_{args.split}"
     elif "gecco" in model_name:
         results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     elif "esm" in model_name:
@@ -443,7 +452,7 @@ if __name__ == "__main__":
         "src/data/results/pulpy_annotations.tsv",
         "src/data/results/cblaster_results_liberal.tsv",
         k=args.k,
-        model_name=model_name,
+        model_name=f"{model_name}_{args.features}",
         split=args.split,
         output_path=output_path,
         weight=args.weight
@@ -473,12 +482,13 @@ if __name__ == "__main__":
         evaluator.precision_recall_curve("all")
 
     # two heaily annoated bacteroidetes
-    evaluator.visualize_predictions_in_genome("AE015928", 0, 0.25)
-    evaluator.visualize_predictions_in_genome("JH724241", 0, 0.25)
+    # evaluator.visualize_predictions_in_genome("AE015928", 0, 0.25)
+    # evaluator.visualize_predictions_in_genome("JH724241", 0, 0.25)
 
 
     """
-    python src/scripts/visualization/evaluate_predictions.py --model genecat --split test -k 5
+    python src/scripts/visualization/evaluate_predictions.py --model genecat_zero_shot --split test -k 5
     python src/scripts/visualization/evaluate_predictions.py --model gecco --split test -k 5
     python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 5
+    python src/scripts/visualization/evaluate_predictions.py --model genecat_fine_tuned --split test -k 1 --features pfam
     """

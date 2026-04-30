@@ -262,7 +262,7 @@ class ArgumentParser(Tap):
     contig_col: str = "sequence_id"
     norm_type: str = "l2"
     gridsearch: bool = False
-    k: int = 5
+    k: int = 7
 
 
 def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
@@ -359,8 +359,11 @@ if __name__ == "__main__":
         save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train")
 
 """
-# for genecat:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data --output-dir src/data/results/genecat/zero_shot_results --model-name pfam --norm-type l2 --normalize
+# for genecat pfam:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data_pfam --output-dir src/data/results/genecat/zero_shot_results_pfam --model-name pfam --norm-type l2 --normalize
+
+# for genecat cazy:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data_cazy --output-dir src/data/results/genecat/zero_shot_results_cazy --model-name cazy --norm-type l2 --normalize
 
 # for ESM-C:
 python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc/linear_regression_results --model-name esmc --norm-type l2 --normalize --embeddings-col embeddings

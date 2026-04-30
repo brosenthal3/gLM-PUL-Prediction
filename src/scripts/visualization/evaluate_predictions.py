@@ -435,11 +435,12 @@ if __name__ == "__main__":
     output_path = f"src/data/plots/{model_name}"
     os.makedirs(output_path, exist_ok=True)
 
+    # I kinda fucked up here cause every method saves the model/feature combination in a different way...
     if model_name == "genecat_zero_shot":
-        results_path = f"src/data/results/genecat/zero_shot_results/{args.features}_labeled_results_{args.split}"
+        results_path = f"src/data/results/genecat/zero_shot_results_{args.features}/labeled_results_{args.split}"
     elif model_name == "genecat_fine_tuned":
         results_path = f"src/data/results/genecat_fine_tuned/{args.features}_labeled_results_{args.split}"
-    elif "gecco" in model_name:
+    elif "gecco" in model_name: # note: options are gecco_pfam and gecco_with_dbcan... I know, inconsistent as hell
         results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     elif "esm" in model_name:
         results_path = f"src/data/results/esmc/linear_regression_results/labeled_results_{args.split}"
@@ -474,7 +475,7 @@ if __name__ == "__main__":
             "src/data/results/pulpy_annotations.tsv",
             "src/data/results/cblaster_results_liberal.tsv",
             k=5,
-            model_name=model_name,
+            model_name=f"{model_name}_{args.features}",
             split=args.split,
             output_path=output_path,
             weight=args.weight
@@ -491,4 +492,7 @@ if __name__ == "__main__":
     python src/scripts/visualization/evaluate_predictions.py --model gecco --split test -k 5
     python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 5
     python src/scripts/visualization/evaluate_predictions.py --model genecat_fine_tuned --split test -k 1 --features pfam
+
+    python src/scripts/visualization/evaluate_predictions.py --model genecat_zero_shot --split test -k 7 --features pfam; python src/scripts/visualization/evaluate_predictions.py --model genecat_zero_shot --split test -k 7 --features cazy
+    
     """

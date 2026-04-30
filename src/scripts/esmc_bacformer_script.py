@@ -74,7 +74,7 @@ for contig in tqdm(os.listdir("src/data/genecat_output/genes")):
         proteins,
         device=device,
         batch_size=128,  # the batch size for computing the protein embeddings
-        max_n_proteins=6000,  # the maximum number of proteins Bacformer was trained with
+        max_n_proteins=9000, # increased to 9000 due to some very long genomes
         bacformer_model_type="large", # Bacformer Large 300M
     )
     print(bacformer_input["protein_embeddings"].shape)

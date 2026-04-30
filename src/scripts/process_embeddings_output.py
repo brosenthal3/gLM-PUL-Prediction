@@ -90,8 +90,11 @@ if __name__ == "__main__":
     main()
 
 """
-    For genecat:
-    python src/scripts/process_embeddings_output.py
+    For genecat pfam:
+    python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_april_sriqcx3c_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_pfam
+
+    For genecat pfam+cazy:
+    python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_pfam_cazy_april_goycr91w_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_cazy
 
     For esmc:
     python src/scripts/process_embeddings_output.py -e src/data/results/esmc/esmc_embeddings -o src/data/results/esmc/fold_data --dir

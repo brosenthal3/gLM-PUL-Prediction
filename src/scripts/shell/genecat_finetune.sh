@@ -1,5 +1,5 @@
 #!/bin/bash                                                                                                                                                                                                      
-#SBATCH -t 12:00:00
+#SBATCH -t 24:00:00
 #SBATCH -J genecat_finetune
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
@@ -7,8 +7,9 @@
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
-#SBATCH -o genecat_%j.out
-#SBATCH -e genecat_%j.err
+#SBATCH --array=0-6
+#SBATCH -o genecat_finetune_%j.out
+#SBATCH -e genecat_finetune_%j.err
 
 source ~/.bashrc
 mamba activate genecat
@@ -22,7 +23,6 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
-SLURM_ARRAY_TASK_ID=0
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 # GENES

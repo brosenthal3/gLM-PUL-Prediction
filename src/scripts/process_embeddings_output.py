@@ -7,10 +7,11 @@ from utility_scripts import join_gene_and_PUL_table
 
 
 class EmbeddingsHandler:
-    def __init__(self, genes, clusters_dir, embeddings, output_dir, dir=False):
+    def __init__(self, genes, clusters_dir, embeddings, output_dir, embedding_col="embedding", dir=False):
         self.dir = dir
+        self.embedding_col = embedding_col
         self.genes = self._validate_table(genes)
-        self.embeddings = self._validate_table(embeddings)
+        self.embeddings = self._validate_table(embeddings).select("protein_id", "embedding")
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
@@ -32,7 +33,7 @@ class EmbeddingsHandler:
         else:
             raise ValueError(f"Invalid file format for {table_path}. Expected .csv or .parquet. If the embeddings are in a directory, specify the --dir flag.")
 
-        return table.rename({"embeddings": "embedding"}, strict=False)
+        return table.rename({self.embedding_col: "embedding"}, strict=False)
 
 
     def save_fold_data(self, fold):
@@ -79,24 +80,27 @@ def main():
     parser.add_argument("-k", type=int, default=7, help="Number of folds for cross-validation")
     parser.add_argument("--output_dir", "-o", type=str, default="src/data/results/genecat/fold_data", help="Directory to save fold data")
     parser.add_argument("--dir", action='store_true', help="Whether the input embeddings are a directory containing .parquet files")
+    parser.add_argument("--embedding_col", type=str, default="embedding", help="Column containing the embeddings")
     args = parser.parse_args()
 
-    handler = EmbeddingsHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir, dir=args.dir)
+    handler = EmbeddingsHandler(args.genes, args.clusters_dir, args.embeddings, output_dir=args.output_dir, embedding_col=args.embedding_col, dir=args.dir)
     handler.save_folds(args.k)
-
 
 
 if __name__ == "__main__":
     main()
 
 """
-    For genecat pfam:
-    python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_april_sriqcx3c_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_pfam
+For genecat pfam:
+python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_untied_april_sriqcx3c_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_pfam
 
-    For genecat pfam+cazy:
-    python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_pfam_cazy_april_goycr91w_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_cazy
+For genecat pfam+cazy:
+python src/scripts/process_embeddings_output.py -e src/data/results/genecat/PUL_embs/model_gene_multilabel_pfam_cazy_april_goycr91w_v0_context_embedding.embeddings.parquet -o src/data/results/genecat/fold_data_cazy
 
-    For esmc:
-    python src/scripts/process_embeddings_output.py -e src/data/results/esmc/esmc_embeddings -o src/data/results/esmc/fold_data --dir
+For esmc:
+python src/scripts/process_embeddings_output.py -e src/data/results/esmc/esmc_bacformer_embeddings -o src/data/results/esmc/fold_data --dir --embedding_col embedding_esmc
+
+For bacformer
+python src/scripts/process_embeddings_output.py -e src/data/results/esmc/esmc_bacformer_embeddings -o src/data/results/bacformer/fold_data --dir --embedding_col embedding_bacformer
 
 """

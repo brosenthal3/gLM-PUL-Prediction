@@ -35,3 +35,4 @@ python -m genecat.cli preprocess -i $GENOMES --hmms $CAZY -o $OUT --write-tables
 # combine features
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 python src/scripts/combine_features.py
+python src/scripts/split_genes_and_features.py

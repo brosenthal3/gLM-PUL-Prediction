@@ -7,7 +7,6 @@ import itertools
 import os
 import hashlib
 from pathlib import Path
-import pyhmmer
 
 Entrez.email = "b.rosenthal@lumc.nl"
 

@@ -23,6 +23,9 @@ def prepare_labeled_genes_df(df: pd.DataFrame, embeddings_col: str, label_col: s
     df = df.dropna(subset=embeddings_col)    
     # check if the embeddings column is already in the correct format
     if isinstance(df[embeddings_col].iloc[0], np.ndarray):
+        df[embeddings_col] = df[embeddings_col].apply(
+            lambda x: np.nan_to_num(x, nan=0.0)
+        )
         return df
     # if embeddings is List[List[np.ndarray]], we need to make it List[np.ndarray]
     if isinstance(df[embeddings_col].iloc[0], list):
@@ -161,6 +164,7 @@ def main(
     embeddings_col: str = "embedding",
     label_col: str = "label",
     contig_col: str = "genome_name",
+    mask_cryptic_puls: bool = False
 ):
     """Run the training of the Linear model."""
     os.makedirs(output_dir, exist_ok=True)
@@ -207,7 +211,13 @@ def main(
 
     model = get_linear_model(gridsearch=gridsearch, n_jobs=n_jobs, random_state=random_state)
     rich.print("Training model...")
-    model.fit(X=np.stack(train_df[embeddings_col].tolist()), y=train_df["label"].to_numpy())
+    if mask_cryptic_puls:
+        cryptic_puls = pd.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", sep='\t')
+        train_df_masked = train_df[~train_df["protein_id"].isin(cryptic_puls["protein_id"])]
+    else:
+        train_df_masked = train_df
+
+    model.fit(X=np.stack(train_df_masked[embeddings_col].tolist()), y=train_df_masked["label"].to_numpy())
 
     if gridsearch:
         rich.print(f"Best scores are {model.best_params_} with macro-ap score {model.best_score_}")
@@ -243,26 +253,6 @@ def main(
 #    genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
 
     return test_df, train_df, model
-
-
-class ArgumentParser(Tap):
-    """Argument parser for sklearn logistic regeression model."""
-
-    def __init__(self):
-        super().__init__(underscores_to_dashes=True)
-
-    # file paths for loading data
-    input_df_file_path: str
-    output_dir: str
-    n_jobs: int = max(0, len(os.sched_getaffinity(0)) - 1)
-    normalize: bool = False
-    embeddings_col: str = "embedding"
-    model_name: str | None = None
-    label_col: str = "label"
-    contig_col: str = "sequence_id"
-    norm_type: str = "l2"
-    gridsearch: bool = False
-    k: int = 7
 
 
 def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
@@ -306,6 +296,28 @@ def save_model(model, fold, output_dir):
     np.save(f"{output_dir}/coef_fold_{fold}.npy", model_to_save.coef_)
     np.save(f"{output_dir}/intercept_fold{fold}.npy", model_to_save.intercept_)
 
+
+class ArgumentParser(Tap):
+    """Argument parser for sklearn logistic regeression model."""
+
+    def __init__(self):
+        super().__init__(underscores_to_dashes=True)
+
+    # file paths for loading data
+    input_df_file_path: str
+    output_dir: str
+    n_jobs: int = max(0, len(os.sched_getaffinity(0)) - 1)
+    normalize: bool = False
+    embeddings_col: str = "embedding"
+    model_name: str | None = None
+    label_col: str = "label"
+    contig_col: str = "sequence_id"
+    norm_type: str = "l2"
+    gridsearch: bool = False
+    k: int = 7
+    mask_cryptic_puls: bool = False
+
+
 if __name__ == "__main__":
     try:
         multiprocessing.set_start_method("spawn")
@@ -334,6 +346,7 @@ if __name__ == "__main__":
             contig_col=args.contig_col,
             norm_type=args.norm_type,
             gridsearch=args.gridsearch,
+            mask_cryptic_puls=args.mask_cryptic_puls
         )
         test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
         test_df["random_state"] = random_state

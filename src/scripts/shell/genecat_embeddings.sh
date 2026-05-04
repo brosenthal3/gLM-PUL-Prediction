@@ -34,7 +34,7 @@ MODEL_CAZY_PFAM=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME_C
 GENES=${PULPATH}/src/data/genecat_output/genome.genes.parquet
 FEATURES_PFAM=${PULPATH}/src/data/genecat_output/pfam.features.parquet
 FEATURES_CAZY_PFAM=${PULPATH}/src/data/genecat_output/dbcan.pfam.features.parquet
-OUT=${PULPATH}/src/data/results/genecat/PUL_embs
+OUT=${PULPATH}/src/data/embeddings/genecat_embeddings
 
 # RUN SCRIPTS 
 python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES_PFAM -m $MODEL_PFAM --vocab $VOCAB_PFAM --batch-size 16 -j 1 -o $OUT --outtypes df

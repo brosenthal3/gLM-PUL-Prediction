@@ -7,8 +7,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 12
-#SBATCH -o gtdbtk_annotation_%j.out
-#SBATCH -e gtdbtk_annotation_%j.err
+#SBATCH -o slurm_output/gtdbtk_annotation_%j.out
+#SBATCH -e slurm_output/gtdbtk_annotation_%j.err
 
 source ~/.bashrc
 # Activate the GTDB-Tk conda environment

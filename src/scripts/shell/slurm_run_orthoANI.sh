@@ -7,8 +7,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 32
-#SBATCH -o orthoANI_%j.out
-#SBATCH -e orthoANI_%j.err
+#SBATCH -o slurm_output/orthoANI_%j.out
+#SBATCH -e slurm_output/orthoANI_%j.err
 
 source ~/.bashrc
 mamba activate genecat
@@ -17,7 +17,7 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
-OUT="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/results/orthoANI_output.txt"
+OUT="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/data_collection/orthoANI_output.txt"
 GENOME_DIR="/exports/lucid-grpzeller-work/${USER}/gLM-PUL-Prediction/src/data/genomes/selected_genomes/"
 
 # run orthoANI script to generate matrix

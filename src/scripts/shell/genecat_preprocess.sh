@@ -8,8 +8,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task 16
-#SBATCH -o preprocess_%j.out
-#SBATCH -e preprocess_%j.err
+#SBATCH -o slurm_output/preprocess_%j.out
+#SBATCH -e slurm_output/preprocess_%j.err
 
 source ~/.bashrc
 mamba activate genecat

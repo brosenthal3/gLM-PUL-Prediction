@@ -249,7 +249,7 @@ def get_non_genbank_genome(data_dir):
 
 
 def get_dbcan_clusters(data_dir):
-    dbcan_clusters_path = f"{data_dir}/results/dbcan_clusters.tsv"
+    dbcan_clusters_path = f"{data_dir}/data_collection/dbcan_clusters.tsv"
     if Path(dbcan_clusters_path).exists():
         print(f"dbCAN clusters file already exists at {dbcan_clusters_path}, loading from file.")
         return polars.read_csv(dbcan_clusters_path, separator='\t')
@@ -259,7 +259,7 @@ def get_dbcan_clusters(data_dir):
 
 
 def get_puldb_clusters(data_dir):
-    puldb_clusters_path = f"{data_dir}/results/puldb_clusters.tsv"
+    puldb_clusters_path = f"{data_dir}/data_collection/puldb_clusters.tsv"
     if Path(puldb_clusters_path).exists():
         print(f"PULdb clusters file already exists at {puldb_clusters_path}, loading from file.")
         puldb_clusters = polars.read_csv(puldb_clusters_path, separator='\t')
@@ -341,7 +341,7 @@ def get_genomes(data_dir, ids, query_type="genbank", separate=False, output_path
 
 def run_genomes_fetcher(data_dir, output_path, query_type="genbank", separate=False):
     separate = "--separate" if separate else ""
-    cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/results/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type {query_type} {separate}"
+    cmd = f"python src/scripts/ncbi_record_fetcher.py -i {data_dir}/data_collection/unique_sequence_ids.tsv -o {output_path} --email {EMAIL} --type {query_type} {separate}"
     subprocess.run(cmd, shell=True, check=True)
 
 
@@ -398,11 +398,11 @@ def get_taxonomic_annotation(gtdb_summary_path):
 
 def blast_truncated_genomes(data_dir):
     # check if blast results for truncated genomes already exist, if not run blast for all truncated genomes
-    if not Path(f"{data_dir}/results/blast_results.tsv").exists():
-        cmd = f"python src/scripts/blast_truncated_sequences.py -i {data_dir}/results/truncated_genomes.tsv -o {data_dir}/results/blast_results.tsv --email {EMAIL}"
+    if not Path(f"{data_dir}/data_collection/blast_results.tsv").exists():
+        cmd = f"python src/scripts/blast_truncated_sequences.py -i {data_dir}/data_collection/truncated_genomes.tsv -o {data_dir}/data_collection/blast_results.tsv --email {EMAIL}"
         subprocess.run(cmd, shell=True, check=True)
     else:
-        print(f"Blast results file already exists at {data_dir}/results/blast_results.tsv, skipping blast step.\n")
+        print(f"Blast results file already exists at {data_dir}/data_collection/blast_results.tsv, skipping blast step.\n")
 
 
 def move_genomes_for_pulpy(data_dir, selected_genomes):
@@ -440,17 +440,17 @@ def main(data_dir, filter_truncated):
     combined_clusters = merge_overlapping_puls(combined_clusters, keep_original=False)
 
     # get length and percentage of genome in PULs
-    combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/results/sequence_lengths.tsv").sort('cluster_id').sort('merged')
-    combined_clusters.write_csv(f"{data_dir}/results/combined_clusters.tsv", separator='\t')
+    combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/data_collection/sequence_lengths.tsv").sort('cluster_id').sort('merged')
+    combined_clusters.write_csv(f"{data_dir}/data_collection/combined_clusters.tsv", separator='\t')
     print(f"Found {combined_clusters.select('sequence_id').unique().shape[0]} unique sequences.")
 
     # STEP 2: BLAST truncated genomes to find potential longer versions
-    combined_clusters.filter(polars.col('length')<100000).write_csv(f"{data_dir}/results/truncated_genomes.tsv", separator='\t')
+    combined_clusters.filter(polars.col('length')<100000).write_csv(f"{data_dir}/data_collection/truncated_genomes.tsv", separator='\t')
     blast_truncated_genomes(data_dir)    
-    blast_output = polars.read_csv(f"{data_dir}/results/blast_results.tsv", separator='\t')
+    blast_output = polars.read_csv(f"{data_dir}/data_collection/blast_results.tsv", separator='\t')
     # replace short PULs with blast hits where possible
     combined_clusters_blasted = merge_blast_hits(combined_clusters, blast_output).sort('cluster_id').sort('merged')
-    combined_clusters_blasted.write_csv(f"{data_dir}/results/combined_clusters_blasted.tsv", separator='\t')
+    combined_clusters_blasted.write_csv(f"{data_dir}/data_collection/combined_clusters_blasted.tsv", separator='\t')
     
     # STEP 3: download genomes for later steps 
     # create file of unique accession ids from cluster tables
@@ -463,7 +463,7 @@ def main(data_dir, filter_truncated):
         .filter(~polars.col('sequence_id').eq("NO_HIT"))
         .sort("sequence_id")
     )
-    unique_accessions.write_csv(f'{data_dir}/results/unique_sequence_ids.tsv', separator='\t')
+    unique_accessions.write_csv(f'{data_dir}/data_collection/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")
 
     # get genome sequences, in fasta format
@@ -479,12 +479,12 @@ def main(data_dir, filter_truncated):
 
     # STEP 4: add taxonomic annotation from GTDB-Tk classification (gtdb-tk ran separately)
     # merge taxonomic annotation into clusters table, both on sequence_id and new_sequence_id
-    taxonomic_annotation = get_taxonomic_annotation("src/data/results/gtdbtk.bac120.summary.tsv")
+    taxonomic_annotation = get_taxonomic_annotation("src/data/data_collection/gtdbtk.bac120.summary.tsv")
     combined_clusters_gtdb = (
         combined_clusters_blasted
         .join(taxonomic_annotation, on="sequence_id", how="left")
     )
-    combined_clusters_gtdb.write_csv("src/data/results/combined_clusters_blasted_gtdb.tsv", separator='\t')
+    combined_clusters_gtdb.write_csv("src/data/data_collection/combined_clusters_blasted_gtdb.tsv", separator='\t')
 
 
 

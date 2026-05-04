@@ -129,7 +129,7 @@ class CblasterProcessor:
         # Stop here if using liberal filters, do not include in cluster table
         if self.liberal_filters:
             print("Saving cblaster results without merging with cluster table...")
-            cblaster_results_df.sort("sequence_id").write_csv(f"src/data/results/cblaster_results_liberal.tsv", separator='\t')
+            cblaster_results_df.sort("sequence_id").write_csv(f"src/data/data_collection/cblaster_results_liberal.tsv", separator='\t')
             return
 
 
@@ -150,19 +150,19 @@ class CblasterProcessor:
         print(f"After merging overlapping PULs: {integrated_table.shape[0]} PULs\n")
         print(f"Added total of {integrated_table.filter(polars.col("database").str.contains("cblaster")).shape[0]} PULs from cblaster")
         integrated_table = recompute_length_percentage(integrated_table).sort("start").sort("sequence_id")
-        integrated_table.write_csv("src/data/results/cblaster_results.tsv", separator='\t')
+        integrated_table.write_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator='\t')
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run cblaster on PUL genes and integrate results into cluster table")
-    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/clusters_deduplicated.tsv")
+    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/data_collection/clusters_deduplicated.tsv")
     parser.add_argument("--gene_table", "-g", help="Path to the gene table file", default="src/data/genecat_output/genome.genes.parquet")
-    parser.add_argument("--cblaster_output", "-o", help="Path to save the cblaster output files", default="src/data/cblaster_output")
+    parser.add_argument("--cblaster_output", "-o", help="Path to save the cblaster output files", default="src/data/cblaster/cblaster_output")
     parser.add_argument("--run_cblaster", "-rc", action="store_true", help="Whether to run cblaster or just process existing output files")
     parser.add_argument("--process_output", "-po", action="store_true", help="Whether to process cblaster output files and integrate into cluster table")
     parser.add_argument("--gene_threshold", "-gt", type=float, default=0.7, help="Minimum percentage of genes in cluster that must have hits in cblaster to be considered a hit")
     parser.add_argument("--email", "-e", type=str, default="b.rosenthal@lumc.nl", help="Email address to use for cblaster configuration")
-    parser.add_argument("--database", "-db", type=str, default="src/data/cblasterdb", help="Path to the cblaster database")
+    parser.add_argument("--database", "-db", type=str, default="src/data/cblaster/cblasterdb", help="Path to the cblaster database")
     parser.add_argument("--liberal_filters", "-lf", action="store_true", help="Whether to use more liberal filters for cblaster hits")
     parser.add_argument("--force", "-f", action="store_true", help="Whether to force rerunning cblaster on all clusters, even if output files already exist")
     args = parser.parse_args()

@@ -7,8 +7,8 @@
 #SBATCH --cpus-per-task 32
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
-#SBATCH -o esm_embeddings_%j.out
-#SBATCH -e esm_embeddings_%j.err
+#SBATCH -o slurm_output/esm_embeddings_%j.out
+#SBATCH -e slurm_output/esm_embeddings_%j.err
 
 source ~/.bashrc
 mamba activate bacformer

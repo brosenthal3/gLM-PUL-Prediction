@@ -366,5 +366,9 @@ python src/scripts/logistic_regression.py --input-df-file-path src/data/results/
 python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data_cazy --output-dir src/data/results/genecat/zero_shot_results_cazy --model-name cazy --norm-type l2 --normalize
 
 # for ESM-C:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc/linear_regression_results --model-name esmc --norm-type l2 --normalize --embeddings-col embeddings
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc/linear_regression_results --model-name esmc --norm-type l2 --normalize --embeddings-col embedding
+
+# for Bacformer:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer/linear_regression_results --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding
+
 """

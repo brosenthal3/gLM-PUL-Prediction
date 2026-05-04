@@ -6,8 +6,8 @@
 #SBATCH --mem=256G
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
-#SBATCH -o genecat_embs_%j.out
-#SBATCH -e genecat_embs_%j.err
+#SBATCH -o slurm_output/genecat_embs_%j.out
+#SBATCH -e slurm_output/genecat_embs_%j.err
 
 source ~/.bashrc
 # Activate the genecat environment

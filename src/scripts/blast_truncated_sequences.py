@@ -158,14 +158,14 @@ def main():
         "-i",
         "--input",
         type=str,
-        default="src/data/results/truncated_genomes.tsv",
+        default="src/data/data_collection/truncated_genomes.tsv",
         help="Input TSV file",
     )
     parser.add_argument(
         "-o", 
         "--output", 
         type=str, 
-        default="src/data/results/blast_results.tsv",
+        default="src/data/data_collection/blast_results.tsv",
         help="Output file"
     )
     parser.add_argument(

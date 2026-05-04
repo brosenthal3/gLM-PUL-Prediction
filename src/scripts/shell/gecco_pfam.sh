@@ -8,8 +8,8 @@
 #SBATCH --nodes=1
 #SBATCH --array=0-6
 #SBATCH --cpus-per-task 16
-#SBATCH -o gecco_%A_%a.out
-#SBATCH -e gecco_%A_%a.err
+#SBATCH -o slurm_output/gecco_%A_%a.out
+#SBATCH -e slurm_output/gecco_%A_%a.err
 
 source ~/.bashrc
 # Activate the genecat environment

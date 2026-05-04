@@ -208,7 +208,7 @@ class DatasetSplitter:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Split dataset into train and test sets based on ANI clustering")
-    parser.add_argument("-i", "--input", type=str, default="src/data/results/cblaster_results.tsv", help="Path to the clusters table")
+    parser.add_argument("-i", "--input", type=str, default="src/data/data_collection/cblaster_results.tsv", help="Path to the clusters table")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to the gene table")
     parser.add_argument("--k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--rank", type=str, default="genus", help="Taxonomic rank to use for splitting (if not using ANI)")
@@ -223,7 +223,7 @@ if __name__ == "__main__":
 
     clusters_table = polars.read_csv(args.input, separator='\t', infer_schema_length=600)
     gene_table = polars.read_parquet(args.genes)
-    ani_table = polars.read_csv("src/data/results/orthoANI_output.txt", separator='\t', has_header=False)
+    ani_table = polars.read_csv("src/data/data_collection/orthoANI_output.txt", separator='\t', has_header=False)
 
     splitter = DatasetSplitter(clusters_table, gene_table, ani_table, args.rank, args.ani_split, args.ani_threshold, args.gene_threshold)
     splitter.split_dataset(k=args.k, output_dir=Path("src/data/splits/"), stratify=args.stratify, split_bacteroidata=args.split_bacteroidata)

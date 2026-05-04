@@ -30,6 +30,6 @@ def main(genomes_dir, output):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate OrthoANI between genomes in a directory")
     parser.add_argument("--input", "-i", help="Directory containing genome FASTA files", default="src/data/genomes/gtdb_genomes")
-    parser.add_argument("--output", "-o", help="Directory to save output file", default="src/data/results")
+    parser.add_argument("--output", "-o", help="Output file to save results to", default="src/data/data_collection/orthoANI_output.txt")
     args = parser.parse_args()
     main(args.input, args.output)

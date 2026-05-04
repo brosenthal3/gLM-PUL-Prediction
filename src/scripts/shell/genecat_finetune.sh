@@ -8,8 +8,8 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
 #SBATCH --array=0-6
-#SBATCH -o genecat_finetune_%j.out
-#SBATCH -e genecat_finetune_%j.err
+#SBATCH -o slurm_output/genecat_finetune_%j.out
+#SBATCH -e slurm_output/genecat_finetune_%j.err
 
 source ~/.bashrc
 mamba activate genecat

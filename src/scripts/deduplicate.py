@@ -232,9 +232,9 @@ class orthoANIProcessor:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Use OrthoANI table to deduplicate any sequences with ANI >= 99%")
-    parser.add_argument("--input", "-i", help="Path to the ANI table file", default="src/data/results/orthoANI_output.txt")
-    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/results/combined_clusters_blasted_gtdb.tsv")
-    parser.add_argument("--output", "-o", help="Path to save the deduplicated cluster table", default="src/data/results/clusters_deduplicated.tsv")
+    parser.add_argument("--input", "-i", help="Path to the ANI table file", default="src/data/data_collection/orthoANI_output.txt")
+    parser.add_argument("--clusters_table", "-c", help="Path to the cluster table file", default="src/data/data_collection/combined_clusters_blasted_gtdb.tsv")
+    parser.add_argument("--output", "-o", help="Path to save the deduplicated cluster table", default="src/data/data_collection/clusters_deduplicated.tsv")
     parser.add_argument("--check_only", action="store_true", help="Only check the deduplicated cluster table")
 
     args = parser.parse_args()

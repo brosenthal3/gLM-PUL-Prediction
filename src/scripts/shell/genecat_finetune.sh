@@ -32,8 +32,10 @@ GENES_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.g
 CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}.tsv
 CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}.tsv
 # OUTPUT
-OUT=${PULPATH}/src/data/results/genecat_fine_tuned
-mkdir -p ${OUT}
+OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam/fold_${SLURM_ARRAY_TASK_ID}
+OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy/fold_${SLURM_ARRAY_TASK_ID}
+mkdir -p $OUT_PFAM
+mkdir -p $OUT_CAZY
 
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/:/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/'
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
@@ -50,7 +52,7 @@ DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test
 
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT}/genecat_fine_tuned\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}\
  --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30
@@ -68,7 +70,7 @@ DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test
 
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT}/genecat_fine_tuned\
- --batch-size 128 -j 1 --offline --name pfam_cazy_fold_${SLURM_ARRAY_TASK_ID}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}\
+ --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30

@@ -30,7 +30,7 @@ python -m genecat.cli preprocess -i $GENOMES --hmms $PFAM -o $OUT --write-tables
 # preprocess with cazy
 python -m genecat.cli preprocess -i $GENOMES --hmms $CAZY -o $OUT --write-tables --call-genes --hmm-type cazy --output-name dbcan
 # call genes and save faa and gff files
-# python -m genecat.cli call-genes -i $GENOMES -o $OUT --type faa+gff
+python -m genecat.cli call-genes -i $GENOMES -o $OUT --type faa+gff
 
 # combine features
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/

@@ -432,7 +432,7 @@ if __name__ == "__main__":
     parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
     args = parser.parse_args()
     model_name = args.model
-    output_path = f"src/results/plots/{model_name}"
+    output_path = f"results/plots/{model_name}"
     os.makedirs(output_path, exist_ok=True)
 
     # I kinda fucked up here cause every method saves the model/feature combination in a different way...
@@ -451,7 +451,7 @@ if __name__ == "__main__":
 
     evaluator = PredictionEvaluator(
         f"{results_path}",
-        "src/data/data_collection/cblaster_results.tsv",
+        "src/data/data_collection/clusters_deduplicated_cblaster.tsv",
         "src/data/data_collection/pulpy_annotations.tsv",
         "src/data/data_collection/cblaster_results_liberal.tsv",
         k=args.k,
@@ -473,7 +473,7 @@ if __name__ == "__main__":
         # new evaluator class for aggregating 5 folds instead of 7
         evaluator = PredictionEvaluator(
             f"{results_path}",
-            "src/data/data_collection/cblaster_results.tsv",
+            "src/data/data_collection/clusters_deduplicated_cblaster.tsv",
             "src/data/data_collection/pulpy_annotations.tsv",
             "src/data/data_collection/cblaster_results_liberal.tsv",
             k=5,

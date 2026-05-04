@@ -1,6 +1,6 @@
 import polars
 import matplotlib.pyplot as plt 
-from matplotlib_venn import venn3
+from matplotlib_venn import venn3, venn2
 import seaborn as sns
 
 def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
@@ -75,27 +75,48 @@ def get_protein_ids_in_clusters(cluster_table):
         .filter(polars.col("is_PUL") == True)
         .join(experimental_puls.select('sequence_id'), on="sequence_id", how="semi")
         .select("protein_id")
+        .to_series()
+        .to_list()
     )
 
 # venn diagrams
 def plot_venn_diagram_cblaster(save="results/plots/venn_cblaster.png"):
-    #experimental_genes = get_protein_ids_in_clusters(experimental_puls)[0:0]
-    cblaster_liberal_genes = set(get_protein_ids_in_clusters(cblaster_results_liberal)) #.join(experimental_genes, how="anti", on="protein_id").to_series().to_list())
-    cblaster_strict_genes = set(get_protein_ids_in_clusters(cblaster_results_strict)) #.join(experimental_genes, how="anti", on="protein_id").to_series().to_list())
-    pulpy_genes = set(get_protein_ids_in_clusters(pulpy)) #.join(experimental_genes, how="anti", on="protein_id").to_series().to_list())
+    experimental_genes = set(get_protein_ids_in_clusters(experimental_puls))
+    cblaster_liberal_genes = set(get_protein_ids_in_clusters(cblaster_results_liberal))
+    cblaster_strict_genes = set(get_protein_ids_in_clusters(cblaster_results_strict))
+    pulpy_genes = set(get_protein_ids_in_clusters(pulpy))
 
-    plt.figure(figsize=(6, 4))
-    venn3([pulpy_genes, cblaster_liberal_genes, cblaster_strict_genes], set_labels = ('PULpy', "Liberal Cblaster", 'Strict Cblaster'))
+    # --- Intersections with experimental ---
+    pulpy_exp = pulpy_genes & experimental_genes
+    liberal_exp = cblaster_liberal_genes & experimental_genes
+    strict_exp = cblaster_strict_genes & experimental_genes
 
-    plt.title("Genes identified by cblaster and PULpy")
+    # Create figure with two rows
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 8))
+
+    # --- Top: all genes ---
+    venn3(
+        [pulpy_genes, cblaster_liberal_genes, cblaster_strict_genes],
+        set_labels=('PULpy', "Liberal Cblaster", 'Strict Cblaster'),
+        ax=ax1
+    )
+    ax1.set_title("All identified genes")
+
+    # --- Bottom: only genes also in experimental ---
+    venn2(
+        [(cblaster_liberal_genes | cblaster_strict_genes | pulpy_genes), experimental_genes],
+        set_labels=('PULpy+Cblaster', 'Experimental'),
+        ax=ax2
+    )
+    ax2.set_title("Genes overlapping with experimental annotations")
+
     plt.tight_layout()
     plt.savefig(save, dpi=300)
-    plt.clf()
+    plt.close()
 
 
 def get_pul_lengths(puls_table):
     return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
-
 
 
 def plot_length_distributions():
@@ -139,4 +160,4 @@ def plot_length_distributions():
     plt.tight_layout()
     plt.savefig("results/plots/pulpy_pul_lengths.png", dpi=300)
 
-plot_length_distributions()
+plot_venn_diagram_cblaster()

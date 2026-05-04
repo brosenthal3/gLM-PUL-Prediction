@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from palettable.cartocolors.qualitative import Bold_10
 
-out_path = "src/data/plots/genecat_fine_tuned"
+out_path = "src/results/plots/genecat_fine_tuned"
 os.makedirs(out_path, exist_ok=True)
 
 pfam = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260429_150219-gtv4ep3n/files/pfam_fold_0_finetune_log_gtv4ep3n/version_0/metrics.csv"

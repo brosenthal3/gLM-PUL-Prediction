@@ -135,7 +135,7 @@ class PredictionEvaluator:
 
 
         self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
-        self.get_pulpy_annotations("src/data/results/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
+        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
 
 
     def get_pulpy_annotations(self, pulpy_annotations_path):
@@ -432,7 +432,7 @@ if __name__ == "__main__":
     parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
     args = parser.parse_args()
     model_name = args.model
-    output_path = f"src/data/plots/{model_name}"
+    output_path = f"src/results/plots/{model_name}"
     os.makedirs(output_path, exist_ok=True)
 
     # I kinda fucked up here cause every method saves the model/feature combination in a different way...
@@ -449,9 +449,9 @@ if __name__ == "__main__":
 
     evaluator = PredictionEvaluator(
         f"{results_path}",
-        "src/data/results/cblaster_results.tsv",
-        "src/data/results/pulpy_annotations.tsv",
-        "src/data/results/cblaster_results_liberal.tsv",
+        "src/data/data_collection/cblaster_results.tsv",
+        "src/data/data_collection/pulpy_annotations.tsv",
+        "src/data/data_collection/cblaster_results_liberal.tsv",
         k=args.k,
         model_name=f"{model_name}_{args.features}",
         split=args.split,
@@ -471,9 +471,9 @@ if __name__ == "__main__":
         # new evaluator class for aggregating 5 folds instead of 7
         evaluator = PredictionEvaluator(
             f"{results_path}",
-            "src/data/results/cblaster_results.tsv",
-            "src/data/results/pulpy_annotations.tsv",
-            "src/data/results/cblaster_results_liberal.tsv",
+            "src/data/data_collection/cblaster_results.tsv",
+            "src/data/data_collection/pulpy_annotations.tsv",
+            "src/data/data_collection/cblaster_results_liberal.tsv",
             k=5,
             model_name=f"{model_name}_{args.features}",
             split=args.split,

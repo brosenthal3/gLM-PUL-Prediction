@@ -33,5 +33,5 @@ plt.legend(handles=[
 plt.xticks([])
 plt.yticks([])
 plt.title("UMAP projection of gene embeddings")
-plt.savefig("src/data/plots/genecat/embedding_umap.png")
+plt.savefig("src/results/plots/genecat/embedding_umap.png")
 plt.clf()

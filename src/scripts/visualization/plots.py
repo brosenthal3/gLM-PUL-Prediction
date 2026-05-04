@@ -6,7 +6,7 @@ from utility_scripts import join_gene_and_PUL_table
 
 
 class Plotter:
-    def __init__(self, clusters_table: polars.DataFrame, gene_table: polars.DataFrame, save_path: str = "src/data/plots"):
+    def __init__(self, clusters_table: polars.DataFrame, gene_table: polars.DataFrame, save_path: str = "src/results/plots"):
         self.clusters_table = clusters_table
         self.gene_table = gene_table
         self.save_path = save_path
@@ -263,7 +263,7 @@ class Plotter:
 
 if __name__ == "__main__":
     # get clusters and gene table
-    clusters_table = polars.read_csv("src/data/results/cblaster_results.tsv", separator='\t', infer_schema_length=600)
+    clusters_table = polars.read_csv("src/data/data_collection/cblaster_results.tsv", separator='\t', infer_schema_length=600)
     gene_table = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     plotter = Plotter(clusters_table, gene_table)
 #    plotter.plot_percentage_in_puls_over_genome_length(cblaster=True)

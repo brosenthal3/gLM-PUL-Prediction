@@ -440,10 +440,12 @@ if __name__ == "__main__":
         results_path = f"src/data/results/genecat/zero_shot_results_{args.features}/labeled_results_{args.split}"
     elif model_name == "genecat_fine_tuned":
         results_path = f"src/data/results/genecat_fine_tuned/{args.features}_labeled_results_{args.split}"
-    elif "gecco" in model_name: # note: options are gecco_pfam and gecco_with_dbcan... I know, inconsistent as hell
-        results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
+    elif "gecco" in model_name: 
+        results_path = f"src/data/results/{model_name}_{args.features}/labeled_results_{args.split}"
     elif "esm" in model_name:
-        results_path = f"src/data/results/esmc/linear_regression_results/labeled_results_{args.split}"
+        results_path = f"src/data/results/esmc/labeled_results_{args.split}"
+    elif "bacformer" in model_name:
+        results_path = f"src/data/results/bacformer/labeled_results_{args.split}"
     else:
         raise ValueError("Invalid model name.")
 

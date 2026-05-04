@@ -31,19 +31,17 @@ cblasterdb.*
 src/data/puls_genes
 src/data/results/gecco/model_*
 src/data/results/gecco/fold_*
-src/data/results/gecco_pfam/model_*
-src/data/results/gecco_pfam/fold_*
-src/data/results/gecco_with_dbcan/model_*
-src/data/results/gecco_with_dbcan/fold_*
-src/data/results/genecat/fold_data*
-src/data/results/genecat/PUL_embs/*
-src/data/results/genecat/logs_fine_tuned
-src/data/results/genecat/models_fine_tuned
-src/data/results/esmc/
+src/data/results/gecco_*/model_*
+src/data/results/gecco_*/fold_*
+src/data/results/genecat_*/fold_data
+src/data/results/genecat_*/models
+src/data/results/esmc/fold_data
+src/data/results/esmc/models
+src/data/results/bacformer/fold_data
+src/data/results/bacformer/models
 src/data/results/genecat_fine_tuned/logs_*
 src/data/results/genecat_fine_tuned/models_*
 src/data/results/genecat/zero_shot_results_*/models
-src/data/results/bacformer/fold_data
 
 # SLURM output stuff
 orthoANI_*.err

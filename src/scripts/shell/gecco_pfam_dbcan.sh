@@ -19,7 +19,7 @@ mamba activate genecat
 set -euo pipefail
 IFS=$'\n\t'
 
-OUT=src/data/results/gecco_with_dbcan
+OUT=src/data/results/gecco_cazy
 FEATURES=src/data/genecat_output/dbcan.pfam.features.parquet
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 

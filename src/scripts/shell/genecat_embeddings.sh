@@ -44,8 +44,8 @@ python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES_CAZY_PFAM -m $MO
 #-----PROCESS EMBEDDINGS-----#
 EMBS_PFAM=${OUT}/${MODEL_NAME_PFAM}_context_embedding.embeddings.parquet
 EMBS_CAZY_PFAM=${OUT}/${MODEL_NAME_CAZY_PFAM}_context_embedding.embeddings.parquet
-OUT_FOLDS="src/data/results/genecat/fold_data"
+OUT_FOLDS="src/data/results/genecat_zeroshot"
 
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
-python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_PFAM -k 7 -o $OUT_FOLDS/pfam
-python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o $OUT_FOLDS/cazy_pfam
+python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_PFAM -k 7 -o ${OUT_FOLDS}_pfam/fold_data
+python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}_cazy/fold_data

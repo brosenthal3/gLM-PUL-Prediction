@@ -360,15 +360,15 @@ if __name__ == "__main__":
 
 """
 # for genecat pfam:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data_pfam --output-dir src/data/results/genecat/zero_shot_results_pfam --model-name pfam --norm-type l2 --normalize
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat/zero_shot_results_pfam --model-name pfam --norm-type l2 --normalize
 
 # for genecat cazy:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat/fold_data_cazy --output-dir src/data/results/genecat/zero_shot_results_cazy --model-name cazy --norm-type l2 --normalize
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat/zero_shot_results_cazy --model-name cazy --norm-type l2 --normalize
 
 # for ESM-C:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc/linear_regression_results --model-name esmc --norm-type l2 --normalize --embeddings-col embedding
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc --model-name esmc --norm-type l2 --normalize --embeddings-col embedding
 
 # for Bacformer:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer/linear_regression_results --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding
 
 """

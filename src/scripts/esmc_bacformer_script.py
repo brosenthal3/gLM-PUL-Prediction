@@ -20,7 +20,7 @@ model = AutoModel.from_pretrained("macwiatrak/bacformer-large-masked-MAG", trust
 output_path = "src/data/embeddings/esmc_bacformer_embeddings"
 os.makedirs(output_path, exist_ok=True)
 faa_path = "src/data/genecat_output/genome.genes.faa"
-sequences = polars.read_csv("src/data/data_collection/cblaster_results.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
+sequences = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
 genes_df = (
     polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     .select("protein_id", "sequence_id").unique()

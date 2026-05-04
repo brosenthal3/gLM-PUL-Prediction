@@ -131,7 +131,8 @@ class CblasterProcessor:
             print("Saving cblaster results without merging with cluster table...")
             cblaster_results_df.sort("sequence_id").write_csv(f"src/data/data_collection/cblaster_results_liberal.tsv", separator='\t')
             return
-
+        else:
+            cblaster_results_df.sort("sequence_id").write_csv(f"src/data/data_collection/cblaster_results_strict.tsv", separator='\t')
 
         sequence_info = (
             self.clusters_table

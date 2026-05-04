@@ -208,7 +208,7 @@ class DatasetSplitter:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Split dataset into train and test sets based on ANI clustering")
-    parser.add_argument("-i", "--input", type=str, default="src/data/data_collection/cblaster_results.tsv", help="Path to the clusters table")
+    parser.add_argument("-i", "--input", type=str, default="src/data/data_collection/clusters_deduplicated_cblaster.tsv", help="Path to the clusters table")
     parser.add_argument("--genes", type=str, default="src/data/genecat_output/genome.genes.parquet", help="Path to the gene table")
     parser.add_argument("--k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--rank", type=str, default="genus", help="Taxonomic rank to use for splitting (if not using ANI)")

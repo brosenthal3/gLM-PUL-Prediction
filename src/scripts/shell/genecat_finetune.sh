@@ -3,13 +3,13 @@
 #SBATCH -J genecat_finetune
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
-#SBATCH --mem=128G
+#SBATCH --mem=64G
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task 16
 #SBATCH --array=0-6
-#SBATCH -o slurm_output/genecat_finetune_%j.out
-#SBATCH -e slurm_output/genecat_finetune_%j.err
+#SBATCH -o slurm_output/genecat_finetune_%A_%a.out
+#SBATCH -e slurm_output/genecat_finetune_%A_%a.err
 
 source ~/.bashrc
 mamba activate genecat
@@ -32,8 +32,8 @@ GENES_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.g
 CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}.tsv
 CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}.tsv
 # OUTPUT
-OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam/fold_${SLURM_ARRAY_TASK_ID}
-OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy/fold_${SLURM_ARRAY_TASK_ID}
+OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam
+OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy
 mkdir -p $OUT_PFAM
 mkdir -p $OUT_CAZY
 
@@ -52,7 +52,7 @@ DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test
 
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30
@@ -70,7 +70,7 @@ DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test
 
 python $PULPATH/src/scripts/genecat_finetune.py\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30

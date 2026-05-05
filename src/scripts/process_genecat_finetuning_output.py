@@ -1,4 +1,5 @@
 import polars
+import os
 import anndata as ad
 from utility_scripts import join_gene_and_PUL_table
 
@@ -30,11 +31,16 @@ def save_pul_predictions(h5ad_path, save_path):
     labeled_table.write_csv(save_path, separator='\t')
 
 
-if __name__ == "__main__":
-    pfam = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260429_150219-gtv4ep3n/files/pul_predictions.h5ad"    
-    save_path_pfam = "src/data/results/genecat_fine_tuned/pfam_labeled_results_test_0.tsv"  
-    save_pul_predictions(pfam, save_path_pfam)
+def main():
+    for k in range(7):
+        for features in ["pfam", "cazy"]:
+            predictions = f"src/data/results/genecat_finetuned_{features}/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+            save_path = f"src/data/results/genecat_finetuned_{features}/labeled_results_test_{k}.tsv"
+            if not os.path.exists(predictions):
+                continue
 
-    pfam_cazy = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260429_221043-bgckiapc/files/pul_predictions.h5ad"
-    save_path_pfam_cazy = "src/data/results/genecat_fine_tuned/pfam_cazy_labeled_results_test_0.tsv"
-    save_pul_predictions(pfam_cazy, save_path_pfam_cazy)
+            save_pul_predictions(predictions, save_path)
+
+
+if __name__ == "__main__":
+    main()

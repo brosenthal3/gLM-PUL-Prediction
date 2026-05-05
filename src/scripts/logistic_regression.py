@@ -47,7 +47,7 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
         )
         param_grid = {
             "l1_ratio": [0, 1],
-            "C": [0.01, 0.1, 1, 10, 100, 1000],
+            "C": [0.05, 1, 10, 500],
         }
         score = make_scorer(
             average_precision_score,
@@ -328,14 +328,14 @@ if __name__ == "__main__":
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     output_dir = args.output_dir
 
-    for fold in range(args.k):
+    for fold in tqdm(range(args.k)):
         rich.print(f"[bold blue]Running fold {fold}...[/]")
         input_df_file_path = args.input_df_file_path + f"/fold_{fold}_data.parquet"
         output = []
         output_train = []
 
         random_state = 1
-        print(f"Running state {random_state}")
+        # print(f"Running state {random_state}")
         test_df, train_df, model = main(
             input_df_file_path=input_df_file_path,
             output_dir=output_dir,
@@ -373,10 +373,10 @@ if __name__ == "__main__":
 
 """
 # for genecat pfam:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat/zero_shot_results_pfam --model-name pfam --norm-type l2 --normalize
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam --model-name pfam --norm-type l2 --normalize
 
 # for genecat cazy:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat/zero_shot_results_cazy --model-name cazy --norm-type l2 --normalize
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy --model-name cazy --norm-type l2 --normalize
 
 # for ESM-C:
 python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc --model-name esmc --norm-type l2 --normalize --embeddings-col embedding

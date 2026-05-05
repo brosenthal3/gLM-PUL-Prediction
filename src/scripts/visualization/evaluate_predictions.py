@@ -67,12 +67,11 @@ class PredictionEvaluator:
     Evaluator class for evaluating the predictions of GECCO against experimental data and PULpy annotations.
     Currently aggregates predictions across all folds.
     """
-
     def __init__(self, labeled_results_path, 
-                clusters_table_path, 
-                pulpy_annotations_path,
-                cblaster_annotations_path, 
-                k, model_name, split, output_path, weight):
+                clusters_table_path="src/data/data_collection/clusters_deduplicated_cblaster.tsv", 
+                pulpy_annotations_path="src/data/data_collection/pulpy_annotations.tsv",
+                cblaster_annotations_path="src/data/data_collection/cblaster_results_liberal.tsv", 
+                k=7, model_name="gecco_pfam", split="test", output_path="results/plots", weight=1.0):
 
         self.model_name = model_name
         self.split = split
@@ -287,14 +286,18 @@ class PredictionEvaluator:
         plt.clf()
 
 
-    def roc_curve(self, true, p_pred, label, color):
+    def roc_curve(self, true, p_pred, label, color, ax=None):
         if len(true) == 0 or len(p_pred) == 0:
             print(f"Warning: No data to plot for ROC curve. Skipping.")
             return
 
         fpr, tpr, thresholds = roc_curve(true, p_pred)
         roc_auc = auc(fpr, tpr)
-        plt.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
+
+        if ax:
+            ax.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
+        else:
+            plt.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
 
     def plot_roc_curves(self, fold):
         self.set_evaluation_data(fold)
@@ -309,35 +312,6 @@ class PredictionEvaluator:
         plt.title(f'ROC Curve for {self.model_name} (on {self.split} set, fold {fold})')
         plt.legend(loc="lower right")
         plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
-        plt.clf()
-
-
-    def get_prediction_lengths(self, table, label_col, cluster_col):
-        lengths = (
-            table
-            .filter(polars.col(label_col) == True)
-            .group_by(cluster_col)
-            .agg(polars.count("protein_id").alias("length"))
-            .select("length").to_series().to_list()
-        )
-        return lengths
-
-
-    def lengths_histogram(self, fold):
-        predicted_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL_pred", "cluster_id_pred")
-        true_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL", "cluster_id")
-        pulpy_lengths = self.get_prediction_lengths(self.labeled_results[fold], "is_PUL_pulpy", "cluster_id_pulpy")
-        lengths = [predicted_lengths, true_lengths, pulpy_lengths]
-
-        plt.figure()
-        for data, label in zip(lengths, ["Predicted PULs", "True PULs", "PULpy PULs"]):
-            sns.kdeplot(data=data, fill=True, label=label, cut=0, common_norm=False, bw_adjust=0.7)
-        plt.xlim(0, 100)
-        plt.xlabel('PUL Length (number of genes)')
-        plt.ylabel('Density (KDE)')
-        plt.title(f'PUL Lengths distributions {"(filtered by " + self.filter + ")" if self.filter else ""}') 
-        plt.legend()
-        plt.savefig(f"{self.output_path}/pul_length_kde_{self.model_name}_{self.filter}_{fold}.png")
         plt.clf()
 
     
@@ -421,41 +395,87 @@ class PredictionEvaluator:
         plt.clf()
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Evaluate predictions of GECCO against experimental data and PULpy annotations"
-    )
-    parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
-    parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
-    parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
-    parser.add_argument("--weight", type=float, default=0.01, help="Weight for uncertain negative examples.")
-    parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
-    args = parser.parse_args()
+def compare_all_models():
+    # comparison of all models
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
+    colors = plt.cm.tab20.colors
+
+    # list of evaluators for all models
+    all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam", "genecat_zeroshot_cazy", "esmc", "bacformer"]
+    evaluators = [
+        PredictionEvaluator(
+            labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
+            model_name=model_name,
+            k=5
+        )
+        for model_name in all_models
+    ]
+
+    for i, model_evaluator in enumerate(evaluators):
+        print(f"Plotting for {all_models[i]}")
+        model_evaluator.aggregate_all_folds()
+        model_evaluator.set_evaluation_data(0)
+
+        # for true vs pred
+        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax[0])
+        model_evaluator.roc_curve(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_roc[0])
+        # for pulpy vs pred
+        model_evaluator.plot_pr(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax[1])
+        model_evaluator.roc_curve(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax_roc[1])
+
+        # plot baselines only once
+        if i == len(all_models)-1:
+            baseline = sum(model_evaluator.true) / len(model_evaluator.true) if len(model_evaluator.true) > 0 else 0
+            baseline_pulpy = sum(model_evaluator.pulpy_pred) / len(model_evaluator.pulpy_pred) if len(model_evaluator.pulpy_pred) > 0 else 0
+            ax[0].plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
+            ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', label="Baseline", color='gray')
+
+
+    # add labels and legend
+    for j in range(2):
+        ax[j].set_xlabel("Recall")
+        ax[j].set_ylabel("Precision")
+        ax[j].legend(loc="upper right")
+
+        ax_roc[j].set_xlabel('False Positive Rate')
+        ax_roc[j].set_ylabel("True Positive Rate")
+        ax_roc[j].legend(loc="lower right")
+
+    ax[0].set_title("Models tested on experimental annotations")
+    ax[1].set_title("Models tested on PULpy annotations")
+    ax_roc[0].set_title("Models tested on experimental annotations")
+    ax_roc[1].set_title("Models tested on PULpy annotations")
+
+    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
+    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
+
+    fig.tight_layout()
+    fig.savefig("results/plots/pr_curves_all.png")
+    fig_roc.tight_layout()
+    fig_roc.savefig("results/plots/roc_curves_all.png")
+    plt.close()
+
+
+def main(args):
     model_name = args.model
+    if model_name == "all":
+        compare_all_models()
+        return
+
+    # path where results are saved
+    results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
+    if not os.path.exists(results_path+"_0.tsv"):
+        raise ValueError("Invalid model name, or no results found.")
+
+    # output path to save plots
     output_path = f"results/plots/{model_name}"
     os.makedirs(output_path, exist_ok=True)
 
-    # I kinda fucked up here cause every method saves the model/feature combination in a different way...
-    if model_name == "genecat_zeroshot":
-        results_path = f"src/data/results/genecat_zeroshot_{args.features}/labeled_results_{args.split}"
-    elif model_name == "genecat_fine_tuned":
-        results_path = f"src/data/results/genecat_fine_tuned/{args.features}_labeled_results_{args.split}"
-    elif "gecco" in model_name: 
-        results_path = f"src/data/results/{model_name}_{args.features}/labeled_results_{args.split}"
-    elif "esm" in model_name:
-        results_path = f"src/data/results/esmc/labeled_results_{args.split}"
-    elif "bacformer" in model_name:
-        results_path = f"src/data/results/bacformer/labeled_results_{args.split}"
-    else:
-        raise ValueError("Invalid model name.")
-
     evaluator = PredictionEvaluator(
         f"{results_path}",
-        "src/data/data_collection/clusters_deduplicated_cblaster.tsv",
-        "src/data/data_collection/pulpy_annotations.tsv",
-        "src/data/data_collection/cblaster_results_liberal.tsv",
         k=args.k,
-        model_name=f"{model_name}_{args.features}",
+        model_name=f"{model_name}",
         split=args.split,
         output_path=output_path,
         weight=args.weight
@@ -469,15 +489,13 @@ if __name__ == "__main__":
          evaluator.precision_recall_curve(fold)
          evaluator.plot_roc_curves(fold)
 
+
+    # new evaluator class for aggregating 5 folds instead of 7
     if args.k >= 5:
-        # new evaluator class for aggregating 5 folds instead of 7
         evaluator = PredictionEvaluator(
             f"{results_path}",
-            "src/data/data_collection/clusters_deduplicated_cblaster.tsv",
-            "src/data/data_collection/pulpy_annotations.tsv",
-            "src/data/data_collection/cblaster_results_liberal.tsv",
             k=5,
-            model_name=f"{model_name}_{args.features}",
+            model_name=f"{model_name}",
             split=args.split,
             output_path=output_path,
             weight=args.weight
@@ -489,13 +507,35 @@ if __name__ == "__main__":
     # evaluator.visualize_predictions_in_genome("JH724241", 0, 0.25)
 
 
-    """
-    python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 5
-    python src/scripts/visualization/evaluate_predictions.py --model gecco --split test -k 5
-    python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 5
-    python src/scripts/visualization/evaluate_predictions.py --model genecat_fine_tuned --split test -k 1 --features pfam
 
-    python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features pfam;\
-    python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features cazy
-    
-    """
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Evaluate predictions of GECCO against experimental data and PULpy annotations"
+    )
+    parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
+    parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
+    parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
+    parser.add_argument("--weight", type=float, default=0.01, help="Weight for uncertain negative examples.")
+    parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
+    args = parser.parse_args()
+
+    main(args)
+
+"""
+--GECCO--
+python src/scripts/visualization/evaluate_predictions.py --model gecco_pfam --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model gecco_cazy --split test -k 7
+
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_pfam --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy --split test -k 7
+
+
+python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model bacformer --split test -k 7
+
+python src/scripts/visualization/evaluate_predictions.py --model genecat_fine_tuned --split test -k 1 --features pfam
+
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features pfam;\
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features cazy
+
+"""

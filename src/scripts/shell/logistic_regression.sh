@@ -17,31 +17,36 @@ mamba activate genecat
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
-
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 
-# ENSURE ALL EMBEDDINGS OUTPUT IS PROCESSED #
-# for genecat pfam:
-#python src/scripts/process_embeddings_output.py -e src/data/embeddings/genecat_embeddings/model_gene_multilabel_untied_april_sriqcx3c_v0_context_embedding.embeddings.parquet -o src/data/results/genecat_zeroshot_pfam/fold_data
+### MODELS TRAINED ON ALL PULs ###
 
-# for genecat cazy:
-#python src/scripts/process_embeddings_output.py -e src/data/embeddings/genecat_embeddings/model_gene_multilabel_pfam_cazy_april_goycr91w_v0_context_embedding.embeddings.parquet -o src/data/results/genecat_zeroshot_cazy/fold_data
+# genecat pfam:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam --model-name pfam --norm-type l2 --normalize
 
-# for esmc:
-#python src/scripts/process_embeddings_output.py -e src/data/embeddings/esmc_bacformer_embeddings -o src/data/results/esmc/fold_data --dir --embedding_col embedding_esmc
+# genecat cazy:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy --model-name cazy --norm-type l2 --normalize
 
-# for bacformer
-#python src/scripts/process_embeddings_output.py -e src/data/embeddings/esmc_bacformer_embeddings -o src/data/results/bacformer/fold_data --dir --embedding_col embedding_bacformer
+# ESM-C:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc --model-name esmc --norm-type l2 --normalize --embeddings-col embedding
 
+# Bacformer:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding
 
-# for genecat pfam:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam --model-name pfam --norm-type l2 --normalize --gridsearch
+### MODELS TRAINED EXCLUDING CRYPTIC PULs ###
 
-# for genecat cazy:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy --model-name cazy --norm-type l2 --normalize --gridsearch
+# genecat pfam
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam_masked --model-name pfam_masked --norm-type l2 --normalize --mask-cryptic-puls
 
-# for ESM-C:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc --model-name esmc --norm-type l2 --normalize --embeddings-col embedding --gridsearch
+# genecat cazy
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy_masked --model-name cazy_masked --norm-type l2 --normalize --mask-cryptic-puls
 
-# for Bacformer:
-python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding --gridsearch
+# ESM-C:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc_masked --model-name esmc_masked --norm-type l2 --normalize --embeddings-col embedding
+
+# Bacformer:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer_masked --model-name bacformer_masked --norm-type l2 --normalize --embeddings-col embedding
+
+### GENERATE VISUALIZATIONSSS ###
+python src/scripts/visualization/evaluate_predictions.py --model all
+python src/scripts/visualization/evaluate_predictions.py --model masked

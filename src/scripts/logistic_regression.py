@@ -174,6 +174,8 @@ def main(
     df = df_polars.to_pandas()
     # explode the embeddings column as after embedding it is a list of lists
     df = prepare_labeled_genes_df(df, embeddings_col=embeddings_col, label_col=label_col)
+    # read cryptic PULs
+    cryptic_puls = pd.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", sep='\t')
 
     if normalize:
         df = normalize_embeddings(df, embedding_col=embeddings_col, norm_type=norm_type)
@@ -181,7 +183,7 @@ def main(
     genome2idx = {g: i for i, g in enumerate(df[contig_col].unique())}
     df["genome_idx"] = df[contig_col].map(genome2idx)
 
-    # TODO whatever it is! make it binary
+    # Binarize labels
     if "True" in df[label_col].unique():
         df["label"] = df[label_col].map({"True": 1, "False": 0})
     elif "Yes" in df[label_col].unique():
@@ -212,7 +214,6 @@ def main(
     model = get_linear_model(gridsearch=gridsearch, n_jobs=n_jobs, random_state=random_state)
     rich.print("Training model...")
     if mask_cryptic_puls:
-        cryptic_puls = pd.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", sep='\t')
         train_df_masked = train_df[~train_df["protein_id"].isin(cryptic_puls["protein_id"])]
     else:
         train_df_masked = train_df
@@ -249,13 +250,13 @@ def main(
 
     rich.print("Train set evaluation:")
     calculate_global_metrics(df=train_df)
-
-#    genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
+    # genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
 
     return test_df, train_df, model
 
 
 def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
+    # get only genes in test set
     test_genes = (genes.join(clusters, on="sequence_id", how="semi"))
 
     # join genes with test clusters and predicted clusters
@@ -372,6 +373,8 @@ if __name__ == "__main__":
         save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train")
 
 """
+### ALL PULs ###
+
 # for genecat pfam:
 python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam --model-name pfam --norm-type l2 --normalize
 
@@ -383,5 +386,19 @@ python src/scripts/logistic_regression.py --input-df-file-path src/data/results/
 
 # for Bacformer:
 python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding
+
+### MASKED CRYPTIC PULs ###
+
+# for genecat pfam
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam_masked --model-name pfam_masked --norm-type l2 --normalize --mask-cryptic-puls
+
+# for genecat cazy
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy_masked --model-name cazy_masked --norm-type l2 --normalize --mask-cryptic-puls
+
+# for ESM-C:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc_masked --model-name esmc_masked --norm-type l2 --normalize --embeddings-col embedding
+
+# for Bacformer:
+python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer_masked --model-name bacformer_masked --norm-type l2 --normalize --embeddings-col embedding
 
 """

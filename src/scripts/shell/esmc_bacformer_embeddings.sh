@@ -22,5 +22,12 @@ IFS=$'\n\t'
 # source $TMPDIR/esm_env/bin/activate
 # pip install biopython polars numpy torch esm
 
+# extract embeddings
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 python src/scripts/esmc_bacformer_script.py
+
+# save folds for esmc:
+python src/scripts/process_embeddings_output.py -e src/data/embeddings/esmc_bacformer_embeddings -o src/data/results/esmc/fold_data --dir --embedding_col embedding_esmc
+
+# save folds for bacformer:
+python src/scripts/process_embeddings_output.py -e src/data/embeddings/esmc_bacformer_embeddings -o src/data/results/bacformer/fold_data --dir --embedding_col embedding_bacformer

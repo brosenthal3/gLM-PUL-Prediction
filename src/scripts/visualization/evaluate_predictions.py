@@ -395,14 +395,13 @@ class PredictionEvaluator:
         plt.clf()
 
 
-def compare_all_models():
+def compare_all_models(all_models, model_class):
     # comparison of all models
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
     colors = plt.cm.tab20.colors
 
     # list of evaluators for all models
-    all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam", "genecat_zeroshot_cazy", "esmc", "bacformer"]
     evaluators = [
         PredictionEvaluator(
             labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
@@ -451,16 +450,22 @@ def compare_all_models():
     fig_roc.suptitle("ROC Curves of all tested models (all folds)")
 
     fig.tight_layout()
-    fig.savefig("results/plots/pr_curves_all.png")
+    fig.savefig(f"results/plots/pr_curves_{model_class}.png")
     fig_roc.tight_layout()
-    fig_roc.savefig("results/plots/roc_curves_all.png")
+    fig_roc.savefig(f"results/plots/roc_curves_{model_class}.png")
     plt.close()
 
 
 def main(args):
     model_name = args.model
     if model_name == "all":
-        compare_all_models()
+        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam", "genecat_zeroshot_cazy", "esmc", "bacformer"]
+        compare_all_models(all_models, model_name)
+        return
+
+    if model_name == "masked":
+        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
+        compare_all_models(all_models, model_name)
         return
 
     # path where results are saved
@@ -526,16 +531,22 @@ if __name__ == "__main__":
 python src/scripts/visualization/evaluate_predictions.py --model gecco_pfam --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model gecco_cazy --split test -k 7
 
+
+--GENECAT ZEROSHOT--
 python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_pfam --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy_masked --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_pfam_masked --split test -k 7
 
 
+--GENECAT FINETUNED--
+python src/scripts/visualization/evaluate_predictions.py --model genecat_finetuned_pfam --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model genecat_finetuned_cazy --split test -k 7
+
+
+--ESMC & BACFORMER--
 python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model bacformer --split test -k 7
 
-python src/scripts/visualization/evaluate_predictions.py --model genecat_fine_tuned --split test -k 1 --features pfam
-
-python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features pfam;\
-python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot --split test -k 7 --features cazy
 
 """

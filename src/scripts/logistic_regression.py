@@ -55,12 +55,12 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
             response_method="predict_proba",
         )
 
-        # GridSearch with 5-fold CV
+        # GridSearch with 3-fold CV, reduce complexity
         model = GridSearchCV(
             clf,
             param_grid,
             scoring=score,
-            cv=5,
+            cv=3,
             n_jobs=n_jobs,
             refit=True,
             error_score="raise",

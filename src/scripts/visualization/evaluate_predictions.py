@@ -450,9 +450,9 @@ def compare_all_models(all_models, model_class):
     fig_roc.suptitle("ROC Curves of all tested models (all folds)")
 
     fig.tight_layout()
-    fig.savefig(f"results/plots/pr_curves_{model_class}.png")
+    fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
     fig_roc.tight_layout()
-    fig_roc.savefig(f"results/plots/roc_curves_{model_class}.png")
+    fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png")
     plt.close()
 
 

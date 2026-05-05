@@ -89,6 +89,7 @@ class PredictionEvaluator:
         self.get_cblaster_annotations(cblaster_annotations_path)
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.filter = None
+        os.makedirs(self.output_path, exist_ok=True)
 
 
     def set_evaluation_data(self, fold):
@@ -394,6 +395,64 @@ class PredictionEvaluator:
         plt.savefig(f"{self.output_path}/f1_scores_per_fold_{self.model_name}_{self.split}.png")
         plt.clf()
 
+    def test_cryptic_puls(self, fold=0):
+        # three comparisons: 
+            # trues = experimental, negatives = all minus cryptic
+            # trues = cryptic, negatives = all minus experimental
+            # trues = experimental+cryptic, negatives = all minus experimental+cryptic
+
+        self.set_evaluation_data(fold)
+        df = self.labeled_results[fold]
+        cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t")
+
+        # --- Add cryptic flag via join (vectorized) ---
+        cryptic_df = cryptic_df.select("protein_id").with_columns(
+            polars.lit(True).alias("is_cryptic")
+        )
+
+        df = df.join(cryptic_df, on="protein_id", how="left").with_columns(
+            polars.col("is_cryptic").fill_null(False)
+        )
+
+        # --- Construct label columns (fully vectorized) ---
+        df = df.with_columns([
+            polars.col("is_PUL").fill_null(False).alias("y_exp"),
+            polars.col("is_cryptic").alias("y_cryptic"),
+            (polars.col("is_PUL").fill_null(False) | polars.col("is_cryptic")).alias("y_both"),
+        ])
+
+        # --- Extract arrays (aligned automatically) ---
+        y_exp = df.select("y_exp").to_series().to_list()
+        y_cryptic = df.select("y_cryptic").to_series().to_list()
+        y_both = df.select("y_both").to_series().to_list()
+        p_pred = df.select("average_p").fill_null(0.0).to_series().to_list()
+
+        # --- Plot ---
+        fig, ax = plt.subplots(figsize=(6, 5))
+        colors = plt.cm.tab10.colors
+
+        self.plot_pr(y_exp, p_pred, "Experimental", colors[0], ax)
+        self.plot_pr(y_cryptic, p_pred, "Cryptic", colors[1], ax)
+        self.plot_pr(y_both, p_pred, "Experimental + Cryptic", colors[2], ax)
+
+        # baselines
+        # for y, label, color in zip(
+        #     [y_exp, y_cryptic, y_both],
+        #     ["Exp baseline", "Cryptic baseline", "Combined baseline"],
+        #     colors[:3]
+        # ):
+        #     baseline = sum(y) / len(y) if len(y) > 0 else 0
+        #     ax.plot([0, 1], [baseline, baseline], linestyle="--", color=color, alpha=0.5)
+
+        ax.set_xlabel("Recall")
+        ax.set_ylabel("Precision")
+        ax.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold all)")
+        ax.legend()
+
+        plt.tight_layout()
+        plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_all.png")
+        plt.close()
+
 
 def compare_all_models(all_models, model_class):
     # comparison of all models
@@ -406,7 +465,8 @@ def compare_all_models(all_models, model_class):
         PredictionEvaluator(
             labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
             model_name=model_name,
-            k=5
+            k=5,
+            output_path=f"results/plots/{model_name}"
         )
         for model_name in all_models
     ]
@@ -415,6 +475,11 @@ def compare_all_models(all_models, model_class):
         print(f"Plotting for {all_models[i]}")
         model_evaluator.aggregate_all_folds()
         model_evaluator.set_evaluation_data(0)
+        
+        # for masked models, also evaluate cryptic puls
+        if "masked" in all_models[i]:
+            print("testing on cryptic puls")
+            model_evaluator.test_cryptic_puls()
 
         # for true vs pred
         model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax[0])
@@ -475,7 +540,6 @@ def main(args):
 
     # output path to save plots
     output_path = f"results/plots/{model_name}"
-    os.makedirs(output_path, exist_ok=True)
 
     evaluator = PredictionEvaluator(
         f"{results_path}",

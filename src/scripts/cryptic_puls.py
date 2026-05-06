@@ -24,8 +24,3 @@ joined_genes = (
     .select("protein_id")
     .write_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t")
 )
-
-
-
-# rename cryptic puls column, select only protein_id and is_ctyptic_PUL
-# join, and make sure is_cryptic_PUL is only 1 if is_PUL is 0.

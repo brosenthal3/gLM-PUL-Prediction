@@ -405,7 +405,7 @@ class PredictionEvaluator:
         df = self.labeled_results[fold]
         cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t")
 
-        # --- Add cryptic flag via join (vectorized) ---
+        # add cryptic label
         cryptic_df = cryptic_df.select("protein_id").with_columns(
             polars.lit(True).alias("is_cryptic")
         )
@@ -414,40 +414,61 @@ class PredictionEvaluator:
             polars.col("is_cryptic").fill_null(False)
         )
 
-        # --- Construct label columns (fully vectorized) ---
+        # make binary labels
         df = df.with_columns([
             polars.col("is_PUL").fill_null(False).alias("y_exp"),
             polars.col("is_cryptic").alias("y_cryptic"),
             (polars.col("is_PUL").fill_null(False) | polars.col("is_cryptic")).alias("y_both"),
         ])
 
-        # --- Extract arrays (aligned automatically) ---
-        y_exp = df.select("y_exp").to_series().to_list()
-        y_cryptic = df.select("y_cryptic").to_series().to_list()
+        # test on ONLY experimental, remove cryptic from evaluation
+        df_exp = df.filter(~polars.col("is_cryptic"))
+        y_exp = df_exp.select("y_exp").to_series().to_list()
+        p_pred_exp = df_exp.select("average_p").fill_null(0.0).to_series().to_list()
+        # test on cryptic only, removing experimental from evaluation
+        df_cryptic = df.filter(~polars.col("is_PUL"))
+        y_cryptic = df_cryptic.select("y_cryptic").to_series().to_list()
+        p_pred_cryptic = df_cryptic.select("average_p").fill_null(0.0).to_series().to_list()
+        # test on both, including all in evaluation
         y_both = df.select("y_both").to_series().to_list()
-        p_pred = df.select("average_p").fill_null(0.0).to_series().to_list()
+        p_pred_both = df.select("average_p").fill_null(0.0).to_series().to_list()
 
         # --- Plot ---
-        fig, ax = plt.subplots(figsize=(6, 5))
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 8))
+
         colors = plt.cm.tab10.colors
 
-        self.plot_pr(y_exp, p_pred, "Experimental", colors[0], ax)
-        self.plot_pr(y_cryptic, p_pred, "Cryptic", colors[1], ax)
-        self.plot_pr(y_both, p_pred, "Experimental + Cryptic", colors[2], ax)
+        # --- Top: PR curves ---
+        self.plot_pr(y_exp, p_pred_exp, "Experimental", colors[0], ax1)
+        self.plot_pr(y_cryptic, p_pred_cryptic, "Cryptic", colors[1], ax1)
+        self.plot_pr(y_both, p_pred_both, "Experimental + Cryptic", colors[2], ax1)
 
-        # baselines
-        # for y, label, color in zip(
-        #     [y_exp, y_cryptic, y_both],
-        #     ["Exp baseline", "Cryptic baseline", "Combined baseline"],
-        #     colors[:3]
-        # ):
-        #     baseline = sum(y) / len(y) if len(y) > 0 else 0
-        #     ax.plot([0, 1], [baseline, baseline], linestyle="--", color=color, alpha=0.5)
+        ax1.set_xlabel("Recall")
+        ax1.set_ylabel("Precision")
+        ax1.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold all)")
+        ax1.legend()
 
-        ax.set_xlabel("Recall")
-        ax.set_ylabel("Precision")
-        ax.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold all)")
-        ax.legend()
+        # --- Bottom: KDE of prediction scores ---
+        bw = 0.3
+        # get only probabilities of positives
+        p_pred_exp = df_exp.filter(polars.col("y_exp")).select("average_p").fill_null(0.0).to_series().to_list()
+        p_pred_cryptic = df_cryptic.filter(polars.col("y_cryptic")).select("average_p").fill_null(0.0).to_series().to_list()
+        p_pred_negatives = df.filter(~polars.col("y_both")).select("average_p").fill_null(0.0).to_series().to_list()
+
+
+        # sns.kdeplot(p_pred_exp, ax=ax2, label="Experimental", color=colors[0], clip=(0, 1), bw_adjust=bw)
+        # sns.kdeplot(p_pred_cryptic, ax=ax2, label="Cryptic", color=colors[1], clip=(0, 1), bw_adjust=bw)
+        # sns.kdeplot(p_pred_both, ax=ax2, label="Experimental + Cryptic", color=colors[2], clip=(0, 1), bw_adjust=bw)
+
+        ax2.hist(p_pred_negatives, bins=30, density=False, alpha=0.2, label="Negatives", color=colors[2])
+        ax2.hist(p_pred_exp, bins=30, density=False, alpha=0.5,label="Experimental", color=colors[0])
+        ax2.hist(p_pred_cryptic, bins=30, density=False, alpha=0.5, label="Cryptic", color=colors[1])
+        ax2.set_yscale("log")
+
+        ax2.set_xlabel("Predicted probability (p_pred)")
+        ax2.set_ylabel("Counts")
+        ax2.set_title("Distribution of prediction scores")
+        ax2.legend()
 
         plt.tight_layout()
         plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_all.png")
@@ -477,9 +498,8 @@ def compare_all_models(all_models, model_class):
         model_evaluator.set_evaluation_data(0)
         
         # for masked models, also evaluate cryptic puls
-        if "masked" in all_models[i]:
-            print("testing on cryptic puls")
-            model_evaluator.test_cryptic_puls()
+        print("testing on cryptic puls")
+        model_evaluator.test_cryptic_puls()
 
         # for true vs pred
         model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax[0])
@@ -524,12 +544,17 @@ def compare_all_models(all_models, model_class):
 def main(args):
     model_name = args.model
     if model_name == "all":
-        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam", "genecat_zeroshot_cazy", "esmc", "bacformer"]
+        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam", "genecat_finetuned_cazy", "esmc", "bacformer"]
+        compare_all_models(all_models, model_name)
+        return
+
+    if model_name == 'logistic_regression':
+        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
 
     if model_name == "masked":
-        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
+        all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
 

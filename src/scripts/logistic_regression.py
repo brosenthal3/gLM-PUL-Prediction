@@ -72,7 +72,7 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
             solver="liblinear",
             fit_intercept=True,
             max_iter=10000,
-            C=1,
+            C=10, # found to be optimal by gridsearch (for genecat zeroshot)
             random_state=random_state,
         )
 

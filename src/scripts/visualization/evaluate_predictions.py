@@ -89,6 +89,7 @@ class PredictionEvaluator:
         self.get_cblaster_annotations(cblaster_annotations_path)
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.filter = None
+        self.aggregated = False
         os.makedirs(self.output_path, exist_ok=True)
 
 
@@ -117,6 +118,9 @@ class PredictionEvaluator:
 
 
     def aggregate_all_folds(self):
+        if self.aggregated:
+            return
+
         # aggregate all folds into one table for overall evaluation
         print("Aggregating all folds for overall evaluation...")
         all_labeled_tables = []
@@ -136,7 +140,7 @@ class PredictionEvaluator:
 
         self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
         self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
-
+        self.aggregated = True
 
     def get_pulpy_annotations(self, pulpy_annotations_path):
         pulpy_annotations = (
@@ -215,7 +219,7 @@ class PredictionEvaluator:
         return mmc_scores[best_mmc_idx], best_threshold, (pr_mmc[1][1], pr_mmc[0][1])
 
 
-    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False, weights=None):
+    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False, weights=None, thresholds_to_mark=[]):
         if len(true) == 0 or len(pred) == 0:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
@@ -223,6 +227,15 @@ class PredictionEvaluator:
         precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True, sample_weight=weights)
         auc = average_precision_score(true, pred, sample_weight=weights)
         ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color, alpha=0.8)
+
+        # show cutoffs on the plot
+        if len(thresholds_to_mark) > 0:
+            for t in thresholds_to_mark:
+                idx = (np.abs(thresholds - t)).argmin()
+                r = recall[idx + 1]
+                p = precision[idx + 1]
+                ax.scatter(r, p, color=color, s=5, alpha=0.5)
+                ax.text(r, p, f"{t:.1f}", fontsize=8, color=color)
 
         if plot_mcc:
             # Matthews correlation coefficient
@@ -315,44 +328,6 @@ class PredictionEvaluator:
         plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
         plt.clf()
 
-    
-    def visualize_predictions_in_genome(self, sequence_id, fold, threshold):
-        self.recompute_predictions(fold, threshold)
-
-        # get all genes of this sequence
-        genes = self.labeled_results[fold].filter(polars.col("sequence_id") == sequence_id)
-        sequence_length = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
-        phylum = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("phylum").to_series().to_list()[0]
-        species = self.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("species").to_series().to_list()[0]
-        # create fig
-        fig, axs = plt.subplots(figsize=(10, 3))
-        features = []
-        # top ax: called genes
-        for row in genes.iter_rows(named=True):
-            if row["is_PUL"]:
-                features.append((row["start"], row["end"], 0, "Experimental"))
-            if row["is_PUL_pulpy"]:
-                features.append((row["start"], row["end"], 1, "PULpy"))
-            if row["is_PUL_pred"]:
-                features.append((row["start"], row["end"], 2, "Predicted"))
-
-        colors = {
-            "Experimental": "blue",
-            "Predicted": "orange",
-            "PULpy": "green"
-        }
-        for start, end, y, label in features:
-            axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
-
-        axs.set_ylim(0, 3)
-        axs.set_yticks([0.25, 1.25, 2.25], ["Experimental", "PULpy", f"{self.model_name} (Threshold: {threshold})"])
-        plt.suptitle(f"PUL predictions for sequence {sequence_id} (species: {species}, phylum: {phylum})")
-        plt.tight_layout()
-        os.makedirs(f"{self.output_path}/predictions_in_genome/", exist_ok=True)
-        plt.savefig(f"{self.output_path}/predictions_in_genome/{sequence_id}_{self.split}_{fold}.png")
-        plt.clf()
-
-
     def venn_diagram(self):
         fig, axs = plt.subplots(2, 4, figsize=(20, 10))
         for i in range(7):
@@ -395,24 +370,22 @@ class PredictionEvaluator:
         plt.savefig(f"{self.output_path}/f1_scores_per_fold_{self.model_name}_{self.split}.png")
         plt.clf()
 
-    def test_cryptic_puls(self, fold=0):
-        # three comparisons: 
-            # trues = experimental, negatives = all minus cryptic
-            # trues = cryptic, negatives = all minus experimental
-            # trues = experimental+cryptic, negatives = all minus experimental+cryptic
 
-        self.set_evaluation_data(fold)
-        df = self.labeled_results[fold]
-        cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t")
+    def test_cryptic_puls(self, fold='all'):
+        """
+        Generates three PR curves, with either only experimental puls, cryptic puls or both as positives.
+        """
+        if fold == "all":
+            self.aggregate_all_folds()
+            df = self.labeled_results[0]
+        else:
+            df = self.labeled_results[fold]
+
+        cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t").unique()
 
         # add cryptic label
-        cryptic_df = cryptic_df.select("protein_id").with_columns(
-            polars.lit(True).alias("is_cryptic")
-        )
-
-        df = df.join(cryptic_df, on="protein_id", how="left").with_columns(
-            polars.col("is_cryptic").fill_null(False)
-        )
+        cryptic_df = cryptic_df.select("protein_id").with_columns(polars.lit(True).alias("is_cryptic"))
+        df = df.join(cryptic_df, on="protein_id", how="left").with_columns(polars.col("is_cryptic").fill_null(False))
 
         # make binary labels
         df = df.with_columns([
@@ -420,7 +393,6 @@ class PredictionEvaluator:
             polars.col("is_cryptic").alias("y_cryptic"),
             (polars.col("is_PUL").fill_null(False) | polars.col("is_cryptic")).alias("y_both"),
         ])
-
         # test on ONLY experimental, remove cryptic from evaluation
         df_exp = df.filter(~polars.col("is_cryptic"))
         y_exp = df_exp.select("y_exp").to_series().to_list()
@@ -433,28 +405,34 @@ class PredictionEvaluator:
         y_both = df.select("y_both").to_series().to_list()
         p_pred_both = df.select("average_p").fill_null(0.0).to_series().to_list()
 
+        # print("Negatives in y_exp: ", y_exp.count(False))
+        # print("Negatives in y_cryptic: ", y_cryptic.count(False))
+        # print("Negatives in y_both: ", y_both.count(False))
+        # print("Experimental & Cryptic overlap:", df.filter(
+        #     (polars.col("is_PUL") == True) & (polars.col("is_cryptic") == True)
+        # ).select("protein_id"))
+
         # --- Plot ---
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 8))
 
         colors = plt.cm.tab10.colors
-
+        thresholds_to_mark = [0.1, 0.3, 0.5, 0.7, 0.9]
         # --- Top: PR curves ---
-        self.plot_pr(y_exp, p_pred_exp, "Experimental", colors[0], ax1)
-        self.plot_pr(y_cryptic, p_pred_cryptic, "Cryptic", colors[1], ax1)
-        self.plot_pr(y_both, p_pred_both, "Experimental + Cryptic", colors[2], ax1)
+        self.plot_pr(y_exp, p_pred_exp, "Experimental", colors[0], ax1, thresholds_to_mark=thresholds_to_mark)
+        self.plot_pr(y_cryptic, p_pred_cryptic, "Cryptic", colors[1], ax1, thresholds_to_mark=thresholds_to_mark)
+        self.plot_pr(y_both, p_pred_both, "Experimental + Cryptic", colors[2], ax1, thresholds_to_mark=thresholds_to_mark)
 
         ax1.set_xlabel("Recall")
         ax1.set_ylabel("Precision")
-        ax1.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold all)")
+        ax1.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold {fold})")
         ax1.legend()
 
         # --- Bottom: KDE of prediction scores ---
         bw = 0.3
-        # get only probabilities of positives
+        # get only probabilities of positives/negatives
         p_pred_exp = df_exp.filter(polars.col("y_exp")).select("average_p").fill_null(0.0).to_series().to_list()
         p_pred_cryptic = df_cryptic.filter(polars.col("y_cryptic")).select("average_p").fill_null(0.0).to_series().to_list()
         p_pred_negatives = df.filter(~polars.col("y_both")).select("average_p").fill_null(0.0).to_series().to_list()
-
 
         # sns.kdeplot(p_pred_exp, ax=ax2, label="Experimental", color=colors[0], clip=(0, 1), bw_adjust=bw)
         # sns.kdeplot(p_pred_cryptic, ax=ax2, label="Cryptic", color=colors[1], clip=(0, 1), bw_adjust=bw)
@@ -471,16 +449,73 @@ class PredictionEvaluator:
         ax2.legend()
 
         plt.tight_layout()
-        plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_all.png")
+        plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_{fold}.png")
+        plt.close()
+
+
+def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None):
+    # perform some steps on all evaluators
+    for model_evaluator in evaluators:
+        model_evaluator.aggregate_all_folds()
+        model_evaluator.set_evaluation_data(0)
+        # compute optimal threshold TODO: ensure this is done on train/val set and not test set...
+        if threshold == None:
+            mcc_thresholds = np.linspace(0, 0.5, num=10)
+            _, threshold, _ = model_evaluator.calculate_mmc(model_evaluator.true, model_evaluator.p_pred, mcc_thresholds)
+
+        # get predictions for given threshold
+        model_evaluator.recompute_predictions(0, threshold)
+
+    # ensure sequence_ids is list
+    if not isinstance(sequence_ids, list):
+        sequence_ids = [sequence_ids]
+    # visualize for each sequence id passed
+    for sequence_id in sequence_ids:
+        phylum = evaluators[0].clusters_table.filter(polars.col("sequence_id") == sequence_id).select("phylum").to_series().to_list()[0]
+        species = evaluators[0].clusters_table.filter(polars.col("sequence_id") == sequence_id).select("species").to_series().to_list()[0]
+
+        # create fig
+        colors_tab10 = plt.cm.tab10.colors
+        fig, axs = plt.subplots(figsize=(10, len(evaluators)+2))
+        for i, model_evaluator in enumerate(evaluators):
+            # get all genes of this sequence
+            genes = model_evaluator.labeled_results[0].filter(polars.col("sequence_id") == sequence_id)
+            sequence_length = model_evaluator.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
+
+            features = []
+            # top ax: called genes
+            for row in genes.iter_rows(named=True):
+                # add experimental and pulpy only at the beginning
+                if i == 0:
+                    if row["is_PUL"]:
+                        features.append((row["start"], row["end"], 0, "Experimental"))
+                    if row["is_PUL_pulpy"]:
+                        features.append((row["start"], row["end"], 1, "PULpy"))
+                # add predictions
+                if row["is_PUL_pred"]:
+                    features.append((row["start"], row["end"], i+2, "Predicted"))
+
+            colors = {
+                "Experimental": "black",
+                "PULpy": "grey",
+                "Predicted": colors_tab10[i],
+            }
+            for start, end, y, label in features:
+                axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
+
+        axs.set_ylim(0, len(evaluators)+2)
+        axs.set_yticks(
+            [0.25+i for i in range(len(evaluators)+2)],
+            ["Experimental", "PULpy"] + [f"{evaluator.model_name} (Threshold: {threshold})" for evaluator in evaluators]
+        )
+        plt.suptitle(f"PUL predictions across models for {sequence_id} (species: {species}, phylum: {phylum})")
+        plt.tight_layout()
+        os.makedirs(f"results/plots/aggregated/predictions_in_genome/", exist_ok=True)
+        plt.savefig(f"results/plots/aggregated/predictions_in_genome/{sequence_id}.png")
         plt.close()
 
 
 def compare_all_models(all_models, model_class):
-    # comparison of all models
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
-    colors = plt.cm.tab20.colors
-
     # list of evaluators for all models
     evaluators = [
         PredictionEvaluator(
@@ -492,14 +527,23 @@ def compare_all_models(all_models, model_class):
         for model_name in all_models
     ]
 
+    # visualize predictions in genome for all models on some species
+    genome_ids = ["AE015928", "AP006841", "JH724241", "NZ_AP022379"]
+    visualize_predictions_in_genome(evaluators, genome_ids, 0.15)
+    return
+
+    # comparison of all models
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
+    colors = plt.cm.tab20.colors
+
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
-        model_evaluator.aggregate_all_folds()
-        model_evaluator.set_evaluation_data(0)
-        
         # for masked models, also evaluate cryptic puls
         print("testing on cryptic puls")
-        model_evaluator.test_cryptic_puls()
+        model_evaluator.aggregate_all_folds()
+        model_evaluator.test_cryptic_puls("all")
+        model_evaluator.set_evaluation_data(0)        
 
         # for true vs pred
         model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax[0])
@@ -508,7 +552,7 @@ def compare_all_models(all_models, model_class):
         model_evaluator.plot_pr(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax[1])
         model_evaluator.roc_curve(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax_roc[1])
 
-        # plot baselines only once
+        # plot baselines only once at the end
         if i == len(all_models)-1:
             baseline = sum(model_evaluator.true) / len(model_evaluator.true) if len(model_evaluator.true) > 0 else 0
             baseline_pulpy = sum(model_evaluator.pulpy_pred) / len(model_evaluator.pulpy_pred) if len(model_evaluator.pulpy_pred) > 0 else 0
@@ -541,23 +585,7 @@ def compare_all_models(all_models, model_class):
     plt.close()
 
 
-def main(args):
-    model_name = args.model
-    if model_name == "all":
-        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam", "genecat_finetuned_cazy", "esmc", "bacformer"]
-        compare_all_models(all_models, model_name)
-        return
-
-    if model_name == 'logistic_regression':
-        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
-        return
-
-    if model_name == "masked":
-        all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
-        return
-
+def evaluate_model(args, model_name):
     # path where results are saved
     results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     if not os.path.exists(results_path+"_0.tsv"):
@@ -575,14 +603,12 @@ def main(args):
         weight=args.weight
     )
 
-    if args.k == 7:
-        evaluator.venn_diagram()
-
     evaluator.f1_per_fold()
-    for fold in range(args.k):
-         evaluator.precision_recall_curve(fold)
-         evaluator.plot_roc_curves(fold)
 
+    for fold in range(args.k):
+        evaluator.precision_recall_curve(fold)
+        evaluator.plot_roc_curves(fold)
+        evaluator.test_cryptic_puls(fold)
 
     # new evaluator class for aggregating 5 folds instead of 7
     if args.k >= 5:
@@ -595,11 +621,28 @@ def main(args):
             weight=args.weight
         )
         evaluator.precision_recall_curve("all")
+        evaluator.test_cryptic_puls("all")
 
-    # two heaily annoated bacteroidetes
-    # evaluator.visualize_predictions_in_genome("AE015928", 0, 0.25)
-    # evaluator.visualize_predictions_in_genome("JH724241", 0, 0.25)
 
+def main(args):
+    model_name = args.model
+    if model_name == "all":
+        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam", "genecat_finetuned_cazy", "esmc", "bacformer"]
+        compare_all_models(all_models, model_name)
+        return
+
+    if model_name == 'logistic_regression':
+        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
+        compare_all_models(all_models, model_name)
+        return
+
+    if model_name == "masked":
+        all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
+        compare_all_models(all_models, model_name)
+        return
+
+    else:
+        evaluate_model(args, model_name)
 
 
 if __name__ == "__main__":
@@ -624,8 +667,8 @@ python src/scripts/visualization/evaluate_predictions.py --model gecco_cazy --sp
 --GENECAT ZEROSHOT--
 python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_pfam --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy --split test -k 7
-python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy_masked --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_pfam_masked --split test -k 7
+python src/scripts/visualization/evaluate_predictions.py --model genecat_zeroshot_cazy_masked --split test -k 7
 
 
 --GENECAT FINETUNED--
@@ -636,6 +679,4 @@ python src/scripts/visualization/evaluate_predictions.py --model genecat_finetun
 --ESMC & BACFORMER--
 python src/scripts/visualization/evaluate_predictions.py --model esmc --split test -k 7
 python src/scripts/visualization/evaluate_predictions.py --model bacformer --split test -k 7
-
-
 """

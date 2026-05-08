@@ -56,19 +56,6 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
     return labled_gene_table
 
 
-cblaster_results_liberal = polars.read_csv("src/data/data_collection/cblaster_results_liberal.tsv", separator='\t', infer_schema_length=600)
-cblaster_results_strict = (
-    polars.read_csv("src/data/data_collection/cblaster_results_strict.tsv", separator='\t')
-)
-pulpy = (
-    polars.read_csv("src/data/data_collection/pulpy_annotations.tsv", separator="\t")
-    .rename({"genome": "sequence_id", "pulid": "cluster_id"})
-    .select(cblaster_results_liberal.columns)
-)
-experimental_puls = polars.read_csv("src/data/data_collection/clusters_deduplicated.tsv", separator="\t")
-genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
-
-
 def get_protein_ids_in_clusters(cluster_table):
     return (
         join_gene_and_PUL_table(genes, cluster_table)
@@ -160,4 +147,119 @@ def plot_length_distributions():
     plt.tight_layout()
     plt.savefig("results/plots/pulpy_pul_lengths.png", dpi=300)
 
-plot_venn_diagram_cblaster()
+
+def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end', blast=False, keep_original=True):
+    merged_puls = polars.DataFrame(schema=df.schema)
+    merged_ids = []
+
+    for sequence_id, group in df.group_by(group_col):
+        if group.shape[0] == 1 or sequence_id[0] is None:
+            merged_puls = merged_puls.vstack(polars.DataFrame(group))
+            continue
+
+        # sort by start position
+        group = group.sort(start_col)
+        current_pul = None
+        for row in group.iter_rows(named=True):
+            if current_pul is None:
+                current_pul = row
+            else:
+                # check if there is an overlap with the current PUL
+                if row[start_col] <= current_pul[end_col]:
+                    # merge the PULs by updating the end position to the maximum end position
+                    current_pul[end_col] = max(current_pul[end_col], row[end_col])
+                    # merge cluster_id by concatenating with an underscore
+                    current_pul['cluster_id'] = f"{current_pul['cluster_id']}_{row['cluster_id']}"
+                    # merge database column by concatenating with an underscore if different
+                    current_pul['database'] = f"{current_pul['database']}_{row['database']}" if current_pul['database'] not in row['database'] else current_pul['database']
+                    if blast:
+                        current_pul['blast_status'] = current_pul['blast_status'] or row['blast_status']
+                        merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged_blast"})                        
+                    else:
+                        merged_ids.append({'cluster_id': current_pul['cluster_id'], 'merged': "merged"})                        
+                else:
+                    merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+                    current_pul = row
+
+        # add the last PUL after processing all rows for this sequence_id
+        if current_pul is not None:
+            merged_puls = merged_puls.vstack(polars.DataFrame([current_pul]))
+
+    # add column for which puls are merged
+    merged_puls = (
+        merged_puls
+        .join(polars.DataFrame(merged_ids), on="cluster_id", how="left", suffix="_new")
+    )
+    # handle when merged col already exists
+    merged_puls = (
+        merged_puls.with_columns(polars.coalesce(polars.col("merged_new"), polars.col("merged")).alias("merged"))
+        .drop("merged_new") 
+        if "merged_new" in merged_puls.columns 
+        else merged_puls
+    )
+
+    return merged_puls.sort('cluster_id').sort('merged')
+
+
+def plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal):
+    all_puls = all_puls.select(["sequence_id", "start", "end", "cluster_id"]).with_columns(
+        polars.lit("experimental").alias("database")
+    )
+    pulpy_puls = pulpy.select(["sequence_id", "start", "end", "cluster_id"]).with_columns(
+        polars.lit("pulpy").alias("database")
+    ).join(
+        all_puls.select("sequence_id").unique(), on="sequence_id", how="semi"
+    ) # only keep cblaster puls in sequences where we have experimental annotations, for fair comparison
+
+    liberal_cblaster_puls = cblaster_results_liberal.select(["sequence_id", "start", "end", "cluster_id"]).with_columns(
+        polars.lit("cblaster").alias("database")
+    ).join(
+        all_puls.select("sequence_id").unique(), on="sequence_id", how="semi"
+    ) # only keep cblaster puls in sequences where we have experimental annotations, for fair comparison
+
+    all_puls_combined = polars.concat([all_puls, pulpy_puls, liberal_cblaster_puls])
+    merged_puls = merge_overlapping_puls(all_puls_combined, blast=False).with_columns(
+        polars.col("database").str.split("_").list.unique().alias("databases")
+    )
+    merged_puls = merged_puls.with_columns(
+        polars.lit('pulpy').is_in(polars.col("databases")).alias("has_pulpy"),
+        polars.lit('cblaster').is_in(polars.col("databases")).alias("has_cblaster"),
+        polars.lit('experimental').is_in(polars.col("databases")).alias("has_experimental"),
+    )
+    # plot Venn diagram of overlap between databases
+    pulpy_puls = set(merged_puls.filter(polars.col("has_pulpy") == True).select("cluster_id").to_series().to_list())
+    cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id").to_series().to_list())
+    experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id").to_series().to_list())
+
+    fig, ax1 = plt.subplots(figsize=(8, 4))
+    venn3(
+        [pulpy_puls, cblaster_liberal_puls, experimental_puls],
+        set_labels=(f'PULpy (total: {len(pulpy_puls)})', f'Liberal Cblaster (total: {len(cblaster_liberal_puls)})', f'Experimental + Strict Cblaster (total: {len(experimental_puls)})'),
+        ax=ax1
+    )
+#    ax1.set_title("PULs identified by PULpy, Liberal Cblaster and Experimental annotations")
+    plt.tight_layout()
+    plt.savefig("results/plots/cryptic_pul_overlap_venn.png", dpi=300)
+    plt.close()
+
+
+def main():
+    cblaster_results_liberal = polars.read_csv("src/data/data_collection/cblaster_results_liberal.tsv", separator='\t', infer_schema_length=600)
+    cblaster_results_strict = (
+        polars.read_csv("src/data/data_collection/cblaster_results_strict.tsv", separator='\t')
+    )
+    pulpy = (
+        polars.read_csv("src/data/data_collection/pulpy_annotations.tsv", separator="\t")
+        .rename({"genome": "sequence_id", "pulid": "cluster_id"})
+        .select(cblaster_results_liberal.columns)
+    )
+    experimental_puls = polars.read_csv("src/data/data_collection/clusters_deduplicated.tsv", separator="\t")
+    all_puls = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t")
+    genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+
+    plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal)
+    #plot_venn_diagram_cblaster()
+
+
+if __name__ == "__main__":
+    main()

@@ -453,7 +453,7 @@ class PredictionEvaluator:
         plt.close()
 
 
-def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None):
+def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, model_name=None):
     # perform some steps on all evaluators
     for model_evaluator in evaluators:
         model_evaluator.aggregate_all_folds()
@@ -510,8 +510,10 @@ def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None):
         )
         plt.suptitle(f"PUL predictions across models for {sequence_id} (species: {species}, phylum: {phylum})")
         plt.tight_layout()
-        os.makedirs(f"results/plots/aggregated/predictions_in_genome/", exist_ok=True)
-        plt.savefig(f"results/plots/aggregated/predictions_in_genome/{sequence_id}.png")
+        if model_name == None:
+            model_name = "all_models"
+        os.makedirs(f"results/plots/aggregated/predictions_in_genome_{model_name}/", exist_ok=True)
+        plt.savefig(f"results/plots/aggregated/predictions_in_genome_{model_name}/{sequence_id}.png")
         plt.close()
 
 
@@ -640,6 +642,12 @@ def main(args):
         all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
+
+    if model_name == "selected":
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "esmc_masked", "bacformer_masked"]
+        compare_all_models(all_models, model_name)
+        return
+
 
     else:
         evaluate_model(args, model_name)

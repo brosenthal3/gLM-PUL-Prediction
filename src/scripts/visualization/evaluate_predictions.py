@@ -139,16 +139,16 @@ class PredictionEvaluator:
 
 
         self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
-        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv", k) # re-join with pulpy annotations after concatenation
+        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
         self.aggregated = True
 
-    def get_pulpy_annotations(self, pulpy_annotations_path, k=7):
+    def get_pulpy_annotations(self, pulpy_annotations_path):
         pulpy_annotations = (
             polars.read_csv(pulpy_annotations_path, separator='\t')
             .select("genome", "pulid", "start", "end")
             .rename({"genome": "sequence_id", "pulid": "cluster_id"})
         )
-        for fold in range(k):
+        for fold in range(len(self.labeled_results)):
             self.labeled_results[fold] = self.labeled_results[fold].join(
                 (
                     join_gene_and_PUL_table(self.labeled_results_raw[fold], pulpy_annotations)
@@ -512,7 +512,7 @@ def compare_all_models(all_models, model_class):
 
         ax_bac[j].set_xlabel('Recall')
         ax_bac[j].set_ylabel("Precision")
-        ax_bac[j].legend(loc="lower right")
+        ax_bac[j].legend(loc="upper right")
 
 
     ax[0].set_title("Models tested on experimental annotations")

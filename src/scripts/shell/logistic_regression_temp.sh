@@ -7,7 +7,7 @@
 #SBATCH --mem=256G
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=32
 #SBATCH --array=0-1
 #SBATCH -o slurm_output/logistic_regression_%j.out
 #SBATCH -e slurm_output/logistic_regression_%j.err
@@ -22,17 +22,10 @@ cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 
 ### MODELS TRAINED ON ALL PULs ###
 if [ "$SLURM_ARRAY_TASK_ID" == "0" ]; then
-    # genecat pfam:
-    #python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_pfam/fold_data --output-dir src/data/results/genecat_zeroshot_pfam --model-name pfam --norm-type l2 --normalize --gridsearch
-
-    # genecat cazy:
-    #python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy --model-name cazy --norm-type l2 --normalize --gridsearch
-
     # ESM-C:
-    python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc --model-name esmc --norm-type l2 --normalize --embeddings-col embedding --gridsearch
-
+    python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc_masked --model-name esmc_masked --norm-type l2 --normalize --embeddings-col embedding --gridsearch --mask-cryptic-puls
     # Bacformer:
-    python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding --gridsearch
+    #python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer --model-name bacformer --norm-type l2 --normalize --embeddings-col embedding --gridsearch
 
     python src/scripts/visualization/evaluate_predictions.py --model logistic_regression
 fi
@@ -47,7 +40,7 @@ if [ "$SLURM_ARRAY_TASK_ID" == "1" ]; then
     #python src/scripts/logistic_regression.py --input-df-file-path src/data/results/genecat_zeroshot_cazy/fold_data --output-dir src/data/results/genecat_zeroshot_cazy_masked --model-name cazy_masked --norm-type l2 --normalize --mask-cryptic-puls --gridsearch
 
     # ESM-C:
-    python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc_masked --model-name esmc_masked --norm-type l2 --normalize --embeddings-col embedding --gridsearch --mask-cryptic-puls
+    #python src/scripts/logistic_regression.py --input-df-file-path src/data/results/esmc/fold_data --output-dir src/data/results/esmc_masked --model-name esmc_masked --norm-type l2 --normalize --embeddings-col embedding --gridsearch --mask-cryptic-puls
 
     # Bacformer:
     python src/scripts/logistic_regression.py --input-df-file-path src/data/results/bacformer/fold_data --output-dir src/data/results/bacformer_masked --model-name bacformer_masked --norm-type l2 --normalize --embeddings-col embedding --gridsearch --mask-cryptic-puls

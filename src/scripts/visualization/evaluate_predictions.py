@@ -453,70 +453,6 @@ class PredictionEvaluator:
         plt.close()
 
 
-def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, model_name=None):
-    # perform some steps on all evaluators
-    for model_evaluator in evaluators:
-        model_evaluator.aggregate_all_folds()
-        model_evaluator.set_evaluation_data(0)
-        # compute optimal threshold TODO: ensure this is done on train/val set and not test set...
-        if threshold == None:
-            mcc_thresholds = np.linspace(0, 0.5, num=10)
-            _, threshold, _ = model_evaluator.calculate_mmc(model_evaluator.true, model_evaluator.p_pred, mcc_thresholds)
-
-        # get predictions for given threshold
-        model_evaluator.recompute_predictions(0, threshold)
-
-    # ensure sequence_ids is list
-    if not isinstance(sequence_ids, list):
-        sequence_ids = [sequence_ids]
-    # visualize for each sequence id passed
-    for sequence_id in sequence_ids:
-        phylum = evaluators[0].clusters_table.filter(polars.col("sequence_id") == sequence_id).select("phylum").to_series().to_list()[0]
-        species = evaluators[0].clusters_table.filter(polars.col("sequence_id") == sequence_id).select("species").to_series().to_list()[0]
-
-        # create fig
-        colors_tab10 = plt.cm.tab10.colors
-        fig, axs = plt.subplots(figsize=(10, len(evaluators)+2))
-        for i, model_evaluator in enumerate(evaluators):
-            # get all genes of this sequence
-            genes = model_evaluator.labeled_results[0].filter(polars.col("sequence_id") == sequence_id)
-            sequence_length = model_evaluator.clusters_table.filter(polars.col("sequence_id") == sequence_id).select("length").to_series().to_list()[0]
-
-            features = []
-            # top ax: called genes
-            for row in genes.iter_rows(named=True):
-                # add experimental and pulpy only at the beginning
-                if i == 0:
-                    if row["is_PUL"]:
-                        features.append((row["start"], row["end"], 0, "Experimental"))
-                    if row["is_PUL_pulpy"]:
-                        features.append((row["start"], row["end"], 1, "PULpy"))
-                # add predictions
-                if row["is_PUL_pred"]:
-                    features.append((row["start"], row["end"], i+2, "Predicted"))
-
-            colors = {
-                "Experimental": "black",
-                "PULpy": "grey",
-                "Predicted": colors_tab10[i],
-            }
-            for start, end, y, label in features:
-                axs.fill_betweenx([y, y + 0.9], start, end, color=colors[label], alpha=1)
-
-        axs.set_ylim(0, len(evaluators)+2)
-        axs.set_yticks(
-            [0.25+i for i in range(len(evaluators)+2)],
-            ["Experimental", "PULpy"] + [f"{evaluator.model_name} (Threshold: {threshold})" for evaluator in evaluators]
-        )
-        plt.suptitle(f"PUL predictions across models for {sequence_id} (species: {species}, phylum: {phylum})")
-        plt.tight_layout()
-        if model_name == None:
-            model_name = "all_models"
-        os.makedirs(f"results/plots/aggregated/predictions_in_genome_{model_name}/", exist_ok=True)
-        plt.savefig(f"results/plots/aggregated/predictions_in_genome_{model_name}/{sequence_id}.png")
-        plt.close()
-
-
 def compare_all_models(all_models, model_class):
     # list of evaluators for all models
     evaluators = [
@@ -528,11 +464,6 @@ def compare_all_models(all_models, model_class):
         )
         for model_name in all_models
     ]
-
-    # visualize predictions in genome for all models on some species
-    genome_ids = ["AE015928", "AP006841", "JH724241", "NZ_AP022379"]
-    visualize_predictions_in_genome(evaluators, genome_ids, 0.15)
-    return
 
     # comparison of all models
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -655,13 +586,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Evaluate predictions of GECCO against experimental data and PULpy annotations"
+        description="Evaluate predictions against experimental data and PULpy/cblaster annotations"
     )
     parser.add_argument("--model", type=str, help="Name of model to evaluate", required=True)
     parser.add_argument("--split", type=str, default="test", help="Whether to evaluate on test or train set")
     parser.add_argument("-k", type=int, default=7, help="Number of folds to evaluate")
     parser.add_argument("--weight", type=float, default=0.01, help="Weight for uncertain negative examples.")
-    parser.add_argument("--features", type=str, default=None, help="Feature representation used to train model (only applicable to genecat and gecco)")
     args = parser.parse_args()
 
     main(args)

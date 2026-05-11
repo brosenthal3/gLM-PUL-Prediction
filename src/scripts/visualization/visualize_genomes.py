@@ -72,40 +72,45 @@ def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, mo
 
 
 def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
+    cryptic_puls = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator='\t')
+    # aggregate model predictions across folds
     model_evaluator.aggregate_all_folds()
     model_evaluator.set_evaluation_data(0)
-    model_evaluator.recompute_predictions(0, threshold=0.15)
-
     # genes from genbank file
     gb_file = f"src/data/genomes/genbank_genomes/{sequence_id}.gb"
     # write annotations df with cols: protein_id, start, end, product, note
     features = []
     for record in gb_io.iter(gb_file):
+        record_definition = record.definition
         length = min(record.length, end-start)
         for feature in filter(lambda feat: feat.kind == "CDS" and int(feat.location.start) >= start and int(feat.location.end) <= end, record.features):
-            qualifiers = {q.key:q.value for q in feature.qualifiers}
             location = feature.location
-            if isinstance(feature.location, gb_io.Complement):
-                strand = -1
-            else:
-                strand = +1
+            qualifiers = {q.key:q.value for q in feature.qualifiers}            
+            strand_direction = -1 if type(location) is gb_io.Complement else 1
 
-            features.append(
-                GraphicFeature(
-                    start=int(location.start)-start,
-                    end=int(location.end)-start,
-                    strand=strand,
-                    label=qualifiers.get("product", "") + " " + qualifiers.get("note", "")
+            product = qualifiers.get("product", None)
+            note = qualifiers.get("note", None)
+            if product == "hypothetical_protein" and note is not None:
+                product = None
+
+            label = f"{product if product else ""} {note if note else ""}"
+            feature_start = int(location.start)-start if strand_direction == 1 else int(location.end)-start
+            feature_end = int(location.end)-start if strand_direction == 1 else int(location.start)-start
+            graphic_feature = GraphicFeature(
+                    start=feature_start,
+                    end=feature_end,
+                    strand=strand_direction,
+                    label=label
                 )
-            )
+            features.append(graphic_feature)
 
-    fig, (ax1, ax2, ax3) = plt.subplots(
-        3, 1, figsize=(12, 5), sharex=True, gridspec_kw={"height_ratios": [4, 1, 1]}
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(
+        4, 1, figsize=(16, 6), sharex=True, gridspec_kw={"height_ratios": [8, 1, 1, 1]}
     )
 
     # PLOT THE RECORD MAP
     graphic_record = GraphicRecord(sequence_length=length, features=features)
-    graphic_record.plot(ax=ax1, with_ruler=False, strand_in_label_threshold=7)
+    graphic_record.plot(ax=ax1, with_ruler=False, strand_in_label_threshold=4, max_label_length=55)
 
     # # PLOT THE PUL annotations
     genes = (
@@ -115,32 +120,69 @@ def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
             polars.col("start") >= start,
             polars.col("end") <= end,
         )
+        .join(cryptic_puls.with_columns(polars.lit(True).alias("is_cryptic")), on="protein_id", how="left")
     )
 
     predicted = []
     labels = []
+    cryptic = []
     colors_tab10 = plt.cm.tab10.colors
     # top ax: called genes
     for row in genes.iter_rows(named=True):
         if row["is_PUL"]:
             labels.append((row["start"]-start, row["end"]-start, "Experimental"))
-        # add predictions
-        if row["is_PUL_pred"]:
-            predicted.append((row["start"]-start, row["end"]-start, "Predicted", row["average_p"]))
+        # add cryptic puls
+        if row["is_cryptic"]:
+            cryptic.append((row["start"]-start, row["end"]-start, "Cryptic PULs"))
+        # add prediction probabilities
+        predicted.append((row["start"]-start, row["end"]-start, "Predicted", row["average_p"]))
 
-    for start, end, label, p in predicted:
-        ax2.fill_betweenx([0, 1], start, end, color=colors_tab10[0], alpha=min(0.1+p, 1))
+    for start_gene, end_gene, label, p in predicted:
+        ax2.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[0], alpha=min(0.1+p, 1))
+    for start_gene, end_gene, label in labels:
+        ax3.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[1], alpha=1)
+    for start_gene, end_gene, label in cryptic:
+        ax4.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[2])
 
-    for start, end, label in labels:
-        ax3.fill_betweenx([0, 1], start, end, color=colors_tab10[1], alpha=1)
+
     ax2.set_ylim(0, 1)
     ax3.set_ylim(0, 1)
-    ax2.set_yticks([0.45], ["Predicted"])
-    ax3.set_yticks([0.45], ["Experimental"])
-    fig.suptitle(f"Gene map and PUL predictions for {sequence_id}")
+    ax4.set_ylim(0, 1)
+    ax2.set_yticks([0.45], [f"Predicted ({model_evaluator.model_name})"])
+    ax3.set_yticks([0.45], ["Experimental PULs"])
+    ax4.set_yticks([0.45], ["Cryptic PULs"])
+
+    tick_skips = round((end-start)*0.1)
+    ax4.set_xticks(ticks=range(0, end-start, tick_skips), labels=range(start, end, tick_skips))
+    ax4.set_xlabel("Location in genome (bp)")
+    fig.suptitle(f"{record_definition} ({sequence_id})")
     fig.tight_layout()
-    fig.savefig(f"results/plots/temp_{sequence_id}.png")
+    fig.savefig(f"results/plots/high_confidence_predictions/{model_evaluator.model_name}_{sequence_id}.png")
     plt.close()
+    return
+
+
+def find_high_confidence_predictions(model_evaluator):
+    model_evaluator.aggregate_all_folds()
+    model_evaluator.set_evaluation_data(0)
+    model_evaluator.recompute_predictions(0, threshold=0.15)
+    model_evaluator.labeled_results[0] = (
+        model_evaluator.labeled_results[0]
+        .filter(
+            ~polars.col("is_PUL"),
+            ~polars.col("is_PUL_pulpy"),
+            polars.col("sequence_id").str.starts_with("N"),
+            polars.col("average_p").ge(0.8)
+        )
+        .sort(by=["average_p"], descending=True)
+    )
+    print(model_evaluator.labeled_results[0].select(
+        "sequence_id",
+        "start",
+        "end",
+        "average_p"
+    )[:200])
+
     return
 
 
@@ -192,8 +234,12 @@ def main(args):
             k=5,
             output_path=f"results/plots/{model_name}"
         )
-        visualize_genes(model_evaluator, "ABJL02000008", start=1216000, end=1229882)
-        visualize_genes(model_evaluator, "RHLG01000001", start=108000, end=116900)
+        # find_high_confidence_predictions(model_evaluator)
+#        visualize_genes(model_evaluator, "RHLG01000001", start=108800, end=118000)
+#        visualize_genes(model_evaluator, "NZ_CP028092", start=2037500, end=2060500)
+#        visualize_genes(model_evaluator, "NZ_KI912107", start=4162000, end=4182000)
+        visualize_genes(model_evaluator, "NZ_CP074436", start=4221500, end=4245000)
+
         return
 
 
@@ -209,14 +255,3 @@ if __name__ == "__main__":
 """
 python src/scripts/visualization/visualize_genomes.py --model gecco_pfam
 """
-
-    # model_evaluator.labeled_results[0].sort(by=["sequence_id", "average_p"], descending=[False, True])
-    # print(model_evaluator.labeled_results[0].select(
-    #     "protein_id",
-    #     "sequence_id",
-    #     "start",
-    #     "end",
-    #     "is_PUL",
-    #     "is_PUL_pulpy",
-    #     "average_p"
-    # ))

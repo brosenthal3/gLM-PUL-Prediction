@@ -29,11 +29,11 @@ PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 GENES_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.genes.parquet
 GENES_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.genes.parquet
 # CLUSTERS
-CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}.tsv
-CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}.tsv
+CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}_with_cryptic.tsv
+CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}_with_cryptic.tsv
 # OUTPUT
-OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam
-OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy
+OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam_masked
+OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy_masked
 mkdir -p $OUT_PFAM
 mkdir -p $OUT_CAZY
 
@@ -50,7 +50,7 @@ MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
 DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.pfam.parquet
 DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.pfam.parquet
 
-python $PULPATH/src/scripts/genecat_finetune.py\
+python -m genecat.cli pul-finetune\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
  --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
@@ -68,7 +68,7 @@ MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
 DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.dbcan.pfam.parquet
 DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.dbcan.pfam.parquet
 
-python $PULPATH/src/scripts/genecat_finetune.py\
+python -m genecat.cli pul-finetune\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
  --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\

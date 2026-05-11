@@ -117,14 +117,14 @@ class PredictionEvaluator:
         self.set_evaluation_data(fold)
 
 
-    def aggregate_all_folds(self):
+    def aggregate_all_folds(self, k=5):
         if self.aggregated:
             return
 
         # aggregate all folds into one table for overall evaluation
         print("Aggregating all folds for overall evaluation...")
         all_labeled_tables = []
-        for fold in range(len(self.labeled_results)):
+        for fold in range(k):
             df = (
                 self.labeled_results[fold]
                 .join(self.clusters_table.select("sequence_id", "phylum", "species").unique(), on="sequence_id", how="left")
@@ -139,16 +139,16 @@ class PredictionEvaluator:
 
 
         self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
-        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
+        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv", k) # re-join with pulpy annotations after concatenation
         self.aggregated = True
 
-    def get_pulpy_annotations(self, pulpy_annotations_path):
+    def get_pulpy_annotations(self, pulpy_annotations_path, k=7):
         pulpy_annotations = (
             polars.read_csv(pulpy_annotations_path, separator='\t')
             .select("genome", "pulid", "start", "end")
             .rename({"genome": "sequence_id", "pulid": "cluster_id"})
         )
-        for fold in range(len(self.labeled_results)):
+        for fold in range(k):
             self.labeled_results[fold] = self.labeled_results[fold].join(
                 (
                     join_gene_and_PUL_table(self.labeled_results_raw[fold], pulpy_annotations)
@@ -459,7 +459,7 @@ def compare_all_models(all_models, model_class):
         PredictionEvaluator(
             labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
             model_name=model_name,
-            k=5,
+            k=7,
             output_path=f"results/plots/{model_name}"
         )
         for model_name in all_models
@@ -468,10 +468,17 @@ def compare_all_models(all_models, model_class):
     # comparison of all models
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
+    fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
     colors = plt.cm.tab20.colors
 
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
+        # before aggregating, plot for folds 5 and 6 separately
+        model_evaluator.set_evaluation_data(5)
+        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_bac[0])
+        model_evaluator.set_evaluation_data(6)
+        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_bac[1])
+
         # for masked models, also evaluate cryptic puls
         print("testing on cryptic puls")
         model_evaluator.aggregate_all_folds()
@@ -503,18 +510,29 @@ def compare_all_models(all_models, model_class):
         ax_roc[j].set_ylabel("True Positive Rate")
         ax_roc[j].legend(loc="lower right")
 
+        ax_bac[j].set_xlabel('Recall')
+        ax_bac[j].set_ylabel("Precision")
+        ax_bac[j].legend(loc="lower right")
+
+
     ax[0].set_title("Models tested on experimental annotations")
     ax[1].set_title("Models tested on PULpy annotations")
     ax_roc[0].set_title("Models tested on experimental annotations")
     ax_roc[1].set_title("Models tested on PULpy annotations")
+    ax_bac[0].set_title("Trained on Bacteroidota, tested on other phyla")
+    ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
 
     fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
     fig_roc.suptitle("ROC Curves of all tested models (all folds)")
+    fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
     fig.tight_layout()
     fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
     fig_roc.tight_layout()
     fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png")
+    fig_bac.tight_layout()
+    fig_bac.savefig(f"results/plots/aggregated/pr_curves_bacteroidota_{model_class}.png")
+
     plt.close()
 
 

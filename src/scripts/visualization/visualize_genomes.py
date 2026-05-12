@@ -1,4 +1,4 @@
-from evaluate_predictions import PredictionEvaluator
+from visualization_utilities import PredictionEvaluator
 import matplotlib.pyplot as plt
 import polars
 import numpy as np

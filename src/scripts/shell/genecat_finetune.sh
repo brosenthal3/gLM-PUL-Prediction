@@ -1,13 +1,13 @@
 #!/bin/bash                                                                                                                                                                                                      
-#SBATCH -t 24:00:00
+#SBATCH -t 15:00:00
 #SBATCH -J genecat_finetune
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
-#SBATCH --mem=64G
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task 16
-#SBATCH --array=0-6
+#SBATCH --cpus-per-task 8
+#SBATCH --array=0-6%2
 #SBATCH -o slurm_output/genecat_finetune_%A_%a.out
 #SBATCH -e slurm_output/genecat_finetune_%A_%a.err
 

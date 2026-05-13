@@ -337,7 +337,7 @@ class ArgumentParser(Tap):
     gridsearch: bool = False
     k: int = 7
     mask_cryptic_puls: bool = False
-    save_results: bool = True
+    save_results: str = "True"
 
 
 if __name__ == "__main__":
@@ -380,7 +380,7 @@ if __name__ == "__main__":
         thresholds["fold"].append(fold)
         thresholds["threshold"].append(threshold)
 
-        if args.save_results:
+        if args.save_results == "True":
             genecat_results = pd.concat(output)
             genecat_results = polars.from_pandas(genecat_results)
             rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")

@@ -70,7 +70,7 @@ class PredictionEvaluator:
                 clusters_table_path="src/data/data_collection/clusters_deduplicated_cblaster.tsv", 
                 pulpy_annotations_path="src/data/data_collection/pulpy_annotations.tsv",
                 cblaster_annotations_path="src/data/data_collection/cblaster_results_liberal.tsv", 
-                k=7, model_name="gecco_pfam", split="test", output_path="results/plots", weight=1.0):
+                k=7, model_name="gecco_pfam", split="test", output_path="results/plots", weight=1.0, aggregate=False):
 
         self.model_name = model_name
         self.split = split
@@ -89,6 +89,9 @@ class PredictionEvaluator:
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.filter = None
         self.aggregated = False
+        if aggregate and k >= 5:
+            self.aggregate_all_folds()
+            
         os.makedirs(self.output_path, exist_ok=True)
 
 

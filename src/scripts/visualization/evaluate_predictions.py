@@ -8,18 +8,50 @@ import seaborn as sns
 from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator
+import upsetplot
 
-def compare_all_models(all_models, model_class):
-    # list of evaluators for all models
-    evaluators = [
+def get_evaluators(all_models, k=7, aggregate=False):
+    return [
         PredictionEvaluator(
             labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
             model_name=model_name,
-            k=7,
-            output_path=f"results/plots/{model_name}"
+            k=k,
+            output_path=f"results/plots/{model_name}",
+            aggregate=aggregate
         )
         for model_name in all_models
     ]
+
+
+def generate_upset_plot(all_models, model_class):
+    evaluators = get_evaluators(all_models, k=5, aggregate=True)
+    gene_table = evaluators[0].labeled_results[0].select("protein_id", "is_PUL", "is_PUL_pulpy").rename({"is_PUL": "experimental", "is_PUL_pulpy": "pulpy"})
+    for model_evaluator in evaluators:
+        gene_table = gene_table.join(
+            model_evaluator.labeled_results[0].select("protein_id", "is_PUL_pred").rename({"is_PUL_pred": model_evaluator.model_name}),
+            on="protein_id",
+            how="left"
+        )
+
+    gene_dicts = {}
+    for col_name in gene_table.columns:
+        if col_name == "protein_id":
+            continue
+        gene_dicts[col_name] = gene_table.filter(polars.col(col_name)).select("protein_id").unique().to_series().to_list()
+
+    # format output for upset plot
+    genes_overlap = upsetplot.from_contents(gene_dicts)
+    print(genes_overlap)
+    # generate upsetplot
+    upset_plot = upsetplot.UpSet(genes_overlap, subset_size="count").plot()
+    plt.suptitle("Comparing predicted PUL genes overlap")
+    plt.savefig(f"results/plots/aggregated/upset_plot_{model_class}.png")
+    plt.close()
+
+
+def compare_all_models(all_models, model_class):
+    # list of evaluators for all models
+    evaluators = get_evaluators(all_models)
 
     # comparison of all models
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
@@ -89,7 +121,6 @@ def compare_all_models(all_models, model_class):
     fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png")
     fig_bac.tight_layout()
     fig_bac.savefig(f"results/plots/aggregated/pr_curves_bacteroidota_{model_class}.png")
-
     plt.close()
 
 
@@ -154,6 +185,10 @@ def main(args):
         compare_all_models(all_models, model_name)
         return
 
+    if model_name == "upset":
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked"]
+        generate_upset_plot(all_models, model_name)
+        return
 
     else:
         evaluate_model(args, model_name)

@@ -10,8 +10,9 @@ from sklearn.metrics import (  # type: ignore
     average_precision_score,
     make_scorer,
     roc_auc_score,
+    matthews_corrcoef
 )
-from sklearn.model_selection import GridSearchCV  # type: ignore
+from sklearn.model_selection import GridSearchCV, train_test_split  # type: ignore
 from tap import Tap
 from tqdm import tqdm  # type: ignore
 from utility_scripts import join_gene_and_PUL_table
@@ -47,7 +48,7 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
         )
         param_grid = {
             "l1_ratio": [0, 1],
-            "C": [0.05, 1, 10, 500],
+            "C": [1, 10, 500],
         }
         score = make_scorer(
             average_precision_score,
@@ -72,7 +73,7 @@ def get_linear_model(gridsearch: bool, n_jobs: int, random_state: int):
             solver="liblinear",
             fit_intercept=True,
             max_iter=10000,
-            C=10, # found to be optimal by gridsearch (for genecat zeroshot)
+            C=10, # found to be optimal by gridsearch (for most models)
             random_state=random_state,
         )
 
@@ -152,6 +153,26 @@ def normalize_embeddings(
     df[embedding_col] = list(embeddings_normed)
     return df
 
+def calculate_optimal_threshold(train_df, embeddings_col, random_state, model):
+    rich.print("Computing optimal threshold using MCC...")
+    # split into validation (10%)
+    train_df_split, validation_df = train_test_split(train_df, stratify=train_df["label"].to_numpy(), test_size=0.2, random_state=random_state)
+    model.fit(X=np.stack(train_df_split[embeddings_col].tolist()), y=train_df_split["label"].to_numpy())
+    
+    # predict on validation df
+    validaton_probas = model.predict_proba(X=np.stack(validation_df[embeddings_col].tolist()))[:, 1]
+    true_labels = validation_df["label"].to_numpy()
+
+    # calculate best threshold based on MCC
+    thresholds = mcc_thresholds = np.linspace(0, 0.75, num=20) # assume threshold is below 0.75
+    mmc_scores = []
+    for threshold in tqdm(thresholds, desc="Calculating MCC for thresholds"):
+        binary_pred = [1 if p >= threshold else 0 for p in validaton_probas]
+        mmc = matthews_corrcoef(true_labels, binary_pred)
+        mmc_scores.append(mmc)
+    
+    return thresholds[np.argmax(mmc_scores)]
+    
 
 def main(
     input_df_file_path: str,
@@ -198,12 +219,7 @@ def main(
 
     ############################## Create datasets #####################################
 
-    # check the split column.
-    if {"train", "test", "validation"} == set(df["split"].unique()):
-        # join train and val because LogisticRegression is convex optimization
-        # no validation needed.
-        train_df = df[(df["split"] == "train") | (df["split"] == "validation")].copy()
-    elif {"train", "test"} == (set(df["split"].unique())):
+    if {"train", "test"} == (set(df["split"].unique())):
         train_df = df[df["split"] == "train"].copy()
     else:
         raise ValueError(f"Unexpected splits {df['split'].unique()}")
@@ -212,14 +228,17 @@ def main(
     ############################ train model ###########################################
 
     model = get_linear_model(gridsearch=gridsearch, n_jobs=n_jobs, random_state=random_state)
-    rich.print("Training model...")
     if mask_cryptic_puls:
-        train_df_masked = train_df[~train_df["protein_id"].isin(cryptic_puls["protein_id"])]
-    else:
-        train_df_masked = train_df
+        train_df = train_df[~train_df["protein_id"].isin(cryptic_puls["protein_id"])]
+    
+    # if only training once, split 10% off for validation, to calculate the optimal threshold
+    if not gridsearch:
+        threshold = calculate_optimal_threshold(train_df, embeddings_col, random_state, model)
+        rich.print(f"Found optimal threshold at {threshold}")
 
-    model.fit(X=np.stack(train_df_masked[embeddings_col].tolist()), y=train_df_masked["label"].to_numpy())
-
+    # train on full dataset
+    rich.print("Training model...")
+    model.fit(X=np.stack(train_df[embeddings_col].tolist()), y=train_df["label"].to_numpy())
     if gridsearch:
         rich.print(f"Best scores are {model.best_params_} with macro-ap score {model.best_score_}")
         # write gridsearch results to tsv
@@ -252,7 +271,7 @@ def main(
     calculate_global_metrics(df=train_df)
     # genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
 
-    return test_df, train_df, model
+    return test_df, train_df, model, threshold
 
 
 def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
@@ -307,7 +326,7 @@ class ArgumentParser(Tap):
     # file paths for loading data
     input_df_file_path: str
     output_dir: str
-    n_jobs: int = max(0, len(os.sched_getaffinity(0)) - 1)
+    n_jobs: int = -1
     normalize: bool = False
     embeddings_col: str = "embedding"
     model_name: str | None = None
@@ -328,6 +347,7 @@ if __name__ == "__main__":
     args = ArgumentParser().parse_args()
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     output_dir = args.output_dir
+    thresholds = {"fold": [], "threshold": []}
 
     for fold in tqdm(range(args.k)):
         rich.print(f"[bold blue]Running fold {fold}...[/]")
@@ -337,7 +357,7 @@ if __name__ == "__main__":
 
         random_state = 1
         # print(f"Running state {random_state}")
-        test_df, train_df, model = main(
+        test_df, train_df, model, threshold = main(
             input_df_file_path=input_df_file_path,
             output_dir=output_dir,
             n_jobs=args.n_jobs,
@@ -354,6 +374,8 @@ if __name__ == "__main__":
         train_df["random_state"] = random_state
         output.append(test_df)
         output_train.append(train_df)
+        thresholds["fold"].append(fold)
+        thresholds["threshold"].append(threshold)
 
         try:
             save_model(model, fold, output_dir)
@@ -368,9 +390,13 @@ if __name__ == "__main__":
         # get all genes in test set
         test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
         save_results(test_clusters, genecat_results, genes, fold, output_dir)
-
+        # get all genes in train set
         train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
         save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train")
+
+    # save thresholds
+    rich.print(f"[bold blue]{'Saving threshold values to':>12}[/] {args.output_dir}")
+    thresholds = polars.DataFrame(thresholds).write_csv(f"{args.output_dir}/optimal_thresholds.tsv", separator="\t")
 
 """
 ### ALL PULs ###

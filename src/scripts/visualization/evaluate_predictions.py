@@ -8,7 +8,7 @@ import seaborn as sns
 from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator
-import upsetplot
+import altair_upset as au
 
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
@@ -31,22 +31,32 @@ def generate_upset_plot(all_models, model_class):
             model_evaluator.labeled_results[0].select("protein_id", "is_PUL_pred").rename({"is_PUL_pred": model_evaluator.model_name}),
             on="protein_id",
             how="left"
-        )
+        ).fill_null(False)
 
-    gene_dicts = {}
-    for col_name in gene_table.columns:
-        if col_name == "protein_id":
-            continue
-        gene_dicts[col_name] = gene_table.filter(polars.col(col_name)).select("protein_id").unique().to_series().to_list()
+    gene_table = gene_table.drop("protein_id").cast(polars.Int8)
+    print(gene_table)
+    # Create UpSet plot
+    chart = au.UpSetAltair(
+        data=gene_table.to_pandas(),
+        sets=gene_table.columns,
+        title="Comparing predicted PUL genes overlap"
+    )
+    chart.save(f"results/plots/aggregated/upset_plot_{model_class}.png")
 
-    # format output for upset plot
-    genes_overlap = upsetplot.from_contents(gene_dicts)
-    print(genes_overlap)
-    # generate upsetplot
-    upset_plot = upsetplot.UpSet(genes_overlap, subset_size="count").plot()
-    plt.suptitle("Comparing predicted PUL genes overlap")
-    plt.savefig(f"results/plots/aggregated/upset_plot_{model_class}.png")
-    plt.close()
+    # gene_dicts = {}
+    # for col_name in gene_table.columns:
+    #     if col_name == "protein_id":
+    #         continue
+    #     gene_dicts[col_name] = gene_table.filter(polars.col(col_name)).select("protein_id").unique().to_series().to_list()
+
+    # # format output for upset plot
+    # genes_overlap = upsetplot.from_contents(gene_dicts)
+    # print(genes_overlap)
+    # # generate upsetplot
+    # upset_plot = upsetplot.UpSet(genes_overlap, subset_size="count").plot()
+    # plt.suptitle
+    # plt.savefig(f"results/plots/aggregated/upset_plot_{model_class}.png")
+    # plt.close()
 
 
 def compare_all_models(all_models, model_class):

@@ -6,6 +6,7 @@
 #SBATCH --mem=32G
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
+#SBATCH --partition=gpu
 #SBATCH --cpus-per-task 8
 #SBATCH --array=0-6%2
 #SBATCH -o slurm_output/genecat_finetune_%A_%a.out

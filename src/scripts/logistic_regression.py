@@ -235,6 +235,8 @@ def main(
     if not gridsearch:
         threshold = calculate_optimal_threshold(train_df, embeddings_col, random_state, model)
         rich.print(f"Found optimal threshold at {threshold}")
+    else:
+        threshold = 0.25
 
     # train on full dataset
     rich.print("Training model...")
@@ -269,12 +271,11 @@ def main(
 
     rich.print("Train set evaluation:")
     calculate_global_metrics(df=train_df)
-    # genome_df = calculate_metrics_per_genome(test_df, contig_col=contig_col)
 
     return test_df, train_df, model, threshold
 
 
-def save_results(clusters, genecat_results, genes, fold, output_dir, split="test"):
+def save_results(clusters, genecat_results, genes, fold, output_dir, split="test", threshold=0.25):
     # get only genes in test set
     test_genes = (genes.join(clusters, on="sequence_id", how="semi"))
 
@@ -288,7 +289,7 @@ def save_results(clusters, genecat_results, genes, fold, output_dir, split="test
         .join(genecat_results.select("protein_id", "probas").rename({"probas": "average_p"}), on="protein_id", how="left")
         .with_columns(
             polars.when(polars.col("is_PUL").is_null()).then(False).otherwise(polars.col("is_PUL")).alias("is_PUL"),
-            polars.when(polars.col("average_p").ge(0.5)).then(True).otherwise(False).alias("is_PUL_pred"),
+            polars.when(polars.col("average_p").ge(threshold)).then(True).otherwise(False).alias("is_PUL_pred"),
         )
         .sort("protein_id")
         .sort("sequence_id")
@@ -336,6 +337,7 @@ class ArgumentParser(Tap):
     gridsearch: bool = False
     k: int = 7
     mask_cryptic_puls: bool = False
+    save_results: bool = True
 
 
 if __name__ == "__main__":
@@ -349,14 +351,14 @@ if __name__ == "__main__":
     output_dir = args.output_dir
     thresholds = {"fold": [], "threshold": []}
 
+    random_state = 1
+    print(f"Running state {random_state}")
+    
+    # run all folds
     for fold in tqdm(range(args.k)):
         rich.print(f"[bold blue]Running fold {fold}...[/]")
         input_df_file_path = args.input_df_file_path + f"/fold_{fold}_data.parquet"
         output = []
-        output_train = []
-
-        random_state = 1
-        # print(f"Running state {random_state}")
         test_df, train_df, model, threshold = main(
             input_df_file_path=input_df_file_path,
             output_dir=output_dir,
@@ -369,34 +371,36 @@ if __name__ == "__main__":
             gridsearch=args.gridsearch,
             mask_cryptic_puls=args.mask_cryptic_puls
         )
+        # make train and test dfs
         test_df = test_df[[args.contig_col, "genome_idx", "protein_id", "probas", args.label_col]]
         test_df["random_state"] = random_state
         train_df["random_state"] = random_state
         output.append(test_df)
-        output_train.append(train_df)
+        # record optimal threshold for this fold
         thresholds["fold"].append(fold)
         thresholds["threshold"].append(threshold)
 
-        try:
-            save_model(model, fold, output_dir)
-        except Exception as e:
-            print("model could not be saved for some reason:")
-            print(e)
+        if args.save_results:
+            genecat_results = pd.concat(output)
+            genecat_results = polars.from_pandas(genecat_results)
+            rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
+            
+            # get all genes in test set
+            test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
+            save_results(test_clusters, genecat_results, genes, fold, output_dir, threshold=threshold)
+            # get all genes in train set
+            train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
+            save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train", threshold=threshold)
 
-        genecat_results = pd.concat(output)
-        genecat_results = polars.from_pandas(genecat_results)
-        rich.print(f"[bold blue]{'Saving test evaluation to':>12}[/] {args.output_dir}")
+            try:
+                save_model(model, fold, output_dir)
+            except Exception as e:
+                print("model could not be saved for some reason:")
+                print(e)
 
-        # get all genes in test set
-        test_clusters = polars.read_csv(f"src/data/splits/test_fold_{fold}.tsv", separator='\t')
-        save_results(test_clusters, genecat_results, genes, fold, output_dir)
-        # get all genes in train set
-        train_clusters = polars.read_csv(f"src/data/splits/train_fold_{fold}.tsv", separator='\t')
-        save_results(train_clusters, genecat_results, genes, fold, output_dir, split="train")
-
-    # save thresholds
+    # save thresholds for all folds
     rich.print(f"[bold blue]{'Saving threshold values to':>12}[/] {args.output_dir}")
-    thresholds = polars.DataFrame(thresholds).write_csv(f"{args.output_dir}/optimal_thresholds.tsv", separator="\t")
+    thresholds = polars.DataFrame(thresholds).write_csv(f"{args.output_dir}/thresholds.tsv", separator="\t")
 
 """
 ### ALL PULs ###

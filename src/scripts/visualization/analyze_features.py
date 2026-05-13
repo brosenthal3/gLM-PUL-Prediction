@@ -176,7 +176,7 @@ def main(args):
             )
 
         if i == 0:
-            bar_ax.set_ylabel("Pfam domain")
+            bar_ax.set_ylabel("Feature")
 
         bar_ax.set_xlabel("PUL genes with domain")
         if i == 1:
@@ -188,9 +188,9 @@ def main(args):
         # Smaller labels
         bar_ax.tick_params(axis='y', labelsize=7)
 
-    fig.suptitle("Volcano plots of Pfam domains enrichment")
+    fig.suptitle("Volcano plots of feature enrichment")
     fig.tight_layout()
-    fig.savefig(os.path.join(model_evaluator.output_path, f"pfam_enrichment_{label}.png"))
+    fig.savefig(os.path.join(model_evaluator.output_path, f"feature_enrichment_analysis.png"))
     plt.close()
 
 if __name__ == "__main__":

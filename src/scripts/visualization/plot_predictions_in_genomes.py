@@ -253,5 +253,5 @@ if __name__ == "__main__":
 
 
 """
-python src/scripts/visualization/visualize_genomes.py --model gecco_pfam
+python src/scripts/visualization/plot_predictions_in_genomes.py --model gecco_pfam
 """

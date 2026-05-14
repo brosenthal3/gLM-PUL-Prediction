@@ -143,6 +143,10 @@ def evaluate_model(args, model_name):
     # output path to save plots
     output_path = f"results/plots/{model_name}"
 
+    # df of cryptic pul protein ids
+    cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t").unique()
+
+
     evaluator = PredictionEvaluator(
         f"{results_path}",
         k=args.k,
@@ -152,12 +156,10 @@ def evaluate_model(args, model_name):
         weight=args.weight
     )
 
-    evaluator.f1_per_fold()
-
     for fold in range(args.k):
         evaluator.precision_recall_curve(fold)
         evaluator.plot_roc_curves(fold)
-        evaluator.test_cryptic_puls(fold)
+        evaluator.test_cryptic_puls(cryptic_df, fold)
 
     # new evaluator class for aggregating 5 folds instead of 7
     if args.k >= 5:

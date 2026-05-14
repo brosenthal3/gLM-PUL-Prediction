@@ -17,6 +17,10 @@ def save_pul_predictions(h5ad_path, save_path):
     genes = polars.read_parquet(adata.uns["test_gene_table"])
     labeled_test_genes = join_gene_and_PUL_table(genes, clusters).select(cols)
 
+    # filter out predicted clusters, if they are included
+    if "origin" in clusters.columns:
+        clusters = clusters.filter(~polars.col("origin").eq("predicted"))
+
     # combine both
     labeled_table = (
         labeled_test_genes
@@ -32,7 +36,7 @@ def save_pul_predictions(h5ad_path, save_path):
 
 
 def main():
-    for k in range(3):
+    for k in range(7):
         for features in ["pfam", "cazy"]:
             predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
             save_path = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"

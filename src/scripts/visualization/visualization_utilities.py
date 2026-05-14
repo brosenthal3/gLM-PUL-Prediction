@@ -91,15 +91,25 @@ class PredictionEvaluator:
         self.aggregated = False
         if aggregate and k >= 5:
             self.aggregate_all_folds()
-            
+
+        self.threshold = self.set_threshold()
         os.makedirs(self.output_path, exist_ok=True)
 
 
+    def set_threshold(self):
+        thresholds_df_path = f"src/data/results/{self.model_name}/thresholds.tsv"
+        if os.path.exists(thresholds_df_path):
+            thresholds_df = polars.read_csv(thresholds_df_path, separator='\t')
+
+        else:
+            return 0.25
+
+
     def set_evaluation_data(self, fold):
-        self.true = self.labeled_results[fold].select(polars.col("is_PUL")).fill_null(False).to_series().to_list()
-        self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).to_series().to_list()
-        self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).to_series().to_list()
-        self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).to_series().to_list()
+        self.true = self.labeled_results[fold].select(polars.col("is_PUL")).fill_null(False).fill_nan(False).to_series().to_list()
+        self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).fill_nan(False).to_series().to_list()
+        self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).fill_nan(0.0).to_series().to_list()
+        self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).fill_nan(False).to_series().to_list()
         # weight down genes with PULpy or cblaster annotations but no experimental data (likely cryptic puls)
         self.sample_weights = (
             self.labeled_results[fold]
@@ -112,7 +122,10 @@ class PredictionEvaluator:
             .select("sample_weight").to_series().to_list()
         )
 
-    def recompute_predictions(self, fold, threshold):
+    def recompute_predictions(self, fold, threshold=None):
+        if threshold is None:
+            threshold = self.threshold
+
         self.labeled_results[fold] = self.labeled_results[fold].with_columns(
             polars.when(polars.col("average_p") >= threshold).then(True).otherwise(False).alias("is_PUL_pred")
         )
@@ -370,6 +383,7 @@ class PredictionEvaluator:
             polars.col("is_PUL").fill_null(False).alias("y_exp"),
             polars.col("is_cryptic").alias("y_cryptic"),
             (polars.col("is_PUL").fill_null(False) | polars.col("is_cryptic")).alias("y_both"),
+            polars.col("average_p").fill_nan(0.0)
         ])
         # test on ONLY experimental, remove cryptic from evaluation
         df_exp = df.filter(~polars.col("is_cryptic"))

@@ -99,8 +99,8 @@ class PredictionEvaluator:
     def set_threshold(self):
         thresholds_df_path = f"src/data/results/{self.model_name}/thresholds.tsv"
         if os.path.exists(thresholds_df_path):
-            thresholds_df = polars.read_csv(thresholds_df_path, separator='\t')
-
+            thresholds_df = polars.read_csv(thresholds_df_path, separator='\t').select("threshold")[:5].median()
+            return thresholds_df.item()
         else:
             return 0.25
 
@@ -207,31 +207,6 @@ class PredictionEvaluator:
     def confusion_matrix(self):
         cm = confusion_matrix(self.true, self.pred)
         print(cm)
-
-
-    def evaluate(self):
-        print("True vs Predicted:")
-        print(classification_report(self.true, self.pred))
-
-        print("True vs PULpy:")
-        print(classification_report(self.true, self.pulpy_pred))
-
-        print("PULpy vs Predicted:")
-        print(classification_report(self.pulpy_pred, self.pred))
-
-
-    def calculate_mmc(self, true, pred, thresholds):
-        mmc_scores = []
-        for threshold in tqdm(thresholds, desc="Calculating MCC for thresholds"):
-            binary_pred = [1 if p >= threshold else 0 for p in pred]
-            mmc = matthews_corrcoef(true, binary_pred)
-            mmc_scores.append(mmc)
-
-        best_mmc_idx = np.argmax(mmc_scores)
-        best_threshold = thresholds[best_mmc_idx]
-        binary_pred = [1 if p >= best_threshold else 0 for p in pred]
-        pr_mmc = precision_recall_curve(true, binary_pred, drop_intermediate=True)
-        return mmc_scores[best_mmc_idx], best_threshold, (pr_mmc[1][1], pr_mmc[0][1])
 
 
     def plot_pr(self, true, pred, label, color, ax, plot_mcc=False, weights=None, thresholds_to_mark=[]):

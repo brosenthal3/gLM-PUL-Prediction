@@ -178,7 +178,7 @@ def main(args):
         if i == 0:
             bar_ax.set_ylabel("Feature")
 
-        bar_ax.set_xlabel("PUL genes with domain")
+        bar_ax.set_xlabel("-log10(FDR)")
         if i == 1:
             bar_ax.set_title(f"Top enriched domains")
 

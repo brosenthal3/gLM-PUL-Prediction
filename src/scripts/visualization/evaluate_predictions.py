@@ -27,21 +27,29 @@ def generate_upset_plot(all_models, model_class):
     evaluators = get_evaluators(all_models, k=5, aggregate=True)
     gene_table = evaluators[0].labeled_results[0].select("protein_id", "is_PUL", "is_PUL_pulpy").rename({"is_PUL": "experimental", "is_PUL_pulpy": "pulpy"})
     for model_evaluator in evaluators:
+        if not "gecco" in model_evaluator.model_name:
+            model_evaluator.recompute_predictions(0)
+
         gene_table = gene_table.join(
             model_evaluator.labeled_results[0].select("protein_id", "is_PUL_pred").rename({"is_PUL_pred": model_evaluator.model_name}),
             on="protein_id",
             how="left"
         ).fill_null(False)
-
     gene_table = gene_table.drop("protein_id").cast(polars.Int8)
-    print(gene_table)
+
     # Create UpSet plot
     chart = au.UpSetAltair(
         data=gene_table.to_pandas(),
         sets=gene_table.columns,
-        title="Comparing predicted PUL genes overlap"
+#        sort_by="frequency",
+#        sort_order="descending",
+        width=800,
+        height=400,
+        vertical_bar_label_size=10,
+        abbre=["experimental", "pulpy", "gecco", "genecat"],
+#        title="Predicted and experimental PUL genes overlap"
     )
-    chart.save(f"results/plots/aggregated/upset_plot_{model_class}.png")
+    chart.save(f"results/plots/aggregated/upset_plot_{model_class}.svg")
 
     # gene_dicts = {}
     # for col_name in gene_table.columns:
@@ -63,11 +71,35 @@ def compare_all_models(all_models, model_class):
     # list of evaluators for all models
     evaluators = get_evaluators(all_models)
 
-    # comparison of all models
+    # comparison of all models, 3 separate plots
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
     colors = plt.cm.tab20.colors
+
+    # add labels and legend
+    for j in range(2):
+        ax[j].set_xlabel("Recall")
+        ax[j].set_ylabel("Precision")
+
+        ax_roc[j].set_xlabel('False Positive Rate')
+        ax_roc[j].set_ylabel("True Positive Rate")
+
+        ax_bac[j].set_xlabel('Recall')
+        ax_bac[j].set_ylabel("Precision")
+
+    # add titles and stuff
+    ax[0].set_title("Models tested on experimental annotations")
+    ax[1].set_title("Models tested on PULpy annotations")
+    ax_roc[0].set_title("Models tested on experimental annotations")
+    ax_roc[1].set_title("Models tested on PULpy annotations")
+    ax_bac[0].set_title("Trained on Bacteroidota, tested on other phyla")
+    ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
+
+    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
+    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
+    fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
+
 
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
@@ -95,35 +127,18 @@ def compare_all_models(all_models, model_class):
         if i == len(all_models)-1:
             baseline = sum(model_evaluator.true) / len(model_evaluator.true) if len(model_evaluator.true) > 0 else 0
             baseline_pulpy = sum(model_evaluator.pulpy_pred) / len(model_evaluator.pulpy_pred) if len(model_evaluator.pulpy_pred) > 0 else 0
-            ax[0].plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
-            ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', label="Baseline", color='gray')
+            ax[0].plot([0, 1], [baseline, baseline], linestyle='--', color='gray')
+            ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', color='gray')
 
+        for j in range(2):
+            ax[j].legend(loc="upper right")
+            ax_roc[j].legend(loc="lower right")
+            ax_bac[j].legend(loc="upper right")
 
-    # add labels and legend
-    for j in range(2):
-        ax[j].set_xlabel("Recall")
-        ax[j].set_ylabel("Precision")
-        ax[j].legend(loc="upper right")
+        if model_class == "presentation":
+            fig.tight_layout()
+            fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}_{i}.png")
 
-        ax_roc[j].set_xlabel('False Positive Rate')
-        ax_roc[j].set_ylabel("True Positive Rate")
-        ax_roc[j].legend(loc="lower right")
-
-        ax_bac[j].set_xlabel('Recall')
-        ax_bac[j].set_ylabel("Precision")
-        ax_bac[j].legend(loc="upper right")
-
-
-    ax[0].set_title("Models tested on experimental annotations")
-    ax[1].set_title("Models tested on PULpy annotations")
-    ax_roc[0].set_title("Models tested on experimental annotations")
-    ax_roc[1].set_title("Models tested on PULpy annotations")
-    ax_bac[0].set_title("Trained on Bacteroidota, tested on other phyla")
-    ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
-
-    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
-    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
-    fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
     fig.tight_layout()
     fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
@@ -196,6 +211,12 @@ def main(args):
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "esmc_masked", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
+
+    if model_name == "presentation":
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked","genecat_finetuned_cazy", "esmc", "bacformer"]
+        compare_all_models(all_models, model_name)
+        return
+
 
     if model_name == "upset":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked"]

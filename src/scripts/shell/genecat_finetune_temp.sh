@@ -15,15 +15,10 @@
 source ~/.bashrc
 mamba activate genecat
 
-# mkdir -p $TMPDIR/genecat_env
-# python -m venv $TMPDIR/genecat_env --system-site-packages
-# source $TMPDIR/genecat_env/bin/activate
-# pip install wandb polars pysqlite3 rich-argparse sqlite-vec scikit-learn rich numpy pytorch_lightning pandas anndata hvplot pyarrow gb_io pyhmmer pyrodigal
-
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
-
+SLURM_ARRAY_TASK_ID=1
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 # GENES
@@ -51,12 +46,12 @@ MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
 DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.pfam.parquet
 DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.pfam.parquet
 
-python -m genecat.cli pul-finetune\
- -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}/fold_${SLURM_ARRAY_TASK_ID}\
- --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
- --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
- --middle-focus --epochs 30
+# python -m genecat.cli pul-finetune\
+#  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
+#  --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}/fold_${SLURM_ARRAY_TASK_ID}\
+#  --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
+#  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
+#  --middle-focus --epochs 30
 
 
 #----TRAIN PFAM+CAZY MODEL----# 

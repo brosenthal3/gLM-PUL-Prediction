@@ -171,7 +171,7 @@ def calculate_optimal_threshold(train_df, embeddings_col, random_state, model):
         mmc = matthews_corrcoef(true_labels, binary_pred)
         mmc_scores.append(mmc)
     
-    return thresholds[np.argmax(mmc_scores)]
+    return model, thresholds[np.argmax(mmc_scores)]
     
 
 def main(
@@ -232,15 +232,16 @@ def main(
         train_df = train_df[~train_df["protein_id"].isin(cryptic_puls["protein_id"])]
     
     # if only training once, split 10% off for validation, to calculate the optimal threshold
+    rich.print("Training model...")
     if not gridsearch:
-        threshold = calculate_optimal_threshold(train_df, embeddings_col, random_state, model)
+        model, threshold = calculate_optimal_threshold(train_df, embeddings_col, random_state, model)
         rich.print(f"Found optimal threshold at {threshold}")
     else:
+        # train on full dataset
+        model.fit(X=np.stack(train_df[embeddings_col].tolist()), y=train_df ["label"].to_numpy())
         threshold = 0.25
 
-    # train on full dataset
-    rich.print("Training model...")
-    model.fit(X=np.stack(train_df[embeddings_col].tolist()), y=train_df["label"].to_numpy())
+
     if gridsearch:
         rich.print(f"Best scores are {model.best_params_} with macro-ap score {model.best_score_}")
         # write gridsearch results to tsv

@@ -3,63 +3,56 @@ import matplotlib.pyplot as plt
 import os
 from palettable.cartocolors.qualitative import Bold_10
 
-out_path = "src/results/plots/genecat_fine_tuned"
-os.makedirs(out_path, exist_ok=True)
+def plot_loss(pfam, cazy, out_path, model_name):
+    df_pfam = polars.read_csv(pfam)
+    df_cazy = polars.read_csv(cazy)
 
-pfam = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260429_150219-gtv4ep3n/files/pfam_fold_0_finetune_log_gtv4ep3n/version_0/metrics.csv"
+    # Figure size in inches
+    cm = 1 / 2.54  # centimeters in inches
+    textwidth = 19 * cm
 
-cazy = "src/data/results/genecat_fine_tuned/logs_genecat_fine_tuned/wandb/offline-run-20260429_221043-bgckiapc/files/pfam_cazy_fold_0_finetune_log_bgckiapc/version_0/metrics.csv"
+    figsize = (textwidth, cm*16)
+    dpi = 300
+    xlim = None  # can set manually if you want
+    ylim_loss = (0, 0.5)
+    ylim_pred = (0, 6.5)
+    left, right, bottom, top = 0.1, 0.9, 0.15, 0.9  # fixed axes layout
+    fig, axis = plt.subplots(2, 1, figsize=figsize, sharex=True)
+    bold10 = Bold_10.mpl_colors
 
-df_pfam = polars.read_csv(pfam)
-df_cazy = polars.read_csv(cazy)
+    for i, df in enumerate([df_pfam, df_cazy]):
+        axs = axis[i]
+        train_df = (
+            df.filter(polars.col("train_loss").is_not_null())
+        )
 
-# Figure size in inches
-cm = 1 / 2.54  # centimeters in inches
-textwidth = 19 * cm
+        if "val_loss" in df.columns:
+            val_df = df.filter(polars.col("val_loss").is_not_null())
+            axs.scatter(val_df["step"].to_numpy(), val_df["val_loss"].cast(polars.Float32).to_numpy(),label="Validation Loss", color="tab:orange", s=25, zorder=20)
 
-figsize = (textwidth, cm*16)
-dpi = 300
-xlim = None  # can set manually if you want
-ylim_loss = (0, 1)
-ylim_pred = (0, 6.5)
-left, right, bottom, top = 0.1, 0.9, 0.15, 0.9  # fixed axes layout
-fig, axis = plt.subplots(2, 1, figsize=figsize)
-bold10 = Bold_10.mpl_colors
+        if "test_loss" in df.columns:
+            test_df = df.filter(polars.col("test_loss").is_not_null())
+            axs.scatter(test_df["step"].to_numpy(), test_df["test_loss"].cast(polars.Float32).to_numpy(), label="Test Loss", color="tab:green", s=25, zorder=20)
 
-for i, df in enumerate([df_pfam, df_cazy]):
-    axs = axis[i]
-    train_df = (
-        df.filter(polars.col("train_loss").is_not_null())
-    )
+        axs.plot(train_df["step"].to_numpy(), train_df["train_loss"].cast(polars.Float32).to_numpy(), label="Train Loss", linestyle='-', linewidth=1, zorder=10)
 
-    if "val_loss" in df.columns:
-        val_df = df.filter(polars.col("val_loss").is_not_null())
-        axs.scatter(val_df["step"].to_numpy(), val_df["val_loss"].cast(polars.Float32).to_numpy(),label="Validation Loss", color="tab:orange", s=25, zorder=20)
+        axs.set_ylabel("Loss")
+        axs.set_ylim(ylim_loss)
+        axs.legend(loc="upper right")
+        axs.set_title("Loss in training " + model_name + (" (Pfam features)" if i==0 else " (CAZy+Pfam features)"))
 
-    if "test_loss" in df.columns:
-        test_df = df.filter(polars.col("test_loss").is_not_null())
-        axs.scatter(test_df["step"].to_numpy(), test_df["test_loss"].cast(polars.Float32).to_numpy(), label="Test Loss", color="tab:green", s=25, zorder=20)
+    axis[1].set_xlabel("Step")
+    print(f"Saving plot to {out_path}...")
+    plt.tight_layout()
+    plt.savefig(out_path)
 
-    axs.plot(train_df["step"].to_numpy(), train_df["train_loss"].cast(polars.Float32).to_numpy(), label="Train Loss", linestyle='-', linewidth=1, zorder=10)
 
-    axs.set_xlabel("Step")
-    axs.set_ylabel("Loss")
-    axs.legend(loc="upper right")
-    axs.set_title("Loss in training GeneCAT for PUL prediction " + ("(Pfam features)" if i==0 else "(CAZy+Pfam features)"))
+out_path_masked = "results/plots/loss_plots/train_loss_masked.png"
+pfam_masked = "src/data/results/genecat_finetuned_pfam_masked/logs_fold_0/wandb/latest-run/files/pfam_fold_0_finetune_log_al0c8pxe/version_0/metrics.csv"
+cazy_masked = "src/data/results/genecat_finetuned_cazy_masked/logs_fold_0/wandb/latest-run/files/cazy_fold_0_finetune_log_bqrf1ino/version_0/metrics.csv"
+plot_loss(pfam_masked, cazy_masked, out_path_masked, "genecat_finetuned_masked")
 
-# axs2 = axs.twinx()
-# axs.set_zorder(axs2.get_zorder() + 1)
-# axs.patch.set_visible(False)
-
-# axs2.plot(train_df["step"], train_df["train_micro_accuracy"], linestyle="-", alpha=0.3, color=bold10[0], zorder=1)
-# axs2.plot(train_df["step"], train_df["train_macro_accuracy"], linestyle="-", alpha=0.3, color=bold10[1], zorder=1)
-# axs2.plot(train_df["step"], train_df["train_micro_accuracy_smooth"], label="Micro Acc", linestyle="--", color=bold10[0], zorder=2)
-# axs2.plot(train_df["step"], train_df["train_macro_accuracy_smooth"], label="Macro Acc", linestyle="--", color=bold10[1], zorder=2)
-# axs2.set_ylabel("Accuracy", color='k')
-# axs2.set_ylim(0, 1)
-# axs2.legend(loc="upper right")
-# axs2.tick_params(axis="y")
-
-print("saving plot?")
-plt.tight_layout()
-plt.savefig(f"{out_path}/train_loss.png")
+out_path = "results/plots/loss_plots/train_loss.png"
+pfam = "src/data/results/genecat_finetuned_pfam/logs_fold_0/wandb/latest-run/files/pfam_fold_0_finetune_log_txdd0ge4/version_0/metrics.csv"
+cazy = "src/data/results/genecat_finetuned_cazy/logs_fold_0/wandb/latest-run/files/cazy_fold_0_finetune_log_q8uzmlkl/version_0/metrics.csv"
+plot_loss(pfam, cazy, out_path, "genecat_finetuned")

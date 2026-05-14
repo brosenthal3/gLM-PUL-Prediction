@@ -32,10 +32,10 @@ def save_pul_predictions(h5ad_path, save_path):
 
 
 def main():
-    for k in range(7):
+    for k in range(3):
         for features in ["pfam", "cazy"]:
-            predictions = f"src/data/results/genecat_finetuned_{features}/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
-            save_path = f"src/data/results/genecat_finetuned_{features}/labeled_results_test_{k}.tsv"
+            predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+            save_path = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"
             if not os.path.exists(predictions):
                 continue
 

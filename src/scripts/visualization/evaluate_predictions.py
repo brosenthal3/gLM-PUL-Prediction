@@ -187,13 +187,13 @@ def evaluate_model(args, model_name):
             weight=args.weight
         )
         evaluator.precision_recall_curve("all")
-        evaluator.test_cryptic_puls("all")
+        evaluator.test_cryptic_puls(cryptic_df, "all")
 
 
 def main(args):
     model_name = args.model
     if model_name == "all":
-        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam", "genecat_finetuned_cazy", "esmc", "bacformer"]
+        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam_masked", "genecat_finetuned_cazy_masked", "esmc", "bacformer"]
         compare_all_models(all_models, model_name)
         return
 

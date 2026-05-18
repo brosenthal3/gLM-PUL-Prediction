@@ -57,19 +57,19 @@ def donut_chart(ax, counts, rank, title="Taxonomic distribution"):
     x = counts.select(f"{rank.lower()}_group").to_series()
     heights = counts.select("count").to_series()
     ax.pie(heights, labels=x, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
-    ax.set_title(f"{title} ({rank})")
+    ax.set_title(f"{title}")
 
 def plot_taxonomy(ax, all_puls):
-    phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=5)
-    class_counts = get_taxonomic_counts(all_puls, rank="class", cutoff=5)
+    phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=15)
+    class_counts = get_taxonomic_counts(all_puls, rank="class", cutoff=15)
 
-    # draw two donut charts inside a single parent axis
-    ax.axis("off")
-    ax_left = ax.inset_axes([0.00, 0.0, 0.48, 1.0])
-    ax_right = ax.inset_axes([0.52, 0.0, 0.48, 1.0])
+    # # draw two donut charts inside a single parent axis
+    # ax.axis("off")
+    # ax_left = ax.inset_axes([0.00, 0.0, 0.48, 1.0])
+    # ax_right = ax.inset_axes([0.52, 0.0, 0.48, 1.0])
 
-    donut_chart(ax_left, phylum_counts, "Phylum", title="Phylum distribution")
-    donut_chart(ax_right, class_counts, "Class", title="Class distribution")
+    donut_chart(ax, phylum_counts, "Phylum", title="Phylum distribution")
+#    donut_chart(ax_right, class_counts, "Class", title="Class distribution")
 
 
 # GENE COUNT PLOT #
@@ -116,7 +116,7 @@ def plot_venn_diagram_database(ax, experimental_puls):
     
     # plot overlap
     venn2([dbcan_sequences, puldb_sequences], set_labels = ('DBCAN', 'PULDB'), ax=ax)
-    ax.set_title("Overlap of experimental annotations by database")
+    ax.set_title("Genomes annotated by each database")
 
 
 

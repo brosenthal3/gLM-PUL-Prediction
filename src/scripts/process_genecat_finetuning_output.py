@@ -22,12 +22,13 @@ def save_pul_predictions(h5ad_path, save_path):
         genes_path = adata.uns["gene_table"]
 
     clusters = polars.read_csv(clusters_path, separator='\t')
-    genes = polars.read_parquet(genes_path)
-    labeled_test_genes = join_gene_and_PUL_table(genes, clusters).select(cols)
-
     # filter out predicted clusters, if they are included
     if "origin" in clusters.columns:
         clusters = clusters.filter(~polars.col("origin").eq("predicted"))
+
+    genes = polars.read_parquet(genes_path)
+    labeled_test_genes = join_gene_and_PUL_table(genes, clusters).select(cols)
+
 
     # combine both
     labeled_table = (

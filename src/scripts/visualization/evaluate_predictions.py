@@ -208,7 +208,7 @@ def main(args):
         return
 
     if model_name == "selected":
-        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "esmc_masked", "bacformer_masked"]
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "bacformer"]
         compare_all_models(all_models, model_name)
         return
 

@@ -13,8 +13,16 @@ def save_pul_predictions(h5ad_path, save_path):
 
     # get cluster IDs
     cols = ["protein_id", "sequence_id", "cluster_id", "is_PUL", "start", "end"]
-    clusters = polars.read_csv(adata.uns["test_cluster_table"], separator='\t')
-    genes = polars.read_parquet(adata.uns["test_gene_table"])
+    print(adata.uns)
+    if "test_cluster_table" in adata.uns.keys():
+        clusters_path = adata.uns["test_cluster_table"]
+        genes_path = adata.uns["test_gene_table"]
+    else:
+        clusters_path = adata.uns["cluster_table"]
+        genes_path = adata.uns["gene_table"]
+
+    clusters = polars.read_csv(clusters_path, separator='\t')
+    genes = polars.read_parquet(genes_path)
     labeled_test_genes = join_gene_and_PUL_table(genes, clusters).select(cols)
 
     # filter out predicted clusters, if they are included
@@ -38,9 +46,11 @@ def save_pul_predictions(h5ad_path, save_path):
 def main():
     for k in range(7):
         for features in ["pfam", "cazy"]:
-            predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+            # predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+            predictions = f"src/data/results/genecat_finetuned_{features}_masked/fold_{k}.h5ad" 
             save_path = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"
             if not os.path.exists(predictions):
+                print("Could not find file at ", predictions)
                 continue
 
             save_pul_predictions(predictions, save_path)

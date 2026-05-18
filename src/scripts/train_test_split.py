@@ -227,36 +227,3 @@ if __name__ == "__main__":
 
     splitter = DatasetSplitter(clusters_table, gene_table, ani_table, args.rank, args.ani_split, args.ani_threshold, args.gene_threshold)
     splitter.split_dataset(k=args.k, output_dir=Path("src/data/splits/"), stratify=args.stratify, split_bacteroidata=args.split_bacteroidata)
-
-
-
-# def report_stats_on_gene_table(
-#     gene_table: polars.DataFrame,
-#     label: str,
-#     stat_file: TextIO,
-#     full_table_counts: Dict[str, int],
-# ) -> None:
-
-#     stat_file.write(
-#         f"{len(gene_table)} genes in {label} set. Percentage: {round(gene_table['protein_id'].n_unique()*100/full_table_counts['genes'], 2)}\n"
-#     )
-#     stat_file.write(
-#         f"{gene_table['sequence_id'].n_unique()} contigs in {label} set. Percentage: {round(gene_table['sequence_id'].n_unique()*100/full_table_counts['contigs'],2)}\n"
-#     )
-
-#     stat_file.write(
-#         f"{gene_table['genome_id'].n_unique()} genomes in {label} set. Percentage: {round(gene_table['genome_id'].n_unique()*100/full_table_counts['genomes'],2)}\n"
-#     )
-
-#     if "taxonomy" in gene_table.columns:
-#         stat_file.write(
-#             f"{gene_table['taxonomy'].n_unique()} taxa in {label} set. Percentage: {round(gene_table['taxonomy'].n_unique()*100/full_table_counts['taxa'],2)}\n"
-#         )
-
-#     # annotated_genes = gene_table.filter(polars.col("domain").is_not_null())[
-#     #     "protein_id"
-#     # ].n_unique()
-#     # stat_file.write(
-#     #     f"Number of Annotated Genes: {annotated_genes} in {label} set. Percentage: {round(annotated_genes*100/gene_table['protein_id'].n_unique(),2)}\n\n"
-#     # )
-

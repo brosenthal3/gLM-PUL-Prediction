@@ -227,6 +227,7 @@ def plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal):
         polars.lit('experimental').is_in(polars.col("databases")).alias("has_experimental"),
     )
     # plot Venn diagram of overlap between databases
+    # TODO: might be error with PULpy cluster ids not being unique!!!
     pulpy_puls = set(merged_puls.filter(polars.col("has_pulpy") == True).select("cluster_id").to_series().to_list())
     cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id").to_series().to_list())
     experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id").to_series().to_list())

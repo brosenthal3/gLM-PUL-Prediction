@@ -61,6 +61,7 @@ def compare_all_models(all_models, model_class):
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 8))
     colors = plt.cm.tab20.colors
 
     # add labels and legend
@@ -74,6 +75,9 @@ def compare_all_models(all_models, model_class):
         ax_bac[j].set_xlabel('Recall')
         ax_bac[j].set_ylabel("Precision")
 
+    ax_bar.set_xlabel("Model")
+    ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
+
     # add titles and stuff
     ax[0].set_title("Models tested on experimental annotations")
     ax[1].set_title("Models tested on PULpy annotations")
@@ -81,12 +85,13 @@ def compare_all_models(all_models, model_class):
     ax_roc[1].set_title("Models tested on PULpy annotations")
     ax_bac[0].set_title("Trained on Bacteroidota, tested on other phyla")
     ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
+    ax_bar.set_title("Overall model comparison (all folds)")
 
     fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
     fig_roc.suptitle("ROC Curves of all tested models (all folds)")
     fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
-
+    auprc_scores = []
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
         # before aggregating, plot for folds 5 and 6 separately
@@ -103,7 +108,8 @@ def compare_all_models(all_models, model_class):
 
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
-        model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
+        auprc = model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
+        auprc_scores.append(auprc)
         model_evaluator.roc_curve(true_masked, p_pred_masked, all_models[i], colors[i], ax_roc[0])
 
         # for pulpy vs pred
@@ -125,6 +131,9 @@ def compare_all_models(all_models, model_class):
             ax_roc[j].legend(loc="lower right")
             ax_bac[j].legend(loc="upper right")
 
+    
+    ax_bar.bar(x=[e.model_name for e in evaluators], height=auprc_scores, color=colors[:len(auprc_scores)])
+    ax_bar.tick_params("x", rotation=60)
 
     fig.tight_layout()
     fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
@@ -132,6 +141,9 @@ def compare_all_models(all_models, model_class):
     fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png")
     fig_bac.tight_layout()
     fig_bac.savefig(f"results/plots/aggregated/pr_curves_bacteroidota_{model_class}.png")
+    fig_bar.tight_layout()
+    fig_bar.savefig(f"results/plots/aggregated/barplot_{model_class}.png")
+
     plt.close()
 
 

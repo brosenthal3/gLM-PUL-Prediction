@@ -56,6 +56,15 @@ def main():
 
             save_pul_predictions(predictions, save_path)
 
+        predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+        save_path_untrained = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"
+        if not os.path.exists(predictions_untrained):
+            print("Could not find file at ", predictions_untrained)
+            continue
+
+        save_pul_predictions(predictions_untrained, save_path_untrained)
+        
+
 
 if __name__ == "__main__":
     main()

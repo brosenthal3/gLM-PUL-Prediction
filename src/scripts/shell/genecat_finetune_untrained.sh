@@ -1,6 +1,6 @@
 #!/bin/bash                                                                                                                                                                                                      
-#SBATCH -t 20:00:00
-#SBATCH -J genecat_finetune
+#SBATCH -t 10:00:00
+#SBATCH -J genecat_finetune_untrained
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
 #SBATCH --mem=32G
@@ -9,8 +9,8 @@
 #SBATCH --partition=gpu-medium
 #SBATCH --cpus-per-task 8
 #SBATCH --array=0-6%4
-#SBATCH -o slurm_output/genecat_finetune_%A_%a.out
-#SBATCH -e slurm_output/genecat_finetune_%A_%a.err
+#SBATCH -o slurm_output/genecat_finetune_untrained_%A_%a.out
+#SBATCH -e slurm_output/genecat_finetune_untrained_%A_%a.err
 
 source ~/.bashrc
 mamba activate genecat
@@ -28,33 +28,13 @@ GENES_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.g
 CLUSTERS_TRAIN=${PULPATH}/src/data/splits/train_fold_${SLURM_ARRAY_TASK_ID}_with_cryptic.tsv
 CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}_with_cryptic.tsv
 # OUTPUT
-OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam_masked
-OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy_masked
-mkdir -p $OUT_PFAM
-mkdir -p $OUT_CAZY
+OUTPUT=${PULPATH}/src/data/results/genecat_untrained
+mkdir -p $OUTPUT
 
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/:/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/'
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
 
-#----TRAIN PFAM ONLY MODEL----#
-
-# MODEL
-VOCAB=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1.vocab.txt
-MODEL_NAME=model_gene_multilabel_untied_april_sriqcx3c_v0.pt
-MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
-# DOMAINS
-DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.pfam.parquet
-DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.pfam.parquet
-
-# python -m genecat.cli pul-finetune\
-#  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
-#  --vocab ${VOCAB} -m ${MODEL} -o ${OUT_PFAM}/fold_${SLURM_ARRAY_TASK_ID}\
-#  --batch-size 128 -j 1 --offline --name pfam_fold_${SLURM_ARRAY_TASK_ID}\
-#  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
-#  --middle-focus --epochs 30
-
-
-#----TRAIN PFAM+CAZY MODEL----# 
+#----TRAIN UNTRAINED PFAM+CAZY MODEL----# 
 
 # MODEL
 VOCAB=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1_cazy_cayman_v0.12.vocab.txt
@@ -69,4 +49,4 @@ python -m genecat.cli pul-finetune\
  --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
- --middle-focus --epochs 30
+ --middle-focus --epochs 30 --untrained

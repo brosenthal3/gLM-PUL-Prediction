@@ -192,6 +192,11 @@ class PredictionEvaluator:
 
 
     def plot_pr(self, true, pred, label, color, ax, weights=None, thresholds_to_mark=[]):
+        """
+        Plots PR curve based on true and pred. Applies plot to ax specified in arguments.
+        Returns: AUPRC score
+        """
+
         if len(true) == 0 or len(pred) == 0:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
@@ -209,6 +214,8 @@ class PredictionEvaluator:
                 ax.scatter(r, p, color=color, s=5, alpha=0.5)
                 ax.text(r, p, f"{t:.1f}", fontsize=8, color=color)
 
+        return auc
+
 
     def plot_pr_dot(self, true, pred, color, ax):
         if len(true) == 0 or len(pred) == 0:
@@ -219,10 +226,10 @@ class PredictionEvaluator:
         auc = average_precision_score(true, pred)
         ax.scatter(recall[1], precision[1], color=color)
 
+
     def plot_baseline(self, true, ax):
         baseline = sum(true) / len(true) if len(true) > 0 else 0
         ax.plot([0, 1], [baseline, baseline], linestyle='--', color='gray')
-
 
 
     def roc_curve(self, true, p_pred, label, color, ax):
@@ -293,12 +300,6 @@ class PredictionEvaluator:
     #     plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
     #     plt.clf()
     
-
-    def get_prauc(self, fold):
-        true, _, p_pred, _ = self.get_evaluation_data(self.labeled_results[fold])
-        auc = average_precision_score(true, p_pred)
-        return auc
-
 
     def f1_per_fold(self):
         f1_scores_per_fold = []

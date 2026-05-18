@@ -46,7 +46,7 @@ DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test
 
 python -m genecat.cli pul-finetune\
  -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
- --vocab ${VOCAB} -m ${MODEL} -o ${OUT_CAZY}/fold_${SLURM_ARRAY_TASK_ID}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUTPUT}/fold_${SLURM_ARRAY_TASK_ID}\
  --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30 --untrained

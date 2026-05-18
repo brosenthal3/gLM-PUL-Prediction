@@ -225,12 +225,13 @@ def plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal):
         polars.lit('pulpy').is_in(polars.col("databases")).alias("has_pulpy"),
         polars.lit('cblaster').is_in(polars.col("databases")).alias("has_cblaster"),
         polars.lit('experimental').is_in(polars.col("databases")).alias("has_experimental"),
+        polars.concat_str([polars.col("cluster_id"), polars.col("sequence_id")]).alias("cluster_id_unique") # concat ids to make unique labels
     )
+
     # plot Venn diagram of overlap between databases
-    # TODO: might be error with PULpy cluster ids not being unique!!!
-    pulpy_puls = set(merged_puls.filter(polars.col("has_pulpy") == True).select("cluster_id").to_series().to_list())
-    cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id").to_series().to_list())
-    experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id").to_series().to_list())
+    pulpy_puls = set(merged_puls.filter(polars.col("has_pulpy") == True).select("cluster_id_unique").to_series().to_list())
+    cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id_unique").to_series().to_list())
+    experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id_unique").to_series().to_list())
 
     fig, ax1 = plt.subplots(figsize=(8, 4))
     venn3(

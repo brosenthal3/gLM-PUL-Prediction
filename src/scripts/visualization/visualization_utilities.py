@@ -61,6 +61,7 @@ def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.
 
     return labled_gene_table
 
+
 class PredictionEvaluator:
     """
     Evaluator class for evaluating the predictions of GECCO against experimental data and PULpy annotations.
@@ -70,6 +71,7 @@ class PredictionEvaluator:
                 clusters_table_path="src/data/data_collection/clusters_deduplicated_cblaster.tsv", 
                 pulpy_annotations_path="src/data/data_collection/pulpy_annotations.tsv",
                 cblaster_annotations_path="src/data/data_collection/cblaster_results_liberal.tsv", 
+                cryptic_puls_path="src/data/data_collection/cryptic_puls_genes.tsv",
                 k=7, model_name="gecco_pfam", split="test", output_path="results/plots", weight=1.0, aggregate=False):
 
         self.model_name = model_name
@@ -85,7 +87,7 @@ class PredictionEvaluator:
             self.labeled_results_raw.append(labeled_results) # keep a copy of the raw results before joining with annotations
 
         self.get_pulpy_annotations(pulpy_annotations_path)
-        self.get_cblaster_annotations(cblaster_annotations_path)
+        self.cryptic_puls = polars.read_csv(cryptic_puls_path, separator="\t")
         self.clusters_table = polars.read_csv(clusters_table_path, separator='\t', infer_schema_length=600)
         self.filter = None
         self.aggregated = False
@@ -105,22 +107,21 @@ class PredictionEvaluator:
             return 0.25
 
 
-    def set_evaluation_data(self, fold):
-        self.true = self.labeled_results[fold].select(polars.col("is_PUL")).fill_null(False).fill_nan(False).to_series().to_list()
-        self.pred = self.labeled_results[fold].select(polars.col("is_PUL_pred")).fill_null(False).fill_nan(False).to_series().to_list()
-        self.p_pred = self.labeled_results[fold].select(polars.col("average_p")).fill_null(0.0).fill_nan(0.0).to_series().to_list()
-        self.pulpy_pred = self.labeled_results[fold].select(polars.col("is_PUL_pulpy")).fill_null(False).fill_nan(False).to_series().to_list()
-        # weight down genes with PULpy or cblaster annotations but no experimental data (likely cryptic puls)
-        self.sample_weights = (
-            self.labeled_results[fold]
-            .with_columns(
-                polars.when(((polars.col("is_PUL_pulpy") == True) | (polars.col("is_PUL_cblaster") == True)) & (polars.col("is_PUL") == False))
-                .then(self.weight)
-                .otherwise(1.0)
-                .alias("sample_weight")
-            )
-            .select("sample_weight").to_series().to_list()
-        )
+    def get_evaluation_data(self, labeled_results_df, mask_cryptic=False):
+        """
+        Returns tuple of (true_labels, predictions, predicted_probs, pulpy_predictions)
+        Removes genes labeled as cryptic if mask_cryptic is set to True
+        """
+
+        if mask_cryptic:
+            labeled_results_df = labeled_results_df.join(self.cryptic_puls.select("protein_id"), how="anti", on="protein_id")
+
+        true = labeled_results_df.select(polars.col("is_PUL")).fill_null(False).fill_nan(False).to_series().to_list()
+        pred = labeled_results_df.select(polars.col("is_PUL_pred")).fill_null(False).fill_nan(False).to_series().to_list()
+        p_pred = labeled_results_df.select(polars.col("average_p")).fill_null(0.0).fill_nan(0.0).to_series().to_list()
+        pulpy_pred = labeled_results_df.select(polars.col("is_PUL_pulpy")).fill_null(False).fill_nan(False).to_series().to_list()
+        return true, pred, p_pred, pulpy_pred
+
 
     def recompute_predictions(self, fold, threshold=None):
         if threshold is None:
@@ -129,33 +130,35 @@ class PredictionEvaluator:
         self.labeled_results[fold] = self.labeled_results[fold].with_columns(
             polars.when(polars.col("average_p") >= threshold).then(True).otherwise(False).alias("is_PUL_pred")
         )
-        self.set_evaluation_data(fold)
 
 
     def aggregate_all_folds(self, k=5):
-        if self.aggregated:
-            return
-
-        # aggregate all folds into one table for overall evaluation
-        print("Aggregating all folds for overall evaluation...")
-        all_labeled_tables = []
-        for fold in range(k):
-            df = (
-                self.labeled_results[fold]
-                .join(self.clusters_table.select("sequence_id", "phylum", "species").unique(), on="sequence_id", how="left")
-            )
-            # cast types to prevent issues
-            if "start_pred" in df.columns: 
-                df = df.with_columns(
-                    polars.col("start_pred").cast(polars.Int64, strict=False),
-                    polars.col("end_pred").cast(polars.Int64, strict=False),
+        # aggregate all folds into one table for overall evaluation, saves as labeled_results[0]
+        if not self.aggregated:
+            print("Aggregating all folds for overall evaluation...")
+            all_labeled_tables = []
+            for fold in range(k):
+                df = (
+                    self.labeled_results[fold]
+                    .join(
+                        self.clusters_table.select("sequence_id", "phylum", "species").unique(), 
+                        on="sequence_id", 
+                        how="left"
+                    )
                 )
-            all_labeled_tables.append(df)
+                # cast types to prevent issues
+                if "start_pred" in df.columns: 
+                    df = df.with_columns(
+                        polars.col("start_pred").cast(polars.Int64, strict=False),
+                        polars.col("end_pred").cast(polars.Int64, strict=False),
+                    )
+                all_labeled_tables.append(df)
 
+            self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
+            self.labeled_results_raw = [polars.concat(all_labeled_tables)]
+            self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
+            self.aggregated = True
 
-        self.labeled_results = [polars.concat(all_labeled_tables)] # keep as list
-        self.get_pulpy_annotations("src/data/data_collection/pulpy_annotations.tsv") # re-join with pulpy annotations after concatenation
-        self.aggregated = True
 
     def get_pulpy_annotations(self, pulpy_annotations_path):
         pulpy_annotations = (
@@ -173,22 +176,7 @@ class PredictionEvaluator:
                 how="left"
             )
 
-    def get_cblaster_annotations(self, cblaster_annotations_path):
-        cblaster_annotations = (
-            polars.read_csv(cblaster_annotations_path, separator='\t')
-            .select("sequence_id", "start", "end")
-        )
-        for fold in range(len(self.labeled_results)):
-            self.labeled_results[fold] = self.labeled_results[fold].join(
-                (
-                    join_gene_and_PUL_table(self.labeled_results_raw[fold], cblaster_annotations)
-                    .select("protein_id", "is_PUL", "cluster_id").rename({"is_PUL": "is_PUL_cblaster", "cluster_id": "cluster_id_cblaster"})
-                ),
-                on="protein_id",
-                how="left"
-            )
 
-    
     def filter_phylum(self, phylum, fold):
         self.labeled_results[fold] = (
             self.labeled_results[fold]
@@ -200,23 +188,17 @@ class PredictionEvaluator:
             .filter(polars.col("phylum") == phylum)
             .drop("phylum")
         )
-        self.set_evaluation_data(fold)
         self.filter = phylum
 
-    
-    def confusion_matrix(self):
-        cm = confusion_matrix(self.true, self.pred)
-        print(cm)
 
-
-    def plot_pr(self, true, pred, label, color, ax, plot_mcc=False, weights=None, thresholds_to_mark=[]):
+    def plot_pr(self, true, pred, label, color, ax, weights=None, thresholds_to_mark=[]):
         if len(true) == 0 or len(pred) == 0:
             print(f"Warning: No data to plot for {label}. Skipping PR curve.")
             return
 
         precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True, sample_weight=weights)
         auc = average_precision_score(true, pred, sample_weight=weights)
-        ax.plot(recall, precision, label=label + " (AP: {:.2f})".format(auc), color=color, alpha=0.8)
+        ax.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color, alpha=0.8)
 
         # show cutoffs on the plot
         if len(thresholds_to_mark) > 0:
@@ -226,12 +208,6 @@ class PredictionEvaluator:
                 p = precision[idx + 1]
                 ax.scatter(r, p, color=color, s=5, alpha=0.5)
                 ax.text(r, p, f"{t:.1f}", fontsize=8, color=color)
-
-        if plot_mcc:
-            # Matthews correlation coefficient
-            mcc_thresholds = np.linspace(0, 1, num=20)
-            mcc, threshold, pr_point = self.calculate_mmc(true, pred, mcc_thresholds)        
-            plt.scatter(pr_point[0], pr_point[1], label=f"Best MCC: {round(mcc, 2)}, threshold {round(threshold, 2)}", color=color, marker='X', s=100)
 
 
     def plot_pr_dot(self, true, pred, color, ax):
@@ -243,49 +219,11 @@ class PredictionEvaluator:
         auc = average_precision_score(true, pred)
         ax.scatter(recall[1], precision[1], color=color)
 
+    def plot_baseline(self, true, ax):
+        baseline = sum(true) / len(true) if len(true) > 0 else 0
+        ax.plot([0, 1], [baseline, baseline], linestyle='--', color='gray')
 
-    def precision_recall_curve(self, fold):
-        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-        if fold == "all":
-            self.aggregate_all_folds()
-            self.set_evaluation_data(0)
-        else:
-            self.set_evaluation_data(fold)
 
-        colors = plt.cm.tab20.colors
-        # for true vs pred
-        self.plot_pr(self.true, self.p_pred, "All taxa", colors[0], ax[0])
-        #self.plot_pr(self.true, self.p_pred, f"All taxa, weighted {self.weight}", colors[5], ax[0], weights=self.sample_weights)
-
-        # for pulpy vs pred
-        self.plot_pr(self.pulpy_pred, self.p_pred, "All taxa", colors[1], ax[1])
-        # dot for pulpy vs experimental
-        self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax[0])
-        # compute baselines
-        baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
-        baseline_pulpy = sum(self.pulpy_pred) / len(self.pulpy_pred) if len(self.pulpy_pred) > 0 else 0
-
-        # then filter by phylum and plot again
-        self.filter_phylum("Bacteroidota", fold if fold != "all" else 0)
-        self.plot_pr(self.true, self.p_pred, "Bacteroidota", colors[2], ax[0])
-        self.plot_pr(self.pulpy_pred, self.p_pred, "Bacteroidota", colors[3], ax[1])
-
-        # plot baselines
-        ax[0].plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
-        ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', label="Baseline", color='gray')
-
-        # add labels and legend
-        for i in range(2):
-            ax[i].set_xlabel("Recall")
-            ax[i].set_ylabel("Precision")
-            ax[i].legend(loc="upper right")
-        ax[0].set_title(self.model_name + " tested on experimental annotations")
-        ax[1].set_title(self.model_name + " tested on PULpy annotations")
-
-        fig.suptitle(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
-        plt.tight_layout()
-        plt.savefig(f"{self.output_path}/pr_curve_{self.model_name}_{self.split}_{fold}.png")
-        plt.clf()
 
     def roc_curve(self, true, p_pred, label, color, ax):
         if len(true) == 0 or len(p_pred) == 0:
@@ -296,22 +234,72 @@ class PredictionEvaluator:
         roc_auc = auc(fpr, tpr)
         ax.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
 
-    def plot_roc_curves(self, fold):
-        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-        self.set_evaluation_data(fold)
-        self.roc_curve(self.true, self.p_pred, "True vs " + self.model_name, 'blue', ax[0])
-        self.roc_curve(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, 'green', ax[1])
 
-        plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title(f'ROC Curve for {self.model_name} (on {self.split} set, fold {fold})')
-        plt.legend(loc="lower right")
-        plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
-        plt.clf()
+    # def precision_recall_curve(self, fold):
+    #     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    #     if fold == "all":
+    #         self.aggregate_all_folds()
+    #         self.set_evaluation_data(0)
+    #     else:
+    #         self.set_evaluation_data(fold)
+
+    #     colors = plt.cm.tab20.colors
+    #     # for true vs pred
+    #     self.plot_pr(self.true, self.p_pred, "All taxa", colors[0], ax[0])
+
+    #     # for pulpy vs pred
+    #     self.plot_pr(self.pulpy_pred, self.p_pred, "All taxa", colors[1], ax[1])
+    #     # dot for pulpy vs experimental
+    #     self.plot_pr_dot(self.true, self.pulpy_pred, colors[4], ax[0])
+    #     # compute baselines
+    #     baseline = sum(self.true) / len(self.true) if len(self.true) > 0 else 0
+    #     baseline_pulpy = sum(self.pulpy_pred) / len(self.pulpy_pred) if len(self.pulpy_pred) > 0 else 0
+
+    #     # then filter by phylum and plot again
+    #     self.filter_phylum("Bacteroidota", fold if fold != "all" else 0)
+    #     self.plot_pr(self.true, self.p_pred, "Bacteroidota", colors[2], ax[0])
+    #     self.plot_pr(self.pulpy_pred, self.p_pred, "Bacteroidota", colors[3], ax[1])
+
+    #     # plot baselines
+    #     ax[0].plot([0, 1], [baseline, baseline], linestyle='--', label="Baseline", color='gray')
+    #     ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', label="Baseline", color='gray')
+
+    #     # add labels and legend
+    #     for i in range(2):
+    #         ax[i].set_xlabel("Recall")
+    #         ax[i].set_ylabel("Precision")
+    #         ax[i].legend(loc="upper right")
+    #     ax[0].set_title(self.model_name + " tested on experimental annotations")
+    #     ax[1].set_title(self.model_name + " tested on PULpy annotations")
+
+    #     fig.suptitle(f"Precision-Recall Curve for {self.model_name} (on {self.split} set, fold {fold})")
+    #     plt.tight_layout()
+    #     plt.savefig(f"{self.output_path}/pr_curve_{self.model_name}_{self.split}_{fold}.png")
+    #     plt.clf()
+
+    # def plot_roc_curves(self, fold):
+    #     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    #     self.set_evaluation_data(fold)
+    #     self.roc_curve(self.true, self.p_pred, "True vs " + self.model_name, 'blue', ax[0])
+    #     self.roc_curve(self.pulpy_pred, self.p_pred, "PULpy vs " + self.model_name, 'green', ax[1])
+
+    #     plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+    #     plt.xlim([0.0, 1.0])
+    #     plt.ylim([0.0, 1.05])
+    #     plt.xlabel('False Positive Rate')
+    #     plt.ylabel('True Positive Rate')
+    #     plt.title(f'ROC Curve for {self.model_name} (on {self.split} set, fold {fold})')
+    #     plt.legend(loc="lower right")
+    #     plt.savefig(f"{self.output_path}/roc_curve_{self.model_name}_{self.split}_{fold}.png")
+    #     plt.clf()
     
+
+    def get_prauc(self, fold):
+        true, _, p_pred, _ = self.get_evaluation_data(self.labeled_results[fold])
+        auc = average_precision_score(true, p_pred)
+        return auc
+
+
     def f1_per_fold(self):
         f1_scores_per_fold = []
         average_precision_scores = []
@@ -339,7 +327,7 @@ class PredictionEvaluator:
         plt.close()
 
 
-    def test_cryptic_puls(self, cryptic_df, fold='all'):
+    def test_cryptic_puls(self, fold='all'):
         """
         Generates three PR curves, with either only experimental puls, cryptic puls or both as positives.
         """
@@ -350,7 +338,7 @@ class PredictionEvaluator:
             df = self.labeled_results[fold]
 
         # add cryptic label
-        cryptic_df = cryptic_df.select("protein_id").with_columns(polars.lit(True).alias("is_cryptic"))
+        cryptic_df = self.cryptic_puls.select("protein_id").with_columns(polars.lit(True).alias("is_cryptic"))
         df = df.join(cryptic_df, on="protein_id", how="left").with_columns(polars.col("is_cryptic").fill_null(False))
 
         # make binary labels
@@ -387,8 +375,7 @@ class PredictionEvaluator:
         ax1.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold {fold})")
         ax1.legend()
 
-        # --- Bottom: KDE of prediction scores ---
-        bw = 0.3
+        # --- Bottom: histogram of prediction scores ---
         # get only probabilities of positives/negatives
         p_pred_exp = df_exp.filter(polars.col("y_exp")).select("average_p").fill_null(0.0).to_series().to_list()
         p_pred_cryptic = df_cryptic.filter(polars.col("y_cryptic")).select("average_p").fill_null(0.0).to_series().to_list()
@@ -408,17 +395,21 @@ class PredictionEvaluator:
         plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_{fold}.png")
         plt.close()
 
-        # def venn_diagram(self):
-        #     fig, axs = plt.subplots(2, 4, figsize=(20, 10))
-        #     for i in range(7):
-        #         ax = axs[i//4, i%4]
-        #         true_set = set(self.labeled_results[i].filter(polars.col("is_PUL") == True).select("protein_id").to_series().to_list())
-        #         pred_set = set(self.labeled_results[i].filter(polars.col("is_PUL_pred") == True).select("protein_id").to_series().to_list())
-        #         pulpy_set = set(self.labeled_results[i].filter(polars.col("is_PUL_pulpy") == True).select("protein_id").to_series().to_list())
-        #         venn3([true_set, pred_set, pulpy_set], ("Experimental", self.model_name, "PULpy"), ax=ax)
-        #         ax.set_title(f"PUL predictions ({self.split} set, fold {i})")
 
-        #     axs[1, 3].axis('off')
-        #     plt.tight_layout()
-        #     plt.savefig(f"{self.output_path}/venn_diagram_{self.model_name}_{self.split}.png")
-        #     plt.clf()
+        def venn_diagram(self, fold):
+            if fold == "all":
+                self.aggregate_all_folds()
+                df = self.labeled_results[0]
+            else:
+                df = self.labeled_results[fold]
+
+            fig, ax = plt.subplots(figsize=(8, 4))
+            true_set = set(df.filter(polars.col("is_PUL") == True).select("protein_id").to_series().to_list())
+            pred_set = set(df.filter(polars.col("is_PUL_pred") == True).select("protein_id").to_series().to_list())
+            pulpy_set = set(df.filter(polars.col("is_PUL_pulpy") == True).select("protein_id").to_series().to_list())
+            venn3([true_set, pred_set, pulpy_set], ("Experimental", self.model_name, "PULpy"), ax=ax)
+            ax.set_title(f"PUL predictions overlap ({self.split} set, fold {i})")
+            ax.axis('off')
+            fig.tight_layout()
+            fig.savefig(f"{self.output_path}/venn_{fold}.png")
+            plt.close()

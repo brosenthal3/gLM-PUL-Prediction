@@ -51,20 +51,6 @@ def generate_upset_plot(all_models, model_class):
     )
     chart.save(f"results/plots/aggregated/upset_plot_{model_class}.svg")
 
-    # gene_dicts = {}
-    # for col_name in gene_table.columns:
-    #     if col_name == "protein_id":
-    #         continue
-    #     gene_dicts[col_name] = gene_table.filter(polars.col(col_name)).select("protein_id").unique().to_series().to_list()
-
-    # # format output for upset plot
-    # genes_overlap = upsetplot.from_contents(gene_dicts)
-    # print(genes_overlap)
-    # # generate upsetplot
-    # upset_plot = upsetplot.UpSet(genes_overlap, subset_size="count").plot()
-    # plt.suptitle
-    # plt.savefig(f"results/plots/aggregated/upset_plot_{model_class}.png")
-    # plt.close()
 
 
 def compare_all_models(all_models, model_class):
@@ -104,40 +90,40 @@ def compare_all_models(all_models, model_class):
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
         # before aggregating, plot for folds 5 and 6 separately
-        model_evaluator.set_evaluation_data(5)
-        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_bac[0])
-        model_evaluator.set_evaluation_data(6)
-        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_bac[1])
+        true_5, _, p_pred_5, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[5], mask_cryptic=True)
+        model_evaluator.plot_pr(true_5, p_pred_5, all_models[i], colors[i], ax_bac[0])
+        true_6, _, p_pred_6, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[6], mask_cryptic=True)
+        model_evaluator.plot_pr(true_6, p_pred_6, all_models[i], colors[i], ax_bac[1])
 
-        # for masked models, also evaluate cryptic puls
-        print("testing on cryptic puls")
-        cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t").unique()
+        # aggregate all folds
         model_evaluator.aggregate_all_folds()
-        model_evaluator.test_cryptic_puls(cryptic_df, "all")
-        model_evaluator.set_evaluation_data(0)        
+
+        # evaluate predictions on cryptic puls
+        model_evaluator.test_cryptic_puls("all")
 
         # for true vs pred
-        model_evaluator.plot_pr(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax[0])
-        model_evaluator.roc_curve(model_evaluator.true, model_evaluator.p_pred, all_models[i], colors[i], ax_roc[0])
+        true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
+        model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
+        model_evaluator.roc_curve(true_masked, p_pred_masked, all_models[i], colors[i], ax_roc[0])
+
         # for pulpy vs pred
-        model_evaluator.plot_pr(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax[1])
-        model_evaluator.roc_curve(model_evaluator.pulpy_pred, model_evaluator.p_pred, all_models[i], colors[i], ax_roc[1])
+        _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
+        model_evaluator.plot_pr(pulpy_pred, p_pred, all_models[i], colors[i], ax[1])
+        model_evaluator.roc_curve(pulpy_pred, p_pred, all_models[i], colors[i], ax_roc[1])
 
         # plot baselines only once at the end
         if i == len(all_models)-1:
-            baseline = sum(model_evaluator.true) / len(model_evaluator.true) if len(model_evaluator.true) > 0 else 0
-            baseline_pulpy = sum(model_evaluator.pulpy_pred) / len(model_evaluator.pulpy_pred) if len(model_evaluator.pulpy_pred) > 0 else 0
-            ax[0].plot([0, 1], [baseline, baseline], linestyle='--', color='gray')
-            ax[1].plot([0, 1], [baseline_pulpy, baseline_pulpy], linestyle='--', color='gray')
+            model_evaluator.plot_baseline(true_masked, ax[0])
+            model_evaluator.plot_baseline(pulpy_pred, ax[1])
+            model_evaluator.plot_baseline(true_5, ax_bac[0])
+            model_evaluator.plot_baseline(true_6, ax_bac[1])
 
+
+        # add legends
         for j in range(2):
             ax[j].legend(loc="upper right")
             ax_roc[j].legend(loc="lower right")
             ax_bac[j].legend(loc="upper right")
-
-        if model_class == "presentation":
-            fig.tight_layout()
-            fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}_{i}.png")
 
 
     fig.tight_layout()
@@ -154,29 +140,10 @@ def evaluate_model(args, model_name):
     results_path = f"src/data/results/{model_name}/labeled_results_{args.split}"
     if not os.path.exists(results_path+"_0.tsv"):
         raise ValueError("Invalid model name, or no results found.")
-
     # output path to save plots
     output_path = f"results/plots/{model_name}"
 
-    # df of cryptic pul protein ids
-    cryptic_df = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator="\t").unique()
-
-
-    evaluator = PredictionEvaluator(
-        f"{results_path}",
-        k=args.k,
-        model_name=f"{model_name}",
-        split=args.split,
-        output_path=output_path,
-        weight=args.weight
-    )
-
-    for fold in range(args.k):
-        evaluator.precision_recall_curve(fold)
-        evaluator.plot_roc_curves(fold)
-        evaluator.test_cryptic_puls(cryptic_df, fold)
-
-    # new evaluator class for aggregating 5 folds instead of 7
+    # evaluator class for aggregating 5 folds instead of 7
     if args.k >= 5:
         evaluator = PredictionEvaluator(
             f"{results_path}",
@@ -187,7 +154,7 @@ def evaluate_model(args, model_name):
             weight=args.weight
         )
         evaluator.precision_recall_curve("all")
-        evaluator.test_cryptic_puls(cryptic_df, "all")
+        evaluator.test_cryptic_puls("all")
 
 
 def main(args):

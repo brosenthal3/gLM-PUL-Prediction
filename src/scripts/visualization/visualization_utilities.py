@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_r
 import seaborn as sns
 from matplotlib_venn import venn3
 from tqdm import tqdm
+from viz_data import model_names
 
 
 def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
@@ -373,7 +374,7 @@ class PredictionEvaluator:
 
         ax1.set_xlabel("Recall")
         ax1.set_ylabel("Precision")
-        ax1.set_title(f"Cryptic PUL evaluation ({self.model_name}, fold {fold})")
+        ax1.set_title(f"Cryptic PUL evaluation ({model_names.get(self.model_name)}, fold {fold})")
         ax1.legend()
 
         # --- Bottom: histogram of prediction scores ---
@@ -410,7 +411,7 @@ class PredictionEvaluator:
             true_set = set(df.filter(polars.col("is_PUL") == True).select("protein_id").to_series().to_list())
             pred_set = set(df.filter(polars.col("is_PUL_pred") == True).select("protein_id").to_series().to_list())
             pulpy_set = set(df.filter(polars.col("is_PUL_pulpy") == True).select("protein_id").to_series().to_list())
-            venn3([true_set, pred_set, pulpy_set], ("Experimental", self.model_name, "PULpy"), ax=ax)
+            venn3([true_set, pred_set, pulpy_set], ("Experimental", model_names.get(self.model_name), "PULpy"), ax=ax)
             ax.set_title(f"PUL predictions overlap ({self.split} set, fold {i})")
             ax.axis('off')
             fig.tight_layout()

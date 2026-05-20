@@ -9,6 +9,7 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator
 import altair_upset as au
+from viz_data import model_names, model_names_masked
 
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
@@ -53,7 +54,7 @@ def generate_upset_plot(all_models, model_class):
 
 
 
-def compare_all_models(all_models, model_class):
+def compare_all_models(all_models, model_class, model_names_dict=model_names):
     # list of evaluators for all models
     evaluators = get_evaluators(all_models)
 
@@ -96,11 +97,12 @@ def compare_all_models(all_models, model_class):
     auprc_both = []
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
+        current_model_name = model_names_dict.get(all_models[i])
         # before aggregating, plot for folds 5 and 6 separately
         true_5, _, p_pred_5, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[5], mask_cryptic=True)
-        model_evaluator.plot_pr(true_5, p_pred_5, all_models[i], colors[i], ax_bac[0])
+        model_evaluator.plot_pr(true_5, p_pred_5, current_model_name, colors[i], ax_bac[0])
         true_6, _, p_pred_6, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[6], mask_cryptic=True)
-        model_evaluator.plot_pr(true_6, p_pred_6, all_models[i], colors[i], ax_bac[1])
+        model_evaluator.plot_pr(true_6, p_pred_6, current_model_name, colors[i], ax_bac[1])
 
         # aggregate all folds
         model_evaluator.aggregate_all_folds()
@@ -114,13 +116,13 @@ def compare_all_models(all_models, model_class):
         
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
-        model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
-        model_evaluator.roc_curve(true_masked, p_pred_masked, all_models[i], colors[i], ax_roc[0])
+        model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[i], ax[0])
+        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[i], ax_roc[0])
 
         # for pulpy vs pred
         _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
-        model_evaluator.plot_pr(pulpy_pred, p_pred, all_models[i], colors[i], ax[1])
-        model_evaluator.roc_curve(pulpy_pred, p_pred, all_models[i], colors[i], ax_roc[1])
+        model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[i], ax[1])
+        model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[i], ax_roc[1])
 
         # plot baselines only once at the end
         if i == len(all_models)-1:
@@ -137,7 +139,7 @@ def compare_all_models(all_models, model_class):
             ax_bac[j].legend(loc="upper right")
 
     # plot bar plot of auprc scores
-    models = [e.model_name for e in evaluators]
+    models = [model_names_dict.get(e.model_name) for e in evaluators]
     x = np.arange(len(models))   # group positions
     width = 0.25
     bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color="steelblue")
@@ -204,7 +206,7 @@ def main(args):
 
     if model_name == "masked":
         all_models = ["genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
+        compare_all_models(all_models, model_name, model_names_masked)
         return
 
     if model_name == "selected":

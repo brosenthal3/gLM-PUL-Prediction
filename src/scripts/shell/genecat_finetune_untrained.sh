@@ -3,12 +3,12 @@
 #SBATCH -J genecat_finetune_untrained
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
-#SBATCH --mem=32G
+#SBATCH --mem=16G
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --partition=gpu-medium
 #SBATCH --cpus-per-task 8
-#SBATCH --array=0-6%4
+#SBATCH --array=0-6
 #SBATCH -o slurm_output/genecat_finetune_untrained_%A_%a.out
 #SBATCH -e slurm_output/genecat_finetune_untrained_%A_%a.err
 
@@ -18,7 +18,7 @@ mamba activate genecat
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
-SLURM_ARRAY_TASK_ID=1
+
 BASEPATH=/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/data/data_split_class_level
 PULPATH=/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 # GENES

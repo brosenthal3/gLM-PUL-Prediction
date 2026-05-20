@@ -367,9 +367,9 @@ class PredictionEvaluator:
         colors = plt.cm.tab10.colors
         thresholds_to_mark = [0.1, 0.3, 0.5, 0.7, 0.9]
         # --- Top: PR curves ---
-        self.plot_pr(y_exp, p_pred_exp, "Experimental", colors[0], ax1, thresholds_to_mark=thresholds_to_mark)
-        self.plot_pr(y_cryptic, p_pred_cryptic, "Cryptic", colors[1], ax1, thresholds_to_mark=thresholds_to_mark)
-        self.plot_pr(y_both, p_pred_both, "Experimental + Cryptic", colors[2], ax1, thresholds_to_mark=thresholds_to_mark)
+        auprc_exp = self.plot_pr(y_exp, p_pred_exp, "Experimental", colors[0], ax1, thresholds_to_mark=thresholds_to_mark)
+        auprc_cryptic = self.plot_pr(y_cryptic, p_pred_cryptic, "Cryptic", colors[1], ax1, thresholds_to_mark=thresholds_to_mark)
+        auprc_both = self.plot_pr(y_both, p_pred_both, "Experimental + Cryptic", colors[2], ax1, thresholds_to_mark=thresholds_to_mark)
 
         ax1.set_xlabel("Recall")
         ax1.set_ylabel("Precision")
@@ -395,6 +395,8 @@ class PredictionEvaluator:
         plt.tight_layout()
         plt.savefig(f"{self.output_path}/cryptic_pr_{self.model_name}_{self.split}_{fold}.png")
         plt.close()
+
+        return auprc_exp, auprc_cryptic, auprc_both
 
 
         def venn_diagram(self, fold):

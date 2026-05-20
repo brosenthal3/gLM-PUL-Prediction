@@ -91,7 +91,9 @@ def compare_all_models(all_models, model_class):
     fig_roc.suptitle("ROC Curves of all tested models (all folds)")
     fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
-    auprc_scores = []
+    auprc_exp = []
+    auprc_cryptic = []
+    auprc_both = []
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
         # before aggregating, plot for folds 5 and 6 separately
@@ -104,12 +106,15 @@ def compare_all_models(all_models, model_class):
         model_evaluator.aggregate_all_folds()
 
         # evaluate predictions on cryptic puls
-        model_evaluator.test_cryptic_puls("all")
-
+        auprc_e, auprc_cr, auprc_b = model_evaluator.test_cryptic_puls("all")
+        # save auprc scores
+        auprc_exp.append(auprc_e)
+        auprc_cryptic.append(auprc_cr)
+        auprc_both.append(auprc_b)
+        
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
-        auprc = model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
-        auprc_scores.append(auprc)
+        model_evaluator.plot_pr(true_masked, p_pred_masked, all_models[i], colors[i], ax[0])
         model_evaluator.roc_curve(true_masked, p_pred_masked, all_models[i], colors[i], ax_roc[0])
 
         # for pulpy vs pred
@@ -131,9 +136,23 @@ def compare_all_models(all_models, model_class):
             ax_roc[j].legend(loc="lower right")
             ax_bac[j].legend(loc="upper right")
 
+    # plot bar plot of auprc scores
+    models = [e.model_name for e in evaluators]
+    x = np.arange(len(models))   # group positions
+    width = 0.25
+    bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color="steelblue")
+    bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color="orange")
+    bars_both= ax_bar.bar(x + width,auprc_both,width,label="Both",color="green")
+    ax_bar.bar_label(bars_exp, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.bar_label(bars_cryptic, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.bar_label(bars_both, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.set_ylim(0, 0.8)
     
-    ax_bar.bar(x=[e.model_name for e in evaluators], height=auprc_scores, color=colors[:len(auprc_scores)])
-    ax_bar.tick_params("x", rotation=60)
+    ax_bar.set_xticks(x)
+    ax_bar.set_xticklabels(models, rotation=45, ha="right")
+    ax_bar.set_ylabel("AUPRC")
+    ax_bar.set_title("AUPRC per model")
+    ax_bar.legend()
 
     fig.tight_layout()
     fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
@@ -165,7 +184,9 @@ def evaluate_model(args, model_name):
             output_path=output_path,
             weight=args.weight
         )
-        evaluator.precision_recall_curve("all")
+        for k in range(5):
+            evaluator.test_cryptic_puls(k)
+
         evaluator.test_cryptic_puls("all")
 
 
@@ -182,7 +203,7 @@ def main(args):
         return
 
     if model_name == "masked":
-        all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
+        all_models = ["genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
 

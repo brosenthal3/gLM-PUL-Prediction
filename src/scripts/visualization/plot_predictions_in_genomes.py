@@ -75,7 +75,6 @@ def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
     cryptic_puls = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator='\t')
     # aggregate model predictions across folds
     model_evaluator.aggregate_all_folds()
-    model_evaluator.set_evaluation_data(0)
     # genes from genbank file
     gb_file = f"src/data/genomes/genbank_genomes/{sequence_id}.gb"
     # write annotations df with cols: protein_id, start, end, product, note
@@ -157,7 +156,7 @@ def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
     ax4.set_xlabel("Location in genome (bp)")
     fig.suptitle(f"{record_definition} ({sequence_id})")
     fig.tight_layout()
-    fig.savefig(f"results/plots/high_confidence_predictions/{model_evaluator.model_name}_{sequence_id}.png")
+    fig.savefig(f"results/plots/high_confidence_predictions/{model_evaluator.model_name}_{sequence_id}_{start}_{end}.png")
     plt.close()
     return
 
@@ -238,7 +237,22 @@ def main(args):
 #        visualize_genes(model_evaluator, "RHLG01000001", start=108800, end=118000)
 #        visualize_genes(model_evaluator, "NZ_CP028092", start=2037500, end=2060500)
 #        visualize_genes(model_evaluator, "NZ_KI912107", start=4162000, end=4182000)
-        visualize_genes(model_evaluator, "NZ_CP074436", start=4221500, end=4245000)
+#        visualize_genes(model_evaluator, "NZ_CP074436", start=4221500, end=4245000)
+
+        # vulgatus
+        visualize_genes(model_evaluator, "CP000139", start=2317000, end=2331000)
+        # fragilis
+        visualize_genes(model_evaluator, "CR626927", start=354000, end=363000)
+        # clostridium 1 
+        visualize_genes(model_evaluator, "NZ_CP010086", start=2883500, end=2896500)
+        # clostridium 2 
+        visualize_genes(model_evaluator, "NZ_CP010086", start=4787882, end=4803326)
+        # clostridium 3 
+        visualize_genes(model_evaluator, "NZ_CP010086", start=5728000, end=5734500)
+        # dorei
+        visualize_genes(model_evaluator, "NZ_CP046176", start=3858000, end=3879000)
+        # rosubria
+        visualize_genes(model_evaluator, "NZ_LR027880", start=4277000, end=4297500)
 
         return
 

@@ -71,10 +71,12 @@ def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, mo
         plt.close()
 
 
-def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
+def visualize_genes(model_evaluators, sequence_id, start=0, end=10000, model_class="predictions"):
     cryptic_puls = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator='\t')
     # aggregate model predictions across folds
-    model_evaluator.aggregate_all_folds()
+    for model_evaluator in model_evaluators:
+        model_evaluator.aggregate_all_folds()
+    
     # genes from genbank file
     gb_file = f"src/data/genomes/genbank_genomes/{sequence_id}.gb"
     # write annotations df with cols: protein_id, start, end, product, note
@@ -103,85 +105,72 @@ def visualize_genes(model_evaluator, sequence_id, start=0, end=10000):
                 )
             features.append(graphic_feature)
 
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(
-        4, 1, figsize=(16, 6), sharex=True, gridspec_kw={"height_ratios": [8, 1, 1, 1]}
+    fig, axes = plt.subplots(
+        len(model_evaluators)+3, 1, figsize=(16, 6), sharex=True, gridspec_kw={"height_ratios": [8]+[1]*(len(model_evaluators)+2)}
     )
 
     # PLOT THE RECORD MAP
     graphic_record = GraphicRecord(sequence_length=length, features=features)
-    graphic_record.plot(ax=ax1, with_ruler=False, strand_in_label_threshold=4, max_label_length=55)
+    graphic_record.plot(ax=axes[0], with_ruler=False, strand_in_label_threshold=4, max_label_length=55)
 
-    # # PLOT THE PUL annotations
-    genes = (
-        model_evaluator.labeled_results[0]
-        .filter(
-            polars.col("sequence_id") == sequence_id,
-            polars.col("start") >= start,
-            polars.col("end") <= end,
+    # PLOT THE PUL annotations
+    genes_dfs = []
+    for model_evaluator in model_evaluators:
+        genes = (
+            model_evaluator.labeled_results[0]
+            .filter(
+                polars.col("sequence_id") == sequence_id,
+                polars.col("start") >= start,
+                polars.col("end") <= end,
+            )
+            .join(cryptic_puls.with_columns(polars.lit(True).alias("is_cryptic")), on="protein_id", how="left")
         )
-        .join(cryptic_puls.with_columns(polars.lit(True).alias("is_cryptic")), on="protein_id", how="left")
-    )
+        genes_dfs.append(genes)
 
-    predicted = []
     labels = []
     cryptic = []
     colors_tab10 = plt.cm.tab10.colors
     # top ax: called genes
-    for row in genes.iter_rows(named=True):
+    for row in genes_dfs[0].iter_rows(named=True):
         if row["is_PUL"]:
             labels.append((row["start"]-start, row["end"]-start, "Experimental"))
         # add cryptic puls
         if row["is_cryptic"]:
             cryptic.append((row["start"]-start, row["end"]-start, "Cryptic PULs"))
-        # add prediction probabilities
-        predicted.append((row["start"]-start, row["end"]-start, "Predicted", row["average_p"]))
 
-    for start_gene, end_gene, label, p in predicted:
-        ax2.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[0], alpha=min(0.1+p, 1))
     for start_gene, end_gene, label in labels:
-        ax3.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[1], alpha=1)
+        axes[-2].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[1], alpha=1)
     for start_gene, end_gene, label in cryptic:
-        ax4.fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[2])
+        axes[-1].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[2])
 
 
-    ax2.set_ylim(0, 1)
-    ax3.set_ylim(0, 1)
-    ax4.set_ylim(0, 1)
-    ax2.set_yticks([0.45], [f"Predicted ({model_evaluator.model_name})"])
-    ax3.set_yticks([0.45], ["Experimental PULs"])
-    ax4.set_yticks([0.45], ["Cryptic PULs"])
+    # add prediction probabilities for every model
+    for i, genes in enumerate(genes_dfs):
+        predicted = []
+        for row in genes.iter_rows(named=True):
+            predicted.append((row["start"]-start, row["end"]-start, "Predicted", row["average_p"]))
+
+        for start_gene, end_gene, label, p in predicted:
+            axes[i+1].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[0], alpha=min(0.1+p, 1))
+
+    for i, ax in enumerate(axes):
+        if i == 0:
+            continue
+        if i > 0 and i <= len(model_evaluators):
+            ax.set_yticks([0.45], [f"{model_evaluators[i-1].model_name}"])
+
+        ax.set_ylim(0, 1)
+
+    axes[-2].set_yticks([0.45], ["Experimental PULs"])
+    axes[-1].set_yticks([0.45], ["Cryptic PULs"])
 
     tick_skips = round((end-start)*0.1)
-    ax4.set_xticks(ticks=range(0, end-start, tick_skips), labels=range(start, end, tick_skips))
-    ax4.set_xlabel("Location in genome (bp)")
+    axes[-1].set_xticks(ticks=range(0, end-start, tick_skips), labels=range(start, end, tick_skips))
+    axes[-1].set_xlabel("Location in genome (bp)")
     fig.suptitle(f"{record_definition} ({sequence_id})")
     fig.tight_layout()
-    fig.savefig(f"results/plots/high_confidence_predictions/{model_evaluator.model_name}_{sequence_id}_{start}_{end}.png")
+    fig.savefig(f"results/plots/high_confidence_predictions/{model_class}_{sequence_id}_{start}_{end}.png")
     plt.close()
-    return
-
-
-def find_high_confidence_predictions(model_evaluator):
-    model_evaluator.aggregate_all_folds()
-    model_evaluator.set_evaluation_data(0)
-    model_evaluator.recompute_predictions(0, threshold=0.15)
-    model_evaluator.labeled_results[0] = (
-        model_evaluator.labeled_results[0]
-        .filter(
-            ~polars.col("is_PUL"),
-            ~polars.col("is_PUL_pulpy"),
-            polars.col("sequence_id").str.starts_with("N"),
-            polars.col("average_p").ge(0.8)
-        )
-        .sort(by=["average_p"], descending=True)
-    )
-    print(model_evaluator.labeled_results[0].select(
-        "sequence_id",
-        "start",
-        "end",
-        "average_p"
-    )[:200])
-
     return
 
 
@@ -197,9 +186,22 @@ def compare_all_models(all_models, model_class):
         for model_name in all_models
     ]
 
-    # visualize predictions in genome for all models on some species
-    genome_ids = ["AE015928", "AP006841", "JH724241", "NZ_AP022379"]
-    visualize_predictions_in_genome(evaluators, genome_ids, 0.15)
+    # vulgatus
+#    visualize_genes(evaluators, "CP000139", start=2317000, end=2331000, model_class=model_class)
+    # fragilis
+#    visualize_genes(evaluators, "CR626927", start=354000, end=363000, model_class=model_class)
+    # clostridium 1 
+#    visualize_genes(evaluators, "NZ_CP010086", start=2883500, end=2896500, model_class=model_class)
+    # clostridium 2 
+    visualize_genes(evaluators, "NZ_CP010086", start=4787882, end=4803326, model_class=model_class)  
+    visualize_genes(evaluators, "NZ_CP010086", start=6310368, end=6318315, model_class=model_class)  # experimental PUL
+    # clostridium 3 
+#    visualize_genes(evaluators, "NZ_CP010086", start=5728000, end=5734500, model_class=model_class)
+    # dorei
+#    visualize_genes(evaluators, "NZ_CP046176", start=3858000, end=3879000, model_class=model_class)
+    # rosubria
+#    visualize_genes(evaluators, "NZ_LR027880", start=4277000, end=4297500, model_class=model_class)
+
     return
 
 
@@ -210,18 +212,8 @@ def main(args):
         compare_all_models(all_models, model_name)
         return
 
-    if model_name == 'logistic_regression':
-        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
-        return
-
-    if model_name == "masked":
-        all_models = ["genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "esmc_masked", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
-        return
-
     if model_name == "selected":
-        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "esmc_masked", "bacformer_masked"]
+        all_models = ["gecco_pfam", "genecat_finetuned_cazy_masked", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
 
@@ -233,12 +225,7 @@ def main(args):
             k=5,
             output_path=f"results/plots/{model_name}"
         )
-        # find_high_confidence_predictions(model_evaluator)
-#        visualize_genes(model_evaluator, "RHLG01000001", start=108800, end=118000)
-#        visualize_genes(model_evaluator, "NZ_CP028092", start=2037500, end=2060500)
-#        visualize_genes(model_evaluator, "NZ_KI912107", start=4162000, end=4182000)
-#        visualize_genes(model_evaluator, "NZ_CP074436", start=4221500, end=4245000)
-
+        model_evaluator = [model_evaluator]
         # vulgatus
         visualize_genes(model_evaluator, "CP000139", start=2317000, end=2331000)
         # fragilis

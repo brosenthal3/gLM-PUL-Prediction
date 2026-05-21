@@ -43,7 +43,7 @@ python src/scripts/analysis/save_pretrained_model.py $MODEL_CAZY_PFAM ${MODEL_PA
 python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES_CAZY_PFAM -m ${MODEL_PATH}/pretrained_model_part.pt --vocab $VOCAB_CAZY_PFAM --batch-size 16 -j 1 -o $OUT --outtypes df
 
 #-----PROCESS EMBEDDINGS-----#
-EMBS_CAZY_PFAM=${OUT}/${MODEL_NAME_CAZY_PFAM}_context_embedding.embeddings.parquet
-OUT_FOLDS="src/data/results/genecat_finetuned_cazy/embeddings"
+EMBS_CAZY_PFAM=${OUT}/${MODEL_PATH}/pretrained_model_part_context_embedding.embeddings.parquet
+OUT_FOLDS="src/data/results/genecat_finetuned_cazy_masked/embeddings"
 
-python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}
+python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}  --embedding_col embeddings

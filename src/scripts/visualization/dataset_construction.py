@@ -66,7 +66,6 @@ def donut_chart(ax, counts, rank, title):
         wedgeprops=dict(width=0.35, edgecolor='w'),
         textprops={'fontsize': 9}
     )
-#    ax.set_title(title)
 
 def plot_taxonomy(ax, all_puls):
     phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=10)
@@ -86,9 +85,10 @@ def get_bins(labeled_table, bin_num):
     )
     labels = [f'{start}-{bins[0]}'] + [f'{bins[i]+1}-{bins[i + 1]}' if (bins[i]+1 != bins[i+1]) else f'{bins[i+1]}' for i in range(len(bins[:-1]))] + [f'≥{bins[-1]+1}']
     return bins, labels
- 
+
 def get_n_genes(genes, labeled_table):
-    labeled_table = join_gene_and_PUL_table(gene_table=genes, cluster_table=labeled_table)
+    print(labeled_table.with_columns((polars.col("end")-polars.col("start")).alias("PUL_length")).sort(by="PUL_length").select("cluster_id", "sequence_id", "species", "PUL_length"))
+    labeled_table = join_gene_and_PUL_table(gene_table=genes, cluster_table=labeled_table, buffer=0)
     labeled_table = labeled_table.group_by("cluster_id").agg(polars.col("is_PUL").sum().alias("n_genes")).sort("n_genes", descending=False).filter(polars.col("cluster_id").is_not_null())
     return labeled_table
 
@@ -144,7 +144,15 @@ def plot_venn_diagram_database(ax, experimental_puls):
     for t in v.set_labels + v.subset_labels:
         if t:
             t.set_fontsize(9)
-#    ax.set_title("PUL origin in dataset")
+
+def get_info_on_data(clusters_table, gene_table):
+    labeled_table = join_gene_and_PUL_table(gene_table=gene_table, cluster_table=clusters_table)
+
+    print("Number of contigs: ", clusters_table.select("sequence_id").n_unique())
+    print("Number of PULs: ", clusters_table.select("cluster_id").n_unique())
+    print("Number of genes: ", labeled_table.select("protein_id").n_unique())
+    print("Number of genes in PULs: ", labeled_table.filter("is_PUL").select("protein_id").n_unique())
+    print("Percentage: ", labeled_table.filter("is_PUL").select("protein_id").n_unique() / labeled_table.select("protein_id").n_unique() * 100)
 
 
 def main():
@@ -159,6 +167,8 @@ def main():
     )
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     original_clusters = polars.read_csv("src/data/data_collection/combined_clusters.tsv", separator="\t", infer_schema_length=600)
+
+    get_info_on_data(all_puls, genes)
 
     fig = plt.figure(figsize=(10, 6))
     gs = fig.add_gridspec(

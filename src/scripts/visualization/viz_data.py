@@ -4,15 +4,15 @@ from palettable.cartocolors.qualitative import Bold_10
 
 model_names = {
     "gecco_pfam": "GECCO (Pfam)",
-    "gecco_cazy": "GECCO (Pfam+CAZy)",
-    "genecat_zeroshot_pfam": "GeneCAT Zero-Shot (Pfam)",
-    "genecat_zeroshot_cazy": "GeneCAT Zero-Shot (Pfam+CAZy)",
-    "genecat_zeroshot_pfam_masked": "GeneCAT Zero-Shot Masked (Pfam)",
-    "genecat_zeroshot_cazy_masked": "GeneCAT Zero-Shot Masked (Pfam+CAZy)",
+    "gecco_cazy": "GECCO (CAZy)",
+    "genecat_zeroshot_pfam": "GeneCAT 0-Shot (Pfam)",
+    "genecat_zeroshot_cazy": "GeneCAT 0-Shot (CAZy)",
+    "genecat_zeroshot_pfam_masked": "GeneCAT 0-Shot Masked (Pfam)",
+    "genecat_zeroshot_cazy_masked": "GeneCAT 0-Shot Masked (CAZy)",
     "genecat_finetuned_pfam": "GeneCAT Finetuned (Pfam)",
-    "genecat_finetuned_cazy": "GeneCAT Finetuned (Pfam+CAZy)",
+    "genecat_finetuned_cazy": "GeneCAT Finetuned (CAZy)",
     "genecat_finetuned_pfam_masked": "GeneCAT Finetuned Masked (Pfam)",
-    "genecat_finetuned_cazy_masked": "GeneCAT Finetuned Masked (Pfam+CAZy)",
+    "genecat_finetuned_cazy_masked": "GeneCAT Finetuned Masked (CAZy)",
     "esmc": "ESM-C",
     "bacformer": "Bacformer",
     "esmc_masked": "ESM-C Masked",
@@ -22,8 +22,8 @@ model_names = {
 
 model_names_masked = {
     "gecco_pfam": "GECCO",
-    "genecat_zeroshot_cazy": "GeneCAT Zero-Shot",
-    "genecat_zeroshot_cazy_masked": "GeneCAT Zero-Shot Masked",
+    "genecat_zeroshot_cazy": "GeneCAT 0-Shot",
+    "genecat_zeroshot_cazy_masked": "GeneCAT 0-Shot Masked",
     "genecat_finetuned_cazy": "GeneCAT Finetuned",
     "genecat_finetuned_cazy_masked": "GeneCAT Finetuned Masked",
     "esmc": "ESM-C",
@@ -32,6 +32,16 @@ model_names_masked = {
     "bacformer_masked": "Bacformer Masked",
     "genecat_untrained": "GeneCAT Untrained"
 }
+
+model_names_features = {
+    "gecco_pfam": "GECCO (Pfam)",
+    "gecco_cazy": "GECCO (CAZy)",
+    "genecat_zeroshot_pfam_masked": "GeneCAT 0-Shot (Pfam)",
+    "genecat_zeroshot_cazy_masked": "GeneCAT 0-Shot (CAZy)",
+    "genecat_finetuned_cazy_masked": "GeneCAT Finetuned (CAZy)",
+    "genecat_finetuned_pfam_masked": "GeneCAT Finetuned (Pfam)",
+}
+
 
 Buda_4 = Buda_4.mpl_colors
 Cork_7 = Cork_7.mpl_colors

@@ -9,7 +9,7 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator
 import altair_upset as au
-from viz_data import model_names, model_names_masked, model_colors
+from viz_data import model_names, model_names_masked, model_colors, model_names_features
 
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
@@ -51,6 +51,55 @@ def generate_upset_plot(all_models, model_class):
 #        title="Predicted and experimental PUL genes overlap"
     )
     chart.save(f"results/plots/aggregated/upset_plot_{model_class}.svg")
+
+
+def barplot_features(all_models, model_names_dict=model_names_features):
+    # list of evaluators for all models
+    evaluators = get_evaluators(all_models)
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(6, 6))
+    ax_bar.set_xlabel("Model")
+    ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
+    ax_bar.set_title("AUPRC per model")
+    auprc_exp = []
+
+    for i, model_evaluator in enumerate(evaluators):
+        current_model_name = model_names_dict.get(all_models[i])
+        # aggregate all folds
+        model_evaluator.aggregate_all_folds()
+        # evaluate predictions on cryptic puls
+        auprc_e, auprc_cr, auprc_b = model_evaluator.test_cryptic_puls("all")
+        # save auprc scores
+        auprc_exp.append(auprc_e)
+
+    # plot bar plot of auprc scores
+    models = [model_names_dict.get(e.model_name) for e in evaluators]
+    colors = [model_colors.get(e.model_name) for e in evaluators]
+    n = len(models)
+    auprc = auprc_exp
+    # group size = 2 models per group
+    group_size = 2
+    gap = 0.8  # visual spacing between groups
+    x = []
+    group_centers = []
+    pos = 0
+    for i in range(0, n, group_size):
+        group = list(range(i, min(i + group_size, n)))
+        group_pos = [pos + j for j in range(len(group))]
+
+        x.extend(group_pos)
+        group_centers.append(np.mean(group_pos))
+
+        pos += len(group) + gap
+
+    x = np.array(x)
+    bars = ax_bar.bar(x, auprc, color=colors)
+    ax_bar.bar_label(bars, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.set_ylim(0, 0.8)
+    ax_bar.set_xticks(x)
+    ax_bar.set_xticklabels(models, rotation=45, ha="right")
+
+    fig_bar.tight_layout()
+    fig_bar.savefig("results/plots/aggregated/barplot_features.png")
 
 
 
@@ -206,7 +255,7 @@ def main(args):
 
     if model_name == "features":
         all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam_masked", "genecat_finetuned_cazy_masked"]
-        compare_all_models(all_models, model_name)
+        barplot_features(all_models)
         return
 
     if model_name == "selected":

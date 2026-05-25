@@ -187,20 +187,20 @@ def compare_all_models(all_models, model_class):
     ]
 
     # vulgatus
-#    visualize_genes(evaluators, "CP000139", start=2317000, end=2331000, model_class=model_class)
+    visualize_genes(evaluators, "CP000139", start=2313000, end=2338000, model_class=model_class)
     # fragilis
-#    visualize_genes(evaluators, "CR626927", start=354000, end=363000, model_class=model_class)
+    visualize_genes(evaluators, "CR626927", start=3720000, end=3727000, model_class=model_class)
     # clostridium 1 
 #    visualize_genes(evaluators, "NZ_CP010086", start=2883500, end=2896500, model_class=model_class)
     # clostridium 2 
-    visualize_genes(evaluators, "NZ_CP010086", start=4787882, end=4803326, model_class=model_class)  
-    visualize_genes(evaluators, "NZ_CP010086", start=6310368, end=6318315, model_class=model_class)  # experimental PUL
+    visualize_genes(evaluators, "NZ_CP010086", start=4787882, end=4803326, model_class=model_class)
+#    visualize_genes(evaluators, "NZ_CP010086", start=6310368, end=6318315, model_class=model_class)  # experimental PUL
     # clostridium 3 
-#    visualize_genes(evaluators, "NZ_CP010086", start=5728000, end=5734500, model_class=model_class)
+    visualize_genes(evaluators, "NZ_CP010086", start=5727000, end=5735000, model_class=model_class)
     # dorei
-#    visualize_genes(evaluators, "NZ_CP046176", start=3858000, end=3879000, model_class=model_class)
+    visualize_genes(evaluators, "NZ_CP046176", start=1442075, end=1455532, model_class=model_class)
     # rosubria
-#    visualize_genes(evaluators, "NZ_LR027880", start=4277000, end=4297500, model_class=model_class)
+    visualize_genes(evaluators, "NZ_LR027880", start=4274000, end=4298000, model_class=model_class)
 
     return
 

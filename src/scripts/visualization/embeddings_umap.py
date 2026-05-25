@@ -63,29 +63,36 @@ def plot_embeddings_umap(embeddings_path="src/data/results/genecat_zeroshot_cazy
 
 
 if __name__ == "__main__":
-    # genecat zeroshot
-    plot_embeddings_umap(
-        save_path="results/plots/umap_genecat_zeroshot_cazy.png",
-        model_name="GeneCAT Zeroshot (Pfam+CAZy)"
-    )
+    # # genecat zeroshot
+    # plot_embeddings_umap(
+    #     save_path="results/plots/umap_genecat_zeroshot_cazy.png",
+    #     model_name="GeneCAT Zeroshot (Pfam+CAZy)"
+    # )
 
-    # genecat finetuned
-    plot_embeddings_umap(
-        embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
-        save_path="results/plots/umap_genecat_finetuned_cazy.png", 
-        model_name="GeneCAT Finetuned (Pfam+CAZy)"
-    )
+    # # genecat finetuned
+    # plot_embeddings_umap(
+    #     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
+    #     save_path="results/plots/umap_genecat_finetuned_cazy.png", 
+    #     model_name="GeneCAT Finetuned (Pfam+CAZy)"
+    # )
 
-    # bacformer
-    plot_embeddings_umap(
-        embeddings_path="src/data/results/bacformer/fold_data/fold_0_data.parquet",
-        save_path="results/plots/umap_bacformer.png",
-        model_name="Bacformer"
-    )
+    # # bacformer
+    # plot_embeddings_umap(
+    #     embeddings_path="src/data/results/bacformer/fold_data/fold_0_data.parquet",
+    #     save_path="results/plots/umap_bacformer.png",
+    #     model_name="Bacformer"
+    # )
 
-    # ESM-C
+    # # ESM-C
+    # plot_embeddings_umap(
+    #     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
+    #     save_path="results/plots/umap_esmc.png",
+    #     model_name="ESM-C"
+    # )
+
+    # genecat_untrained
     plot_embeddings_umap(
-        embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-        save_path="results/plots/umap_esmc.png",
-        model_name="ESM-C"
+        embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
+        save_path="results/plots/umap_genecat_untrained.png",
+        model_name="GeneCAT Untrained & Finetuned (Pfam+CAZy)"
     )

@@ -9,7 +9,7 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator
 import altair_upset as au
-from viz_data import model_names, model_names_masked
+from viz_data import model_names, model_names_masked, model_colors
 
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
@@ -63,7 +63,7 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
     fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 8))
-    colors = plt.cm.tab20.colors
+    colors = model_colors
 
     # add labels and legend
     for j in range(2):
@@ -100,9 +100,9 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
         current_model_name = model_names_dict.get(all_models[i])
         # before aggregating, plot for folds 5 and 6 separately
         true_5, _, p_pred_5, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[5], mask_cryptic=True)
-        model_evaluator.plot_pr(true_5, p_pred_5, current_model_name, colors[i], ax_bac[0])
+        model_evaluator.plot_pr(true_5, p_pred_5, current_model_name, colors[all_models[i]], ax_bac[0])
         true_6, _, p_pred_6, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[6], mask_cryptic=True)
-        model_evaluator.plot_pr(true_6, p_pred_6, current_model_name, colors[i], ax_bac[1])
+        model_evaluator.plot_pr(true_6, p_pred_6, current_model_name, colors[all_models[i]], ax_bac[1])
 
         # aggregate all folds
         model_evaluator.aggregate_all_folds()
@@ -116,13 +116,13 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
         
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
-        model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[i], ax[0])
-        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[i], ax_roc[0])
+        model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax[0])
+        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax_roc[0])
 
         # for pulpy vs pred
         _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
-        model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[i], ax[1])
-        model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[i], ax_roc[1])
+        model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax[1])
+        model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax_roc[1])
 
         # plot baselines only once at the end
         if i == len(all_models)-1:
@@ -210,7 +210,7 @@ def main(args):
         return
 
     if model_name == "selected":
-        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc", "bacformer"]
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
         compare_all_models(all_models, model_name)
         return
 

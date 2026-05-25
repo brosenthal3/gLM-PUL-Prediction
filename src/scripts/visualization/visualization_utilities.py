@@ -204,7 +204,7 @@ class PredictionEvaluator:
 
         precision, recall, thresholds = precision_recall_curve(true, pred, drop_intermediate=True, sample_weight=weights)
         auc = average_precision_score(true, pred, sample_weight=weights)
-        ax.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color, alpha=0.8)
+        ax.plot(recall, precision, label=label + " (AUC: {:.2f})".format(auc), color=color)
 
         # show cutoffs on the plot
         if len(thresholds_to_mark) > 0:

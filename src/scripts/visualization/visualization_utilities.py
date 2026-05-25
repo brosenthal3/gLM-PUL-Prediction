@@ -9,6 +9,19 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from viz_data import model_names
 
+def get_bins(bin_num, start=0, stop=50):
+    start = 0
+    bins = np.unique(
+        np.logspace(
+            start=start,
+            stop=np.log2(stop),
+            base=2,
+            num=bin_num,
+        ).astype(int)
+    )
+    labels = [f'{start}-{bins[0]}'] + [f'{bins[i]+1}-{bins[i + 1]}' if (bins[i]+1 != bins[i+1]) else f'{bins[i+1]}' for i in range(len(bins[:-1]))] + [f'≥{bins[-1]+1}']
+    return bins, labels
+
 
 def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
     return table.with_columns(

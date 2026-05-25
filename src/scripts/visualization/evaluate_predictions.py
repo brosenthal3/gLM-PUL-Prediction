@@ -7,7 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_r
 import seaborn as sns
 from matplotlib_venn import venn3
 from tqdm import tqdm
-from visualization_utilities import PredictionEvaluator
+from visualization_utilities import PredictionEvaluator, get_bins
 import altair_upset as au
 from viz_data import model_names, model_names_masked, model_colors, model_names_features
 
@@ -100,6 +100,53 @@ def barplot_features(all_models, model_names_dict=model_names_features):
 
     fig_bar.tight_layout()
     fig_bar.savefig("results/plots/aggregated/barplot_features.png")
+
+
+def barplot_pul_length(all_models, model_names_dict=model_names):
+    pul_length_distributions = {}
+    # get gene count distributions for all models from predicted clusters
+    for model_name in all_models:
+        clusters_table_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
+        clusters_table = polars.read_parquet(clusters_table_path)
+        pul_length_distributions[model_name] = clusters_table["gene_count"].to_list()
+
+    # plot distributions as barplot
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # get bins and labels for barplot
+    bins, labels = get_bins(10, start=0, stop=15)
+    n_models = len(all_models)
+    width = 0.12
+    for model_name, lengths in pul_length_distributions.items():
+        labeled_table = polars.DataFrame({"n_genes": lengths})
+        binned = labeled_table.with_columns(
+            polars.col("n_genes")
+            .cut(breaks=bins.tolist(), include_breaks=False, labels=labels)
+            .alias("gene_bin")
+        )
+        counts = (
+            binned.group_by("gene_bin")
+            .len()
+            .sort("gene_bin")
+        )
+        # plot bar for current model
+        counts_dict = dict(zip(counts["gene_bin"].to_list(), counts["len"].to_list()))
+        y = [counts_dict.get(label, 0)/len(lengths) for label in labels]
+        x = np.arange(len(labels))
+        idx = all_models.index(model_name)
+        # center grouped bars: compute offset so bars for each model are centered around each xtick
+        offset = (idx - (n_models - 1) / 2) * width
+        ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=model_names_dict.get(model_name), color=model_colors.get(model_name))
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.margins(x=0.02)
+#    ax.set_xlim(-0.5, len(labels)-0.5)    
+    ax.set_xlabel("PUL length in genes")
+    ax.set_ylabel("Proportion of predicted clusters")
+    ax.set_title("PUL length distribution in predicted clusters")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig("results/plots/aggregated/pul_length_barplot.png")
 
 
 
@@ -260,7 +307,8 @@ def main(args):
 
     if model_name == "selected":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
+        barplot_pul_length(all_models)
+        #compare_all_models(all_models, model_name)
         return
 
     if model_name == "upset":

@@ -4,6 +4,7 @@ from matplotlib_venn import venn3, venn2
 import seaborn as sns
 from cryptic_puls_plots import join_gene_and_PUL_table
 import numpy as np
+from visualization_utilities import get_bins
 
 
 # KDE PUL LENGTHS PLOT #
@@ -73,19 +74,6 @@ def plot_taxonomy(ax, all_puls):
 
 
 # GENE COUNT PLOT #
-def get_bins(labeled_table, bin_num):
-    start = 0
-    bins = np.unique(
-        np.logspace(
-            start=start,
-            stop=np.log2(50),
-            base=2,
-            num=bin_num,
-        ).astype(int)
-    )
-    labels = [f'{start}-{bins[0]}'] + [f'{bins[i]+1}-{bins[i + 1]}' if (bins[i]+1 != bins[i+1]) else f'{bins[i+1]}' for i in range(len(bins[:-1]))] + [f'≥{bins[-1]+1}']
-    return bins, labels
-
 def get_n_genes(genes, labeled_table):
     print(labeled_table.with_columns((polars.col("end")-polars.col("start")).alias("PUL_length")).sort(by="PUL_length").select("cluster_id", "sequence_id", "species", "PUL_length"))
     labeled_table = join_gene_and_PUL_table(gene_table=genes, cluster_table=labeled_table, buffer=0)
@@ -95,7 +83,7 @@ def get_n_genes(genes, labeled_table):
 def plot_pul_gene_count(ax, genes, labeled_table):
     bins_num = 15
     labeled_table = get_n_genes(genes, labeled_table)
-    bins, labels = get_bins(labeled_table, bins_num)
+    bins, labels = get_bins(bins_num)
 
     binned = labeled_table.with_columns(
         polars.col("n_genes")
@@ -120,7 +108,6 @@ def plot_pul_gene_count(ax, genes, labeled_table):
     ax.margins(x=0.02)
     ax.set_xlabel("PUL length in genes")
     ax.set_ylabel("Count")
-#    ax.set_title("PUL length distribution in genes")
 
 
 # DATABASE VENN DIAGRAM #

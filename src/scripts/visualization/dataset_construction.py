@@ -53,55 +53,74 @@ def get_taxonomic_counts(table=None, rank="phylum", cutoff=10):
         .sort("count", descending=True)
     )
 
-def donut_chart(ax, counts, rank, title="Taxonomic distribution"):
+def donut_chart(ax, counts, rank, title):
     x = counts.select(f"{rank.lower()}_group").to_series()
     heights = counts.select("count").to_series()
-    ax.pie(heights, labels=x, radius=1, wedgeprops=dict(width=0.3, edgecolor='w'))
-    ax.set_title(f"{title}")
+
+    labels = [f"{name}\n(n={count})" if count>20 else name for name, count in zip(x, heights)]
+
+    ax.pie(
+        heights,
+        labels=labels,
+        radius=1,
+        wedgeprops=dict(width=0.35, edgecolor='w'),
+        textprops={'fontsize': 9}
+    )
+#    ax.set_title(title)
 
 def plot_taxonomy(ax, all_puls):
-    phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=15)
-    class_counts = get_taxonomic_counts(all_puls, rank="class", cutoff=15)
-
-    # # draw two donut charts inside a single parent axis
-    # ax.axis("off")
-    # ax_left = ax.inset_axes([0.00, 0.0, 0.48, 1.0])
-    # ax_right = ax.inset_axes([0.52, 0.0, 0.48, 1.0])
-
-    donut_chart(ax, phylum_counts, "Phylum", title="Phylum distribution")
-#    donut_chart(ax_right, class_counts, "Class", title="Class distribution")
+    phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=10)
+    donut_chart(ax, phylum_counts, "Phylum", title="Taxonomic distribution of PULs on a phylum level")
 
 
 # GENE COUNT PLOT #
-def get_bins(labeled_table):
+def get_bins(labeled_table, bin_num):
+    start = 0
     bins = np.unique(
         np.logspace(
-            start=1,
-            stop=np.log2(80),
+            start=start,
+            stop=np.log2(50),
             base=2,
-            num=20,
+            num=bin_num,
         ).astype(int)
     )
-    labels = [f'<{bins[0]}'] + [f'{bins[i]}-{bins[i + 1]}' for i in range(len(bins[:-1]))] + [f'>{bins[-1]}']
+    labels = [f'{start}-{bins[0]}'] + [f'{bins[i]+1}-{bins[i + 1]}' if (bins[i]+1 != bins[i+1]) else f'{bins[i+1]}' for i in range(len(bins[:-1]))] + [f'≥{bins[-1]+1}']
     return bins, labels
-
+ 
 def get_n_genes(genes, labeled_table):
     labeled_table = join_gene_and_PUL_table(gene_table=genes, cluster_table=labeled_table)
     labeled_table = labeled_table.group_by("cluster_id").agg(polars.col("is_PUL").sum().alias("n_genes")).sort("n_genes", descending=False).filter(polars.col("cluster_id").is_not_null())
     return labeled_table
 
 def plot_pul_gene_count(ax, genes, labeled_table):
-    # get bins 
+    bins_num = 15
     labeled_table = get_n_genes(genes, labeled_table)
-#    bins, labels = get_bins(labeled_table)
-#    binned_labeled_table = labeled_table.with_columns(polars.col('n_genes').cut(breaks=bins.tolist(), include_breaks=False, labels=labels).alias('gene_bin'))
+    bins, labels = get_bins(labeled_table, bins_num)
 
-    # plot histogram
-    ax.hist(labeled_table.select("n_genes").to_series(), bins=20, edgecolor="black")
-    ax.set_xlabel("Number of genes in PUL")
+    binned = labeled_table.with_columns(
+        polars.col("n_genes")
+        .cut(breaks=bins.tolist(), include_breaks=False, labels=labels)
+        .alias("gene_bin")
+    )
+
+    counts = (
+        binned.group_by("gene_bin")
+        .len()
+        .sort("gene_bin")
+    )
+
+    # ensure correct order (important!)
+    counts_dict = dict(zip(counts["gene_bin"].to_list(), counts["len"].to_list()))
+    y = [counts_dict.get(label, 0) for label in labels]
+    x = np.arange(len(labels))
+
+    ax.bar(x, y, edgecolor="black", width=1.0, align="center")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.margins(x=0.02)
+    ax.set_xlabel("PUL length in genes")
     ax.set_ylabel("Count")
-    ax.set_title("Gene counts in experimental annotations")
-    ax.tick_params(axis='x', rotation=45)
+#    ax.set_title("PUL length distribution in genes")
 
 
 # DATABASE VENN DIAGRAM #
@@ -109,15 +128,23 @@ def plot_venn_diagram_database(ax, experimental_puls):
     # filter on database
     dbcan = experimental_puls.filter(polars.col("database").str.contains("dbcan"))
     puldb = experimental_puls.filter(polars.col("database").str.contains("puldb"))
+    cblaster = experimental_puls.filter(polars.col("database").str.contains("cblaster"))
 
     # make sets of sequence ids
-    dbcan_sequences = set(dbcan.select("sequence_id").to_series())
-    puldb_sequences = set(puldb.select("sequence_id").to_series())
+    dbcan_sequences = set(dbcan.select("cluster_id").to_series())
+    puldb_sequences = set(puldb.select("cluster_id").to_series())
+    cblaster_sequences = set(cblaster.select("cluster_id").to_series())
     
     # plot overlap
-    venn2([dbcan_sequences, puldb_sequences], set_labels = ('DBCAN', 'PULDB'), ax=ax)
-    ax.set_title("Genomes annotated by each database")
-
+    v = venn3(
+        [dbcan_sequences, puldb_sequences, cblaster_sequences], 
+        set_labels=('dcCAN-PUL', 'PULDB', "Cblaster-strict"), 
+        ax=ax
+    )
+    for t in v.set_labels + v.subset_labels:
+        if t:
+            t.set_fontsize(9)
+#    ax.set_title("PUL origin in dataset")
 
 
 def main():
@@ -133,19 +160,39 @@ def main():
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     original_clusters = polars.read_csv("src/data/data_collection/combined_clusters.tsv", separator="\t", infer_schema_length=600)
 
-    fig, axes = plt.subplots(
-        2, 2, 
-        figsize=(12, 8), 
-        width_ratios=[2, 3], 
+    fig = plt.figure(figsize=(10, 6))
+    gs = fig.add_gridspec(
+        2, 2,
+        width_ratios=[1, 1],
         height_ratios=[1, 1]
     )
-    ax1, ax2, ax3, ax4 = axes.flatten()
-    plot_venn_diagram_database(ax1, original_clusters)
-    plot_taxonomy(ax2, all_puls)
-    plot_pul_gene_count(ax3, genes, experimental_puls)
-    plot_length_distributions(ax4, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy)
+    # left column
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax3 = fig.add_subplot(gs[1, 0])
+    # right column spanning both rows
+    ax_tax = fig.add_subplot(gs[:, 1])
+
+    plot_venn_diagram_database(ax1, all_puls)
+    plot_taxonomy(ax_tax, all_puls)
+    plot_pul_gene_count(ax3, genes, all_puls)
+
+    titles = {
+        ax1: "PUL origin in dataset",
+        ax3: "PUL length distribution",
+        ax_tax: "Taxonomic distributions of PULs on a phylum level"
+    }
+    for ax, title in titles.items():
+        ax.set_title(title, loc='left', pad=12)
+    fig.align_ylabels([ax1, ax3, ax_tax])
+
+    plt.rcParams.update({
+        "font.size": 10,
+        "axes.titlesize": 12,
+        "axes.labelsize": 10,
+        "figure.dpi": 300
+    })
     fig.tight_layout()
-    fig.savefig("results/plots/dataset_construction.png", dpi=300)
+    fig.savefig("results/plots/dataset_construction.svg")
 
 
 if __name__ == "__main__":

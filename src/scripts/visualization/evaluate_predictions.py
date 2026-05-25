@@ -199,26 +199,20 @@ def main(args):
         compare_all_models(all_models, model_name)
         return
 
-    if model_name == 'logistic_regression':
-        all_models = ["genecat_zeroshot_pfam", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
-        compare_all_models(all_models, model_name)
-        return
-
     if model_name == "masked":
         all_models = ["genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
         compare_all_models(all_models, model_name, model_names_masked)
         return
 
+    if model_name == "features":
+        all_models = ["gecco_pfam", "gecco_cazy", "genecat_zeroshot_pfam_masked", "genecat_zeroshot_cazy_masked", "genecat_finetuned_pfam_masked", "genecat_finetuned_cazy_masked"]
+        compare_all_models(all_models, model_name)
+        return
+
     if model_name == "selected":
-        all_models = ["gecco_pfam", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "bacformer"]
+        all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc", "bacformer"]
         compare_all_models(all_models, model_name)
         return
-
-    if model_name == "presentation":
-        all_models = ["gecco_pfam", "genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked","genecat_finetuned_cazy", "esmc", "bacformer"]
-        compare_all_models(all_models, model_name)
-        return
-
 
     if model_name == "upset":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked"]

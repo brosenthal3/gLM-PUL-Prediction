@@ -12,7 +12,8 @@ model_names = {
     "esmc": "ESM-C",
     "bacformer": "Bacformer",
     "esmc_masked": "ESM-C Masked",
-    "bacformer_masked": "Bacformer Masked"
+    "bacformer_masked": "Bacformer Masked",
+    "genecat_untrained": "GeneCAT Untrained"
 }
 
 model_names_masked = {
@@ -24,5 +25,7 @@ model_names_masked = {
     "esmc": "ESM-C",
     "bacformer": "Bacformer",
     "esmc_masked": "ESM-C Masked",
-    "bacformer_masked": "Bacformer Masked"
+    "bacformer_masked": "Bacformer Masked",
+    "genecat_untrained": "GeneCAT Untrained"
 }
+

@@ -256,9 +256,9 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     models = [model_names_dict.get(e.model_name) for e in evaluators]
     x = np.arange(len(models))   # group positions
     width = 0.25
-    bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color="steelblue")
-    bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color="orange")
-    bars_both= ax_bar.bar(x + width,auprc_both,width,label="Both",color="green")
+    bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color=Cork_7[-1])
+    bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color=Cork_7[0])
+    bars_both= ax_bar.bar(x + width,auprc_both,width,label="Both",color=Cork_7[-3])
     ax_bar.bar_label(bars_exp, fmt="%.2f", padding=3, fontsize=8)
     ax_bar.bar_label(bars_cryptic, fmt="%.2f", padding=3, fontsize=8)
     ax_bar.bar_label(bars_both, fmt="%.2f", padding=3, fontsize=8)

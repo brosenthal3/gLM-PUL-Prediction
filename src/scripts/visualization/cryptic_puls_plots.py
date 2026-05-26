@@ -1,60 +1,10 @@
 import polars
+import numpy as np
 import matplotlib.pyplot as plt 
 from matplotlib_venn import venn3, venn2
 import seaborn as sns
-
-def reset_start_end(table: polars.DataFrame) -> polars.DataFrame:
-    return table.with_columns(
-        polars.when(polars.col("start") < polars.col("end")).then(polars.col("start")).otherwise(polars.col("end")).alias("start"),
-        polars.when(polars.col("start") < polars.col("end")).then(polars.col("end")).otherwise(polars.col("start")).alias("end"),
-    )
-
-def join_gene_and_PUL_table(gene_table: polars.DataFrame, cluster_table: polars.DataFrame, buffer: int = 100,) -> polars.DataFrame:
-    gene_table = reset_start_end(gene_table)
-    cluster_table = reset_start_end(cluster_table)
-
-    labled_gene_table = (
-        cluster_table
-        .rename({"start": "pul_start", "end": "pul_end"}) # avoid column name conflicts
-        .join(
-            gene_table,
-            on="sequence_id",
-            how="inner",
-            validate="m:m",
-        )
-        .with_columns(
-            polars.when(
-                polars.col("start") >= polars.col("pul_start") - buffer, # allow for some buffer around the PUL boundaries
-                polars.col("end") <= polars.col("pul_end") + buffer,
-            )
-            .then(polars.col("cluster_id"))
-            .otherwise(None)
-            .alias("cluster_id"),
-            polars.when(
-                polars.col("start") >= polars.col("pul_start") - buffer,
-                polars.col("end") <= polars.col("pul_end") + buffer,
-            )
-            .then(True)
-            .otherwise(False)
-            .cast(polars.Boolean)
-            .alias("is_PUL")
-        )
-        # aggregate by protein_id to determine if protein is in any PUL
-        .group_by("protein_id")
-        .agg(
-            polars.col("is_PUL").any().alias("is_PUL"),
-            polars.col("sequence_id").first().alias("sequence_id"),
-            polars.col("start").first().alias("start"),
-            polars.col("end").first().alias("end"),
-            polars.col("cluster_id").drop_nulls().first().alias("cluster_id")
-        )
-        .sort(by=["sequence_id", "start", "end"])
-        .with_row_index(name="gene_id", offset=0)  # important
-        .select(["sequence_id", "protein_id", "start", "end", "is_PUL", "cluster_id"])
-    )
-
-    return labled_gene_table
-
+from viz_data import Cork_7, Bilbao_5, Buda_4, Bold_10, model_colors
+from visualization_utilities import get_bins, join_gene_and_PUL_table
 
 def get_protein_ids_in_clusters(cluster_table):
     return (
@@ -65,6 +15,7 @@ def get_protein_ids_in_clusters(cluster_table):
         .to_series()
         .to_list()
     )
+
 
 # venn diagrams
 def plot_venn_diagram_cblaster(save="results/plots/venn_cblaster.png"):
@@ -102,50 +53,75 @@ def plot_venn_diagram_cblaster(save="results/plots/venn_cblaster.png"):
     plt.close()
 
 
-def get_pul_lengths(puls_table):
-    return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
+def get_pul_lengths(puls_table, genes):
+    # merge with gene table to get gene counts per PUL
+    return (
+        join_gene_and_PUL_table(genes, puls_table)
+        # create unique cluster id by concatenating cluster_id and sequence_id, to avoid merging clusters from different sequences in the next step
+        .with_columns(polars.concat_str([polars.col("cluster_id"), polars.col("sequence_id")]).alias("cluster_id_unique"))
+        .group_by("cluster_id_unique").agg(
+            polars.col("protein_id").n_unique().alias("pul_length"),
+        )
+        .select(["cluster_id_unique", "pul_length"])
+    )
 
 
-def plot_length_distributions():
-    experimental = get_pul_lengths(experimental_puls)
-    cblaster_liberal_puls = get_pul_lengths(cblaster_results_liberal)
-    cblaster_strict_puls = get_pul_lengths(cblaster_results_strict)
-    pulpy_puls = get_pul_lengths(pulpy)
+def plot_length_distributions(genes, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy):
+    fig, ax = plt.subplots(figsize=(7, 5.5))
+    bins, labels = get_bins(10, start=0, stop=100)
+    experimental = get_pul_lengths(experimental_puls, genes)
+    cblaster_liberal_puls = get_pul_lengths(cblaster_results_liberal, genes)
+    cblaster_strict_puls = get_pul_lengths(cblaster_results_strict, genes)
+    pulpy_puls = get_pul_lengths(pulpy, genes)
 
-    # Extract series once (cleaner + reusable)
+    # Extract series
     exp_lengths = experimental.select("pul_length").to_series()
     lib_lengths = cblaster_liberal_puls.select("pul_length").to_series()
     strict_lengths = cblaster_strict_puls.select("pul_length").to_series()
     pulpy_lengths = pulpy_puls.select("pul_length").to_series()
 
-    # Create figure with two rows
-    fig, (ax1, ax2) = plt.subplots(
-        2, 1, 
-        figsize=(6, 6), 
-        sharex=False,
-        gridspec_kw={"height_ratios": [1, 1]}
-    )
+    n_datasets = 4
+    pul_length_distributions = {
+        "Experimental": exp_lengths,
+        "PULpy": pulpy_lengths,
+        "Liberal Cblaster": lib_lengths,
+        "Strict Cblaster": strict_lengths,
+    }
+    all_datasets = list(pul_length_distributions.keys())
+    colors = [Cork_7[-1], Cork_7[0], Cork_7[2], Cork_7[-2]]
+    width = 0.2
+    for dataset_name, lengths in pul_length_distributions.items():
+        labeled_table = polars.DataFrame({"n_genes": lengths})
+        binned = labeled_table.with_columns(
+            polars.col("n_genes")
+            .cut(breaks=bins.tolist(), include_breaks=False, labels=labels)
+            .alias("gene_bin")
+        )
+        counts = (
+            binned.group_by("gene_bin")
+            .len()
+            .sort("gene_bin")
+        )
+        # plot bar for current model
+        counts_dict = dict(zip(counts["gene_bin"].to_list(), counts["len"].to_list()))
+        y = [counts_dict.get(label, 0)/len(lengths) for label in labels]
+        x = np.arange(len(labels))
+        idx = all_datasets.index(dataset_name)
+        # center grouped bars: compute offset so bars for each model are centered around each xtick
+        offset = (idx - (n_datasets - 1) / 2) * width
+        ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=dataset_name, color=colors[idx], alpha=0.9)
 
-    # Boxplot
-    ax1.boxplot(
-        [exp_lengths, lib_lengths, strict_lengths, pulpy_lengths],
-        tick_labels=["Experimental", "Liberal Cblaster", "Strict Cblaster", "PULpy"]
-    )
-    ax1.set_ylabel("PUL length (bp)")
-    ax1.set_title("PUL lengths of PULpy, Cblaster and Experimental annotations")
+    ax.set_xticks(x)
+    labels[0] = "1"
+    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.margins(x=0.02)
+    ax.set_xlabel("PUL length in genes")
+    ax.set_ylabel("Proportion of identified clusters")
+    ax.set_title("PUL length distribution in identified clusters")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig("results/plots/cryptic_pul_length_barplot.png")
 
-    # KDE plots
-    sns.kdeplot(exp_lengths, ax=ax2, label="Experimental", clip=(0, 100000))
-    sns.kdeplot(lib_lengths, ax=ax2, label="Liberal Cblaster", clip=(0, 100000))
-    sns.kdeplot(strict_lengths, ax=ax2, label="Strict Cblaster", clip=(0, 100000))
-    sns.kdeplot(pulpy_lengths, ax=ax2, label="PULpy", clip=(0, 100000))
-
-    ax2.set_xlabel("PUL length (bp)")
-    ax2.set_ylabel("Density")
-    ax2.legend()
-
-    plt.tight_layout()
-    plt.savefig("results/plots/pulpy_pul_lengths.png", dpi=300)
 
 
 def merge_overlapping_puls(df, group_col='sequence_id', start_col='start', end_col='end', blast=False, keep_original=True):
@@ -233,11 +209,13 @@ def plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal):
     cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id_unique").to_series().to_list())
     experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id_unique").to_series().to_list())
 
-    fig, ax1 = plt.subplots(figsize=(8, 4))
+    fig, ax1 = plt.subplots(figsize=(7, 4))
     venn3(
         [pulpy_puls, cblaster_liberal_puls, experimental_puls],
         set_labels=(f'PULpy (total: {len(pulpy_puls)})', f'Liberal Cblaster (total: {len(cblaster_liberal_puls)})', f'Experimental + Strict Cblaster (total: {len(experimental_puls)})'),
-        ax=ax1
+        ax=ax1,
+        set_colors=(Cork_7[0], Cork_7[2], Cork_7[-1]),
+        alpha=0.8
     )
 #    ax1.set_title("PULs identified by PULpy, Liberal Cblaster and Experimental annotations")
     plt.tight_layout()
@@ -260,8 +238,7 @@ def main():
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
 
     plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal)
-    #plot_venn_diagram_cblaster()
-
+    plot_length_distributions(genes, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy)
 
 if __name__ == "__main__":
     main()

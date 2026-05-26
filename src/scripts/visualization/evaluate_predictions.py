@@ -138,6 +138,7 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
         ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=model_names_dict.get(model_name), color=model_colors.get(model_name))
 
     ax.set_xticks(x)
+    labels[0] = "1"
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.margins(x=0.02)
 #    ax.set_xlim(-0.5, len(labels)-0.5)    

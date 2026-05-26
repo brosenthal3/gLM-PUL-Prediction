@@ -71,12 +71,16 @@ def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, mo
         plt.close()
 
 
-def visualize_genes(model_evaluators, sequence_id, start=0, end=10000, model_class="predictions"):
+def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="predictions"):
+    fig, axes = plt.subplots(
+        len(model_names)+3, 1, figsize=(16, 7), sharex=True, gridspec_kw={"height_ratios": [8]+[1]*(len(model_names)+2)}
+    )
+
+    # read necessary data
     cryptic_puls = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator='\t')
-    # aggregate model predictions across folds
-    for model_evaluator in model_evaluators:
-        model_evaluator.aggregate_all_folds()
-    
+    gene_table = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+    clusters_experimental = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700)
+
     # genes from genbank file
     gb_file = f"src/data/genomes/genbank_genomes/{sequence_id}.gb"
     # write annotations df with cols: protein_id, start, end, product, note
@@ -105,60 +109,65 @@ def visualize_genes(model_evaluators, sequence_id, start=0, end=10000, model_cla
                 )
             features.append(graphic_feature)
 
-    fig, axes = plt.subplots(
-        len(model_evaluators)+3, 1, figsize=(16, 6), sharex=True, gridspec_kw={"height_ratios": [8]+[1]*(len(model_evaluators)+2)}
-    )
-
     # PLOT THE RECORD MAP
     graphic_record = GraphicRecord(sequence_length=length, features=features)
-    graphic_record.plot(ax=axes[0], with_ruler=False, strand_in_label_threshold=4, max_label_length=55)
+    graphic_record.plot(ax=axes[0], with_ruler=False, max_label_length=60, annotate_inline=False)
 
-    # PLOT THE PUL annotations
-    genes_dfs = []
-    for model_evaluator in model_evaluators:
-        genes = (
-            model_evaluator.labeled_results[0]
-            .filter(
-                polars.col("sequence_id") == sequence_id,
-                polars.col("start") >= start,
-                polars.col("end") <= end,
-            )
-            .join(cryptic_puls.with_columns(polars.lit(True).alias("is_cryptic")), on="protein_id", how="left")
+    # experimental puls
+    experimental_clusters = clusters_experimental.filter(polars.col("sequence_id") == sequence_id, polars.col("start") >= start-10000, polars.col("end") <= end+10000)
+    # predicted puls
+    clusters_dfs = []
+    for model_name in model_names:
+        cluster_table_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
+        clusters = polars.read_parquet(cluster_table_path)
+        clusters_dfs.append(
+            clusters.filter(polars.col("sequence_id") == sequence_id, polars.col("start") >= start-10000, polars.col("end") <= end+10000)  # add some padding
         )
-        genes_dfs.append(genes)
+    cryptic = (
+        gene_table
+        .join(cryptic_puls, on="protein_id", how="inner")
+        .filter(polars.col("sequence_id") == sequence_id, polars.col("start") >= start, polars.col("end") <= end) # no padding because genes should be fully contained
+    )
 
-    labels = []
-    cryptic = []
+    if len(experimental_clusters) > 0:
+        print(f"Found experimental PULs in this region, not plotting")
+        return
+    if len(cryptic) > 4: # arbitrary threshold, can be adjusted
+        print(f"Found many cryptic PUL genes in this region, not plotting")
+        return
+
     colors_tab10 = plt.cm.tab10.colors
-    # top ax: called genes
-    for row in genes_dfs[0].iter_rows(named=True):
-        if row["is_PUL"]:
-            labels.append((row["start"]-start, row["end"]-start, "Experimental"))
-        # add cryptic puls
-        if row["is_cryptic"]:
-            cryptic.append((row["start"]-start, row["end"]-start, "Cryptic PULs"))
-
-    for start_gene, end_gene, label in labels:
-        axes[-2].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[1], alpha=1)
-    for start_gene, end_gene, label in cryptic:
-        axes[-1].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[2])
+    # top ax: experimental Puls
+    for row in experimental_clusters.iter_rows(named=True):
+        pul_start = max(row["start"], start)
+        pul_end = min(row["end"], end)
+        axes[-2].fill_betweenx([0, 1], pul_start-start, pul_end-start, color=colors_tab10[1], alpha=1)
+    # bottom ax: cryptic    
+    for row in cryptic.iter_rows(named=True):
+        start_gene = max(row["start"], start)
+        end_gene = min(row["end"], end)
+        axes[-1].fill_betweenx([0, 1], start_gene-start, end_gene-start, color=colors_tab10[2])
 
 
-    # add prediction probabilities for every model
-    for i, genes in enumerate(genes_dfs):
-        predicted = []
-        for row in genes.iter_rows(named=True):
-            predicted.append((row["start"]-start, row["end"]-start, "Predicted", row["average_p"]))
+    # add predicted clusters for every model
+    for i, clusters in enumerate(clusters_dfs):
+        for row in clusters.iter_rows(named=True):         
+            pul_start = max(row["start"], start)
+            pul_end = min(row["end"], end)
 
-        for start_gene, end_gene, label, p in predicted:
-            axes[i+1].fill_betweenx([0, 1], start_gene, end_gene, color=colors_tab10[0], alpha=min(0.1+p, 1))
+            axes[i+1].fill_betweenx(
+                [0, 1], 
+                pul_start-start, 
+                pul_end-start, 
+                color=colors_tab10[0], 
+                alpha=min(0.2+row["average_p"], 1)
+        )
 
     for i, ax in enumerate(axes):
         if i == 0:
             continue
-        if i > 0 and i <= len(model_evaluators):
-            ax.set_yticks([0.45], [f"{model_evaluators[i-1].model_name}"])
-
+        if i > 0 and i <= len(model_names):
+            ax.set_yticks([0.45], [f"{model_names[i-1]}"])
         ax.set_ylim(0, 1)
 
     axes[-2].set_yticks([0.45], ["Experimental PULs"])
@@ -175,32 +184,42 @@ def visualize_genes(model_evaluators, sequence_id, start=0, end=10000, model_cla
 
 
 def compare_all_models(all_models, model_class):
-    # list of evaluators for all models
-    evaluators = [
-        PredictionEvaluator(
-            labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
-            model_name=model_name,
-            k=5,
-            output_path=f"results/plots/{model_name}"
+    # # list of evaluators for all models
+    # evaluators = [
+    #     PredictionEvaluator(
+    #         labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
+    #         model_name=model_name,
+    #         k=5,
+    #         output_path=f"results/plots/{model_name}"
+    #     )
+    #     for model_name in all_models
+    # ]
+
+    high_confidence_predictions = polars.read_csv(f"src/data/analysis/high_confidence_predictions_genecat_finetuned_cazy_masked.tsv", separator="\t")
+    for cluster in high_confidence_predictions.iter_rows(named=True):
+        visualize_genes(
+            model_names=all_models,
+            sequence_id=cluster["sequence_id"],
+            start=cluster["start"]-2000, # add some padding
+            end=cluster["end"]+2000,
+            model_class=model_class
         )
-        for model_name in all_models
-    ]
 
     # vulgatus
-    visualize_genes(evaluators, "CP000139", start=2313000, end=2338000, model_class=model_class)
+#    visualize_genes(evaluators, "CP000139", start=2313000, end=2338000, model_class=model_class)
     # fragilis
-    visualize_genes(evaluators, "CR626927", start=3720000, end=3727000, model_class=model_class)
+#    visualize_genes(evaluators, "CR626927", start=3710000, end=3729000, model_class=model_class)
     # clostridium 1 
 #    visualize_genes(evaluators, "NZ_CP010086", start=2883500, end=2896500, model_class=model_class)
     # clostridium 2 
-    visualize_genes(evaluators, "NZ_CP010086", start=4787882, end=4803326, model_class=model_class)
+#    visualize_genes(evaluators, "NZ_CP010086", start=4787882, end=4803326, model_class=model_class)
 #    visualize_genes(evaluators, "NZ_CP010086", start=6310368, end=6318315, model_class=model_class)  # experimental PUL
     # clostridium 3 
-    visualize_genes(evaluators, "NZ_CP010086", start=5727000, end=5735000, model_class=model_class)
+#    visualize_genes(evaluators, "NZ_CP010086", start=5727000, end=5735000, model_class=model_class)
     # dorei
-    visualize_genes(evaluators, "NZ_CP046176", start=1442075, end=1455532, model_class=model_class)
+#    visualize_genes(evaluators, "NZ_CP046176", start=1442075, end=1455532, model_class=model_class)
     # rosubria
-    visualize_genes(evaluators, "NZ_LR027880", start=4274000, end=4298000, model_class=model_class)
+#    visualize_genes(evaluators, "NZ_LR027880", start=4274000, end=4298000, model_class=model_class)
 
     return
 

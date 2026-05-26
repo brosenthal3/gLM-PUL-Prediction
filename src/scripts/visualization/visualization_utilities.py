@@ -9,6 +9,22 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from viz_data import model_names
 
+
+def get_pul_lengths(puls_table, genes):
+    # merge with gene table to get gene counts per PUL
+    return (
+        join_gene_and_PUL_table(genes, puls_table)
+        .filter(polars.col("is_PUL") == True)
+        # create unique cluster id by concatenating cluster_id and sequence_id, to avoid merging clusters from different sequences in the next step
+        .with_columns(polars.concat_str([polars.col("cluster_id"), polars.col("sequence_id")]).alias("cluster_id_unique"))
+        .group_by("cluster_id_unique").agg(
+            polars.col("protein_id").n_unique().alias("pul_length"),
+        )
+        .select(["cluster_id_unique", "pul_length"])
+    )
+
+
+
 def get_bins(bin_num, start=0, stop=50):
     start = 0
     bins = np.unique(

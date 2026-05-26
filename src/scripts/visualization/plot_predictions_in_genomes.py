@@ -151,7 +151,7 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
     if len(experimental_clusters) > 0:
         print(f"Found experimental PULs in this region, not plotting")
         return
-    if len(cryptic) > 4: # arbitrary threshold, can be adjusted
+    if len(cryptic) > 1: # arbitrary threshold, can be adjusted
         print(f"Found many cryptic PUL genes in this region, not plotting")
         return
 
@@ -228,7 +228,7 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
 
 
 def compare_all_models(all_models, model_class):
-    high_confidence_predictions = polars.read_csv(f"src/data/analysis/high_confidence_predictions_genecat_finetuned_cazy_masked.tsv", separator="\t")
+    high_confidence_predictions = polars.read_csv(f"src/data/analysis/high_confidence_predictions_gecco_pfam.tsv", separator="\t")
     for cluster in high_confidence_predictions.iter_rows(named=True):
         visualize_genes(
             model_names=all_models,

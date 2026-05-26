@@ -7,7 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix, precision_r
 import seaborn as sns
 from matplotlib_venn import venn3
 from tqdm import tqdm
-from visualization_utilities import PredictionEvaluator, get_bins
+from visualization_utilities import PredictionEvaluator, get_bins, get_pul_lengths
 import altair_upset as au
 from viz_data import model_names, model_names_masked, model_colors, model_names_features, Cork_7, Bold_10, Bilbao_5, Buda_4
 
@@ -71,6 +71,7 @@ def barplot_features(all_models, model_names_dict=model_names_features):
         # save auprc scores
 #        auprc_exp.append(auprc_e)
 
+    # TODO: replace hardcoded values!
     models = ["GECCO", "GeneCAT 0-Shot", "GeneCAT Fine-tuned"]
     auprc_exp = [0.37, 0.36, 0.41, 0.44, 0.52, 0.55]
     features = ["Pfam features", "Pfam+CAZy features"]
@@ -126,6 +127,12 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
         clusters_table_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
         clusters_table = polars.read_parquet(clusters_table_path)
         pul_length_distributions[model_name] = clusters_table["gene_count"].to_list()
+    
+    all_models.append("experimental")
+    pul_length_distributions["experimental"] = get_pul_lengths(
+        polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700),
+        polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+    )["pul_length"].to_list()
 
     # plot distributions as barplot
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -176,7 +183,7 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     fig, ax = plt.subplots(1, 2, figsize=(12, 6))
     fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
-    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 8))
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(10, 8))
     colors = model_colors
 
     # add labels and legend
@@ -191,7 +198,7 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
         ax_bac[j].set_ylabel("Precision")
 
     ax_bar.set_xlabel("Model")
-    ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
+    ax_bar.set_ylabel("AUPRC (Area Under Precision-Recall Curve)")
 
     # add titles and stuff
     ax[0].set_title("Models tested on experimental annotations")
@@ -265,9 +272,8 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     ax_bar.set_ylim(0, 0.8)
     
     ax_bar.set_xticks(x)
-    ax_bar.set_xticklabels(models, rotation=45, ha="right")
-    ax_bar.set_ylabel("AUPRC")
-    ax_bar.set_title("AUPRC per model")
+    ax_bar.set_xticklabels(models, rotation=40, ha="right")
+    ax_bar.set_title("Model performance evaluated on experimental and cryptic PULs")
     ax_bar.legend()
 
     fig.tight_layout()

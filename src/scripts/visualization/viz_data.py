@@ -17,7 +17,8 @@ model_names = {
     "bacformer": "Bacformer",
     "esmc_masked": "ESM-C Masked",
     "bacformer_masked": "Bacformer Masked",
-    "genecat_untrained": "GeneCAT Untrained"
+    "genecat_untrained": "GeneCAT Untrained",
+    "experimental": "Experimental PULs",
 }
 
 model_names_masked = {
@@ -78,4 +79,5 @@ model_colors = {
     "esmc_masked": Bilbao_5[2],
     "bacformer": Bilbao_5[3],
     "bacformer_masked": Bilbao_5[4],
+    "experimental": Cork_7[0],
 }

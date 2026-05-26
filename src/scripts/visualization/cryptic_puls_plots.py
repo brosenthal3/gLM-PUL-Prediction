@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib_venn import venn3, venn2
 import seaborn as sns
 from viz_data import Cork_7, Bilbao_5, Buda_4, Bold_10, model_colors
-from visualization_utilities import get_bins, join_gene_and_PUL_table
+from visualization_utilities import get_bins, join_gene_and_PUL_table, get_pul_lengths
 
 def get_protein_ids_in_clusters(cluster_table):
     return (
@@ -51,19 +51,6 @@ def plot_venn_diagram_cblaster(save="results/plots/venn_cblaster.png"):
     plt.tight_layout()
     plt.savefig(save, dpi=300)
     plt.close()
-
-
-def get_pul_lengths(puls_table, genes):
-    # merge with gene table to get gene counts per PUL
-    return (
-        join_gene_and_PUL_table(genes, puls_table)
-        # create unique cluster id by concatenating cluster_id and sequence_id, to avoid merging clusters from different sequences in the next step
-        .with_columns(polars.concat_str([polars.col("cluster_id"), polars.col("sequence_id")]).alias("cluster_id_unique"))
-        .group_by("cluster_id_unique").agg(
-            polars.col("protein_id").n_unique().alias("pul_length"),
-        )
-        .select(["cluster_id_unique", "pul_length"])
-    )
 
 
 def plot_length_distributions(genes, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy):

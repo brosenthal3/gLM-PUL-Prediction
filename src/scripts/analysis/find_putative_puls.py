@@ -2,7 +2,7 @@ import polars
 import os
 import argparse
 
-model_name = "genecat_finetuned_cazy_masked"
+model_name = "gecco_pfam"
 clusters_table_path = "src/data/data_collection/clusters_deduplicated_cblaster.tsv"
 cryptic_puls_path = "src/data/data_collection/cryptic_puls_genes.tsv"
 #labeled_results_path = f"src/data/results/{model_name}/labeled_results_test"

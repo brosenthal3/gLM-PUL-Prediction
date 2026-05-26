@@ -2,6 +2,7 @@ import polars
 from matplotlib_venn import venn2
 import matplotlib.pyplot as plt
 from viz_data import Cork_7
+from visualization_utilities import join_gene_and_PUL_table
 
 cols = ["protein_id", "domain", "sequence_id"]
 features_pfam = polars.read_parquet("src/data/genecat_output/pfam.features.parquet").select(cols).with_columns(polars.lit("pfam").alias("feature"))
@@ -11,12 +12,19 @@ selected_sequences = (
     .select("sequence_id")
     .unique()
 )
+all_puls = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t")
+genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
+genes_with_puls = join_gene_and_PUL_table(gene_table=genes, cluster_table=all_puls).filter("is_PUL").select("protein_id").unique()
 
 genes_cazy = set(features_cazy.join(selected_sequences, on="sequence_id", how="semi").select("protein_id").to_series())
 genes_pfam = set(features_pfam.join(selected_sequences, on="sequence_id", how="semi").select("protein_id").to_series())
 only_cazy = polars.DataFrame({"protein_id":list(genes_cazy - genes_pfam)})
 cazy_only_domains = features_cazy.join(only_cazy, on="protein_id", how="semi")
-print(cazy_only_domains.select("domain").to_series().value_counts().sort(by="count"))
+#print(cazy_only_domains.select("domain").to_series().value_counts().sort(by="count"))
+
+only_cazy_puls = only_cazy.join(genes_with_puls, on="protein_id", how="inner").select("protein_id").n_unique()
+print(f"Number of proteins with only CAZy annotations that are in PULs: {only_cazy_puls}")
+
 
 fig, ax = plt.subplots(figsize=(5, 5))
 # plot overlap

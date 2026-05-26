@@ -73,13 +73,29 @@ def visualize_predictions_in_genome(evaluators, sequence_ids, threshold=None, mo
 
 def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="predictions"):
     fig, axes = plt.subplots(
-        len(model_names)+3, 1, figsize=(16, 7), sharex=True, gridspec_kw={"height_ratios": [8]+[1]*(len(model_names)+2)}
+        len(model_names)+4, 1, figsize=(16, 7), sharex=True, gridspec_kw={"height_ratios": [8, 2]+[1]*(len(model_names)+2)}
     )
 
     # read necessary data
     cryptic_puls = polars.read_csv("src/data/data_collection/cryptic_puls_genes.tsv", separator='\t')
     gene_table = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     clusters_experimental = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700)
+    cazy_annotations = (
+        polars.read_parquet("src/data/genecat_output/dbcan.features.parquet")
+        .select(["sequence_id", "protein_id", "start", "end", "domain_start", "domain_end", "domain"])
+        .join(
+            polars.read_csv("src/data/analysis/Cayman_substrate_annotations.csv")
+            .select("Subfamily", "FUNCTION_AT_DESTINATION_3")
+            .rename({"Subfamily": "domain", "FUNCTION_AT_DESTINATION_3": "substrate"}),
+            on="domain",
+            how="left"
+        )
+        .with_columns(
+            (polars.col("start")).alias("start_domain"),
+            (polars.col("end")).alias("end_domain"),
+        )
+    )
+    
 
     # genes from genbank file
     gb_file = f"src/data/genomes/genbank_genomes/{sequence_id}.gb"
@@ -128,6 +144,9 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
         .join(cryptic_puls, on="protein_id", how="inner")
         .filter(polars.col("sequence_id") == sequence_id, polars.col("start") >= start, polars.col("end") <= end) # no padding because genes should be fully contained
     )
+    cazy_annotations = (
+        cazy_annotations.filter(polars.col("sequence_id") == sequence_id, polars.col("start") >= start, polars.col("end") <= end) # no padding because genes should be fully contained
+    )
 
     if len(experimental_clusters) > 0:
         print(f"Found experimental PULs in this region, not plotting")
@@ -148,6 +167,30 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
         end_gene = min(row["end"], end)
         axes[-1].fill_betweenx([0, 1], start_gene-start, end_gene-start, color=colors_tab10[2])
 
+    # plot CAZy domains in middle ax
+    # track y-positions for each domain position to avoid overlapping text
+    domain_positions = {}
+    for row in cazy_annotations.iter_rows(named=True):
+        start_domain = max(row["start_domain"], start)
+        end_domain = min(row["end_domain"], end)
+        axes[1].fill_betweenx([0, 1], start_domain-start, end_domain-start, color=colors_tab10[-1], alpha=0.8)
+        # add text annotation for substrate if available
+        substrate = row["substrate"]
+        text = row["domain"]
+        
+        # stagger text vertically for overlapping domains
+        domain_key = (start_domain, end_domain)
+        if domain_key not in domain_positions:
+            domain_positions[domain_key] = 0
+        else:
+            domain_positions[domain_key] += 1
+        
+        y_offset = 0.5 + (domain_positions[domain_key] * 0.2 - 0.075)  # stagger around 0.5
+
+        axes[1].text(
+            (start_domain+end_domain)/2 - start, y_offset, text, 
+            horizontalalignment='center', verticalalignment='center', fontsize=9, alpha=1)
+
 
     # add predicted clusters for every model
     for i, clusters in enumerate(clusters_dfs):
@@ -155,7 +198,7 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
             pul_start = max(row["start"], start)
             pul_end = min(row["end"], end)
 
-            axes[i+1].fill_betweenx(
+            axes[i+2].fill_betweenx(
                 [0, 1], 
                 pul_start-start, 
                 pul_end-start, 
@@ -166,12 +209,13 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
     for i, ax in enumerate(axes):
         if i == 0:
             continue
-        if i > 0 and i <= len(model_names):
-            ax.set_yticks([0.45], [f"{model_names[i-1]}"])
+        if i >= 2 and i < len(model_names)+2:
+            ax.set_yticks([0.45], [f"{model_names[i-2]}"])
         ax.set_ylim(0, 1)
 
     axes[-2].set_yticks([0.45], ["Experimental PULs"])
     axes[-1].set_yticks([0.45], ["Cryptic PULs"])
+    axes[1].set_yticks([0.5], ["CAZy family"])
 
     tick_skips = round((end-start)*0.1)
     axes[-1].set_xticks(ticks=range(0, end-start, tick_skips), labels=range(start, end, tick_skips))
@@ -184,17 +228,6 @@ def visualize_genes(model_names, sequence_id, start=0, end=10000, model_class="p
 
 
 def compare_all_models(all_models, model_class):
-    # # list of evaluators for all models
-    # evaluators = [
-    #     PredictionEvaluator(
-    #         labeled_results_path = f"src/data/results/{model_name}/labeled_results_test",
-    #         model_name=model_name,
-    #         k=5,
-    #         output_path=f"results/plots/{model_name}"
-    #     )
-    #     for model_name in all_models
-    # ]
-
     high_confidence_predictions = polars.read_csv(f"src/data/analysis/high_confidence_predictions_genecat_finetuned_cazy_masked.tsv", separator="\t")
     for cluster in high_confidence_predictions.iter_rows(named=True):
         visualize_genes(
@@ -232,7 +265,7 @@ def main(args):
         return
 
     if model_name == "selected":
-        all_models = ["gecco_pfam", "genecat_finetuned_cazy_masked", "bacformer_masked"]
+        all_models = ["gecco_pfam", "genecat_finetuned_cazy_masked"]
         compare_all_models(all_models, model_name)
         return
 

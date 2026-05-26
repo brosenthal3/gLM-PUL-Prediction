@@ -5,6 +5,7 @@ import seaborn as sns
 from cryptic_puls_plots import join_gene_and_PUL_table
 import numpy as np
 from visualization_utilities import get_bins
+from viz_data import model_colors, Cork_7, Bold_10, Bilbao_5, Buda_4
 
 
 # KDE PUL LENGTHS PLOT #
@@ -65,7 +66,8 @@ def donut_chart(ax, counts, rank, title):
         labels=labels,
         radius=1,
         wedgeprops=dict(width=0.35, edgecolor='w'),
-        textprops={'fontsize': 9}
+        textprops={'fontsize': 9},
+        colors=Cork_7[:len(counts)]
     )
 
 def plot_taxonomy(ax, all_puls):
@@ -102,7 +104,8 @@ def plot_pul_gene_count(ax, genes, labeled_table):
     y = [counts_dict.get(label, 0) for label in labels]
     x = np.arange(len(labels))
 
-    ax.bar(x, y, edgecolor="black", width=1.0, align="center")
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
+    ax.bar(x, y, edgecolor=Cork_7[2], width=1.0, align="center", color=Cork_7[0])
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.margins(x=0.02)
@@ -125,9 +128,15 @@ def plot_venn_diagram_database(ax, experimental_puls):
     # plot overlap
     v = venn3(
         [dbcan_sequences, puldb_sequences, cblaster_sequences], 
-        set_labels=('dcCAN-PUL', 'PULDB', "Cblaster-strict"), 
-        ax=ax
+        set_labels=(f'dcCAN-PUL (n={len(dbcan_sequences)})', f'PULDB (n={len(puldb_sequences)})', f'Cblaster-strict (n={len(cblaster_sequences)})'), 
+        ax=ax,
+        set_colors=(Cork_7[0], Cork_7[1], Cork_7[-1]),
+        alpha=0.82
     )
+    for patch in v.patches:
+        patch.set_edgecolor("white")
+        patch.set_linewidth(0.5)
+
     for t in v.set_labels + v.subset_labels:
         if t:
             t.set_fontsize(9)
@@ -154,7 +163,6 @@ def main():
     )
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     original_clusters = polars.read_csv("src/data/data_collection/combined_clusters.tsv", separator="\t", infer_schema_length=600)
-    get_info_on_data(all_puls, genes)
 
     fig1, ax1 = plt.subplots(figsize=(6, 4))
     fig2, ax_tax = plt.subplots(figsize=(6, 6))
@@ -165,9 +173,9 @@ def main():
     plot_pul_gene_count(ax3, genes, all_puls)
 
     titles = {
-        ax1: "PUL origin in dataset",
+        ax1: "Origin of literature-derived PUL annotations in dataset",
         ax3: "PUL length distribution",
-        ax_tax: "Taxonomic distributions of PULs on a phylum level"
+        ax_tax: "Phylum-level distributions of literature-derived PULs in dataset"
     }
     for ax, title in titles.items():
         ax.set_title(title, loc='left', pad=12)
@@ -185,6 +193,7 @@ def main():
     fig3.tight_layout()
     fig3.savefig("results/plots/dataset_pul_lengths.png")
 
+    get_info_on_data(all_puls, genes)
 
 if __name__ == "__main__":
     main()

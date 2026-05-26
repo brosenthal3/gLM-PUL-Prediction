@@ -154,20 +154,11 @@ def main():
     )
     genes = polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
     original_clusters = polars.read_csv("src/data/data_collection/combined_clusters.tsv", separator="\t", infer_schema_length=600)
-
     get_info_on_data(all_puls, genes)
 
-    fig = plt.figure(figsize=(10, 6))
-    gs = fig.add_gridspec(
-        2, 2,
-        width_ratios=[1, 1],
-        height_ratios=[1, 1]
-    )
-    # left column
-    ax1 = fig.add_subplot(gs[0, 0])
-    ax3 = fig.add_subplot(gs[1, 0])
-    # right column spanning both rows
-    ax_tax = fig.add_subplot(gs[:, 1])
+    fig1, ax1 = plt.subplots(figsize=(6, 4))
+    fig2, ax_tax = plt.subplots(figsize=(6, 6))
+    fig3, ax3 = plt.subplots(figsize=(6, 4))
 
     plot_venn_diagram_database(ax1, all_puls)
     plot_taxonomy(ax_tax, all_puls)
@@ -180,7 +171,6 @@ def main():
     }
     for ax, title in titles.items():
         ax.set_title(title, loc='left', pad=12)
-    fig.align_ylabels([ax1, ax3, ax_tax])
 
     plt.rcParams.update({
         "font.size": 10,
@@ -188,8 +178,12 @@ def main():
         "axes.labelsize": 10,
         "figure.dpi": 300
     })
-    fig.tight_layout()
-    fig.savefig("results/plots/dataset_construction.svg")
+    fig1.tight_layout()
+    fig1.savefig("results/plots/dataset_venn.png")
+    fig2.tight_layout()
+    fig2.savefig("results/plots/dataset_tax.png")
+    fig3.tight_layout()
+    fig3.savefig("results/plots/dataset_pul_lengths.png")
 
 
 if __name__ == "__main__":

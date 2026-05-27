@@ -9,7 +9,7 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator, get_bins, get_pul_lengths
 import altair_upset as au
-from viz_data import model_names, model_names_masked, model_colors, model_names_features, Cork_7, Bold_10, Bilbao_5, Buda_4
+from viz_data import model_names, model_names_masked, model_colors, model_names_features, Cork_7, Bold_10, Bilbao_5, Buda_4, model_colors_selected
 
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
@@ -53,25 +53,23 @@ def generate_upset_plot(all_models, model_class):
 
 def barplot_features(all_models, model_names_dict=model_names_features):
     # list of evaluators for all models
-#    evaluators = get_evaluators(all_models)
+    evaluators = get_evaluators(all_models)
     fig_bar, ax_bar = plt.subplots(1, 1, figsize=(4.5, 5))
     ax_bar.set_xlabel("Model")
     ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
     ax_bar.set_title("AUPRC per model")
     auprc_exp = []
 
-#    for i, model_evaluator in enumerate(evaluators):
-#        current_model_name = model_names_dict.get(all_models[i])
+    for i, model_evaluator in enumerate(evaluators):
+        current_model_name = model_names_dict.get(all_models[i])
         # aggregate all folds
-#        model_evaluator.aggregate_all_folds()
+        model_evaluator.aggregate_all_folds()
         # evaluate predictions
-#        auprc_e, auprc_cr, auprc_b = model_evaluator.test_cryptic_puls("all")
+        auprc_e, auprc_cr, auprc_b = model_evaluator.test_cryptic_puls("all")
         # save auprc scores
-#        auprc_exp.append(auprc_e)
+        auprc_exp.append(auprc_e)
 
-    # TODO: replace hardcoded values!
     models = ["GECCO", "GeneCAT 0-Shot", "GeneCAT Fine-tuned"]
-    auprc_exp = [0.37, 0.36, 0.41, 0.44, 0.52, 0.55]
     features = ["Pfam features", "Pfam+CAZy features"]
     colors = [Cork_7[0], Cork_7[2]]
 
@@ -85,34 +83,6 @@ def barplot_features(all_models, model_names_dict=model_names_features):
     ax_bar.set_xticklabels(models, rotation=45, ha="right")
     ax_bar.set_ylim(0, 0.8)
     ax_bar.legend(loc="upper left")
-
-    # n = len(models)
-    # auprc = auprc_exp
-    # # group size = 2 models per group
-    # group_size = 2
-    # gap = 1.1  # visual spacing between groups
-    # x = []
-    # group_centers = []
-    # pos = 0
-    # for i in range(0, n, group_size):
-    #     group = list(range(i, min(i + group_size, n)))
-    #     group_pos = [pos + j for j in range(len(group))]
-    #     x.extend(group_pos)
-    #     group_centers.append(np.mean(group_pos))
-    #     pos += len(group) + gap
-
-    # x = np.array(x)
-    # bars = ax_bar.bar(x, auprc, color=colors, label=labels, edgecolor="black")
-    # ax_bar.bar_label(bars, fmt="%.2f", padding=3, fontsize=8)
-    # ax_bar.set_ylim(0, 0.8)
-    # ax_bar.set_xticks(x)
-    # ax_bar.set_xticklabels(models, rotation=45, ha="right")
-
-    # ax_bar.legend(
-    #     handles=[plt.Rectangle((0,0),1,1, color=Cork_7[2], edgecolor="black"), plt.Rectangle((0,0),1,1, color=Cork_7[0], edgecolor="black")],
-    #     labels=["Pfam features", "Pfam+CAZy features"],
-    #     loc="upper left"
-    # )
 
     fig_bar.tight_layout()
     fig_bar.savefig("results/plots/aggregated/barplot_features.png")
@@ -171,6 +141,9 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
     fig.tight_layout()
     fig.savefig("results/plots/aggregated/pul_length_barplot.png")
 
+    plt.close()
+    all_models.pop(-1)
+
 
 
 def compare_all_models(all_models, model_class, model_names_dict=model_names):
@@ -178,37 +151,35 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     evaluators = get_evaluators(all_models)
 
     # comparison of all models, 3 separate plots
-    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-    fig_roc, ax_roc = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    fig_roc, ax_roc = plt.subplots(1, 1, figsize=(6, 6))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
-    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(10, 8))
-    colors = model_colors
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 6))
+    if model_class == "selected":
+        colors = model_colors_selected
+    else:
+        colors = model_colors
 
     # add labels and legend
     for j in range(2):
-        ax[j].set_xlabel("Recall")
-        ax[j].set_ylabel("Precision")
-
-        ax_roc[j].set_xlabel('False Positive Rate')
-        ax_roc[j].set_ylabel("True Positive Rate")
-
         ax_bac[j].set_xlabel('Recall')
         ax_bac[j].set_ylabel("Precision")
-
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax_roc.set_xlabel('False Positive Rate')
+    ax_roc.set_ylabel("True Positive Rate")
     ax_bar.set_xlabel("Model")
     ax_bar.set_ylabel("AUPRC (Area Under Precision-Recall Curve)")
 
     # add titles and stuff
-    ax[0].set_title("Models tested on experimental annotations")
-    ax[1].set_title("Models tested on PULpy annotations")
-    ax_roc[0].set_title("Models tested on experimental annotations")
-    ax_roc[1].set_title("Models tested on PULpy annotations")
+    ax.set_title("PR-curve of models tested on experimental PULs")
+    ax_roc.set_title("ROC-curves of models tested on experimental PULs")
     ax_bac[0].set_title("Trained on Bacteroidota, tested on other phyla")
     ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
-    ax_bar.set_title("Overall model comparison (all folds)")
+    ax_bar.set_title("AUPRC per model evaluated on experimental and cryptic PULs")
 
-    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
-    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
+#    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
+#    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
     fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
     auprc_exp = []
@@ -235,27 +206,27 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
         
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
-        model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax[0])
-        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax_roc[0])
+        model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax)
+        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax_roc)
 
         # for pulpy vs pred
-        _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
-        model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax[1])
-        model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax_roc[1])
+        # _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
+        # model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax[1])
+        # model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax_roc[1])
 
         # plot baselines only once at the end
         if i == len(all_models)-1:
-            model_evaluator.plot_baseline(true_masked, ax[0])
-            model_evaluator.plot_baseline(pulpy_pred, ax[1])
+            model_evaluator.plot_baseline(true_masked, ax)
+#            model_evaluator.plot_baseline(pulpy_pred, ax[1])
             model_evaluator.plot_baseline(true_5, ax_bac[0])
             model_evaluator.plot_baseline(true_6, ax_bac[1])
 
-
         # add legends
         for j in range(2):
-            ax[j].legend(loc="upper right")
-            ax_roc[j].legend(loc="lower right")
             ax_bac[j].legend(loc="upper right")
+
+        ax.legend(loc="upper right")
+        ax_roc.legend(loc="lower right")
 
     # plot bar plot of auprc scores
     models = [model_names_dict.get(e.model_name) for e in evaluators]
@@ -263,15 +234,13 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     width = 0.25
     bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color=Cork_7[-1])
     bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color=Cork_7[0])
-    bars_both= ax_bar.bar(x + width,auprc_both,width,label="Both",color=Cork_7[-3])
+    bars_both = ax_bar.bar(x + width,auprc_both,width,label="Both",color="#808889")
     ax_bar.bar_label(bars_exp, fmt="%.2f", padding=3, fontsize=8)
     ax_bar.bar_label(bars_cryptic, fmt="%.2f", padding=3, fontsize=8)
     ax_bar.bar_label(bars_both, fmt="%.2f", padding=3, fontsize=8)
     ax_bar.set_ylim(0, 0.8)
-    
     ax_bar.set_xticks(x)
     ax_bar.set_xticklabels(models, rotation=40, ha="right")
-    ax_bar.set_title("Model performance evaluated on experimental and cryptic PULs")
     ax_bar.legend()
 
     fig.tight_layout()
@@ -330,7 +299,7 @@ def main(args):
     if model_name == "selected":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
         barplot_pul_length(all_models)
-        #compare_all_models(all_models, model_name)
+        compare_all_models(all_models, model_name)
         return
 
     if model_name == "upset":

@@ -90,3 +90,13 @@ model_colors = {
     "bacformer_masked": Bilbao_5[4],
     "experimental": Cork_7[0],
 }
+
+model_colors_selected = {
+    "gecco_pfam": Bold_10[0],
+    "genecat_zeroshot_cazy_masked":  Bold_10[3],
+    "genecat_finetuned_cazy_masked": Bold_10[6],
+    "genecat_untrained": Bold_10[-3],
+    "esmc_masked": Bold_10[1],
+    "bacformer_masked": Bold_10[-2],
+    "experimental": Cork_7[-1],
+}

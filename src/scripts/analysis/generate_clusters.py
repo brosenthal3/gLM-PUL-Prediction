@@ -1,11 +1,14 @@
 import polars
 from tqdm import tqdm
 
-def combine_pul_genes(model_name, output_path, threshold=0.25):
+def combine_pul_genes(model_name, output_path, threshold=0.25, fold=None):
     labeled_results_path = f"src/data/results/{model_name}/labeled_results_test"
 
     # combine all labeled results into one dataframe
     labeled_results = []
+    if fold:
+        labeled_results.append(polars.read_csv(f"{labeled_results_path}_{fold}.tsv", separator='\t', infer_schema_length=8000))
+    
     for i in range(5):
         labeled_results.append(polars.read_csv(f"{labeled_results_path}_{i}.tsv", separator='\t', infer_schema_length=8000))
 
@@ -68,3 +71,6 @@ if __name__ == "__main__":
     for model_name, threshold in tqdm(model_names.items(), desc="Generating clusters for models", total=len(model_names)):
         output_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
         combine_pul_genes(model_name, output_path, threshold=threshold)
+
+        output_path = f"src/data/results/{model_name}/predicted_clusters_6.parquet"
+        combine_pul_genes(model_name, output_path, threshold=threshold, fold=6)

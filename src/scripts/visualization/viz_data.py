@@ -43,6 +43,15 @@ model_names_features = {
     "genecat_finetuned_pfam_masked": "GeneCAT Finetuned (Pfam)",
 }
 
+model_names_selected = {
+    "gecco_pfam": "GECCO",
+    "genecat_zeroshot_cazy_masked": "GeneCAT 0-Shot",
+    "genecat_finetuned_cazy_masked": "GeneCAT Pretrained & Finetuned",
+    "esmc_masked": "ESM-C",
+    "bacformer_masked": "Bacformer",
+    "genecat_untrained": "GeneCAT Untrained & Finetuned",
+    "experimental": "Experimental PULs",
+}
 
 Buda_4 = Buda_4.mpl_colors
 Cork_7 = Cork_7.mpl_colors

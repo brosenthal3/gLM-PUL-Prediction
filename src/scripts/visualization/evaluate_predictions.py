@@ -42,13 +42,11 @@ def generate_upset_plot(all_models, model_class):
     chart = au.UpSetAltair(
         data=gene_table.to_pandas(),
         sets=gene_table.columns,
-#        sort_by="frequency",
-#        sort_order="descending",
         width=800,
         height=400,
         vertical_bar_label_size=10,
         abbre=["experimental", "pulpy", "gecco", "genecat"],
-#        title="Predicted and experimental PUL genes overlap"
+        title="Predicted and experimental PUL genes overlap"
     )
     chart.save(f"results/plots/aggregated/upset_plot_{model_class}.svg")
 

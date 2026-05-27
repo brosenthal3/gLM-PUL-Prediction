@@ -57,68 +57,78 @@ def plot_features_venn():
     fig.savefig("results/plots/feature_venn.png")
 
 
-def get_feature_counts(labeled_results, genes, features, selected_features):
+def get_feature_counts(labeled_results, genes, features, selected_features, groups="cluster_id"):
     predicted_puls_total = labeled_results.height
     # create unique cluster id
     labeled_results = labeled_results.with_columns(
         polars.concat_str([polars.col("sequence_id"), polars.col("start")]).alias("cluster_id")
     )
     selected_features = polars.DataFrame({"domain": selected_features})
-    # find clusters with selected domains
+    all_pul_genes = join_gene_and_PUL_table(genes, labeled_results).filter("is_PUL")
+    # find clusters/genes with selected domains
     labeled_results = (
-        join_gene_and_PUL_table(genes, labeled_results).filter("is_PUL")
+        all_pul_genes
         .join(
             features.join(selected_features, on="domain", how="semi"),
             on="protein_id",
             how="inner"
         )
-        .group_by("cluster_id").agg()
+        .group_by(groups).agg()
     )
-    return labeled_results.height / predicted_puls_total
+    return labeled_results.height / all_pul_genes.group_by(groups).agg().height
+
 
 def plot_functional_composition():
     all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
 
     all_folds_suscd_values = []
-    fold_6_suscd_values = []
     all_folds_cazy_values = []
+    fold_5_cazy_values = []
+    fold_5_suscd_values = []
     fold_6_cazy_values = []
+    fold_6_suscd_values = []
 
     for model_name in all_models:
         # get predicted puls for only bacteroidota species
         bacteroidetes = all_puls.filter(polars.col("phylum").eq("Bacteroidota")).select("sequence_id").unique()
         all_folds = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters.parquet").join(bacteroidetes, on="sequence_id", how="semi")
         fold_6 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_6.parquet").join(bacteroidetes, on="sequence_id", how="semi")
+        fold_5 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_5.parquet").join(bacteroidetes, on="sequence_id", how="anti") # in this case only for non-bacteroidetes!
 
         # get frequency of susC and SusD domains in predicted clusters
         all_folds_suscd_values.append(get_feature_counts(all_folds, genes, features_pfam, suscd))
         fold_6_suscd_values.append(get_feature_counts(fold_6, genes, features_pfam, suscd))
+        fold_5_suscd_values.append(get_feature_counts(fold_5, genes, features_pfam, suscd))
 
         # get proportion of cazy domains in predicted clusters
-        all_folds_cazy_values.append(get_feature_counts(all_folds, genes, features_cazy, cazy_features_selected))
-        fold_6_cazy_values.append(get_feature_counts(fold_6, genes, features_cazy, cazy_features_selected))
+        all_folds_cazy_values.append(get_feature_counts(all_folds, genes, features_cazy, cazy_features_selected, groups="protein_id"))
+        fold_6_cazy_values.append(get_feature_counts(fold_6, genes, features_cazy, cazy_features_selected, groups="protein_id"))
+        fold_5_cazy_values.append(get_feature_counts(fold_5, genes, features_cazy, cazy_features_selected, groups="protein_id"))
 
     # add one bar for experimental
     experimental_bacteroidetes_puls = all_puls.filter(polars.col("phylum").eq("Bacteroidota"))
     experimental_suscd = get_feature_counts(experimental_bacteroidetes_puls, genes, features_pfam, suscd)
     experimental_cazy = get_feature_counts(experimental_bacteroidetes_puls, genes, features_cazy, cazy_features_selected)
 
-    folds_susc = [all_folds_suscd_values, fold_6_suscd_values]
-    folds_cazy = [all_folds_cazy_values, fold_6_cazy_values]
-    fold_labels = ["5-fold cross-validation", "Trained on non-Bacteroidetes"]
-    colors = [Cork_7[0], Cork_7[2]]
-    x = np.arange(len(all_models))
-    baseline_x = len(all_models) + 1
+    folds_susc = [all_folds_suscd_values, fold_5_suscd_values, fold_6_suscd_values]
+    print(folds_susc, experimental_suscd)
+    folds_cazy = [all_folds_cazy_values, fold_5_cazy_values, fold_6_cazy_values]
+    print(folds_cazy, experimental_cazy)
 
-    width = 0.32
-    fig = plt.figure(figsize=(12, 6), constrained_layout=True)
+    fold_labels = ["5-fold cross-validation", "Trained on Bacteroidetes", "Trained on non-Bacteroidetes"]
+    colors = [Cork_7[0], Cork_7[4], Cork_7[2]]
+    x = np.arange(len(all_models))
+    baseline_x = len(all_models) + 0.6
+
+    width = 0.3
+    fig = plt.figure(figsize=(14, 6), constrained_layout=True)
     subfig_left, subfig_right = fig.subfigures(1, 2, wspace=0.05)
     ax1 = subfig_left.subplots()
     ax2 = subfig_right.subplots()
 
     # SusC/SusD
     # model predictions
-    for i in range(2):
+    for i in range(3):
         bars = ax1.bar(
             x + (i - 0.5) * width,
             folds_susc[i],
@@ -148,7 +158,7 @@ def plot_functional_composition():
     ax1.set_ylabel("Proportion")
 
     # CAZy
-    for i in range(2):
+    for i in range(3):
         bars = ax2.bar(
             x + (i - 0.5) * width,
             folds_cazy[i],
@@ -164,18 +174,16 @@ def plot_functional_composition():
     baseline_bar = ax2.bar(
         baseline_x,
         experimental_cazy,
-        width=0.45,
+        width=0.4,
         color=Cork_7[-1],
         edgecolor="black",
         label="Experimental baseline"
     )
     ax2.bar_label(baseline_bar, fmt="%.2f", padding=3, fontsize=8)
-
-
     ax2.set_xticks(list(x)+[baseline_x])
     ax2.set_xticklabels([model_names_selected[m] for m in all_models] + ["Experimental"], rotation=45, ha="right")
     ax2.set_ylim(0, 1)
-    ax2.set_title("Predicted PULs with CAZymes")
+    ax2.set_title("Predicted PUL genes with CAZymes")
 
     ax2.legend(loc="upper right")
 
@@ -187,33 +195,9 @@ def plot_functional_composition():
     )
 
 
-def plot_gecco_weights():
-    # aggregate gecco weights across all folds
-    all_folds_weights = []
-    for i in range(5):
-        weights = (
-            polars.read_csv(f"src/data/results/gecco_pfam/model_{i}/model.state.tsv", separator="\t")
-            .join(polars.DataFrame({"attr": suscd}), on="attr", how="semi")
-            .filter(polars.col("label") == 1)
-            .select("attr", "weight")
-        )
-        all_folds_weights.append(weights)
-
-    all_folds_weights = (
-        polars.concat(all_folds_weights, how="align")
-        .group_by("attr")
-        .agg(polars.col("weight").mean().alias("weight"))
-        .with_columns(
-            polars.col("attr").is_in(susc).alias("susc"),            
-            polars.col("attr").is_in(susd).alias("susd")
-        )
-        .group_by("susc").agg(polars.col("weight").mean().alias("weight"))
-        .sort("susc", descending=True)
-    )
-
-    # get gecco weights for fold 6
-    fold_6_weights = (
-        polars.read_csv("src/data/results/gecco_pfam/model_6/model.state.tsv", separator="\t")
+def compute_gecco_weights(weights_df):
+    return (
+        weights_df
         .join(polars.DataFrame({"attr": suscd}), on="attr", how="semi")
         .filter(polars.col("label") == 1)
         .select("attr", "weight")
@@ -225,16 +209,38 @@ def plot_gecco_weights():
         .sort("susc", descending=True)
     )
 
+def plot_gecco_weights():
+    # aggregate gecco weights across all folds
+    all_folds_weights = []
+    for i in range(5):
+        weights = (
+            polars.read_csv(f"src/data/results/gecco_pfam/model_{i}/model.state.tsv", separator="\t")
+            .join(polars.DataFrame({"attr": suscd}), on="attr", how="semi")
+            .filter(polars.col("label") == 1)
+            .select("attr", "label", "weight")
+        )
+        all_folds_weights.append(weights)
+
+    all_folds_weights = compute_gecco_weights(
+        polars.concat(all_folds_weights, how="align")
+        .group_by("attr")
+        .agg(polars.col("weight").mean().alias("weight"), polars.lit(1).alias("label"))
+    )
+
+    # get gecco weights for folds 5 and 6
+    fold_5_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_5/model.state.tsv", separator="\t"))
+    fold_6_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_6/model.state.tsv", separator="\t"))
+
     # plott
     fig, ax = plt.subplots(figsize=(4.5, 3.5))
-    folds_susc = [all_folds_weights["weight"].to_list(), fold_6_weights["weight"].to_list()]
-    fold_labels = ["5-fold cross-validation", "Trained on non-Bacteroidetes"]
+    folds_susc = [all_folds_weights["weight"].to_list(), fold_5_weights["weight"].to_list(), fold_6_weights["weight"].to_list()]
+    fold_labels = ["5-fold cross-validation", "Trained on Bacteroidetes", "Trained on non-Bacteroidetes"]
     feature_labels = ["SusC domains", "SusD domains"]
-    colors = [Cork_7[0], Cork_7[2]]
+    colors = [Cork_7[0], Cork_7[4], Cork_7[2]]
     x = np.arange(len(feature_labels))
-    width = 0.3
+    width = 0.25
 
-    for i in range(2):
+    for i in range(3):
         bars = ax.bar(
             x + (i - 0.5) * width,
             folds_susc[i],
@@ -256,6 +262,5 @@ def plot_gecco_weights():
 
 if __name__ == "__main__":
     #plot_features_venn()
-    #plot_functional_composition()
-
-    plot_gecco_weights()
+    plot_functional_composition()
+    #plot_gecco_weights()

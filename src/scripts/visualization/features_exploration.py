@@ -65,14 +65,17 @@ def get_feature_counts(labeled_results, genes, features, selected_features, grou
     )
     selected_features = polars.DataFrame({"domain": selected_features})
     all_pul_genes = join_gene_and_PUL_table(genes, labeled_results).filter("is_PUL")
+    # genes with features
+    genes_with_features = features.join(selected_features, on="domain", how="semi").join(labeled_results.select("sequence_id"), on="sequence_id", how="semi")
     # find clusters/genes with selected domains
     labeled_results = (
         all_pul_genes
         .join(
-            features.join(selected_features, on="domain", how="semi"),
+            genes_with_features,
             on="protein_id",
-            how="inner"
+            how="left"
         )
+        .filter(polars.col("domain").is_not_null())
         .group_by(groups).agg()
     )
     return labeled_results.height / all_pul_genes.group_by(groups).agg().height
@@ -88,48 +91,50 @@ def plot_functional_composition():
     fold_6_cazy_values = []
     fold_6_suscd_values = []
 
-    # for model_name in all_models:
-    #     # get predicted puls for only bacteroidota species
-    #     bacteroidetes = all_puls.filter(polars.col("phylum").eq("Bacteroidota")).select("sequence_id").unique()
-    #     all_folds = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters.parquet").join(bacteroidetes, on="sequence_id", how="semi")
-    #     fold_6 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_6.parquet").join(bacteroidetes, on="sequence_id", how="semi")
-    #     fold_5 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_5.parquet").join(bacteroidetes, on="sequence_id", how="anti") # in this case only for non-bacteroidetes!
+    for model_name in all_models:
+        # get predicted puls for only bacteroidota species
+        bacteroidetes = all_puls.filter(polars.col("phylum").eq("Bacteroidota")).select("sequence_id").unique()
+        all_folds = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters.parquet").join(bacteroidetes, on="sequence_id", how="semi")
+        fold_6 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_6.parquet").join(bacteroidetes, on="sequence_id", how="semi")
+        fold_5 = polars.read_parquet(f"src/data/results/{model_name}/predicted_clusters_5.parquet").join(bacteroidetes, on="sequence_id", how="anti") # in this case only for non-bacteroidetes!
 
-    #     # get frequency of susC and SusD domains in predicted clusters
-    #     all_folds_suscd_values.append(get_feature_counts(all_folds, genes, features_pfam, suscd))
-    #     fold_6_suscd_values.append(get_feature_counts(fold_6, genes, features_pfam, suscd))
-    #     fold_5_suscd_values.append(get_feature_counts(fold_5, genes, features_pfam, suscd))
+        # get frequency of susC and SusD domains in predicted clusters
+        all_folds_suscd_values.append(get_feature_counts(all_folds, genes, features_pfam, suscd))
+        fold_6_suscd_values.append(get_feature_counts(fold_6, genes, features_pfam, suscd))
+        fold_5_suscd_values.append(get_feature_counts(fold_5, genes, features_pfam, suscd))
 
-    #     # get proportion of cazy domains in predicted clusters
-    #     all_folds_cazy_values.append(get_feature_counts(all_folds, genes, features_cazy, cazy_features_selected, groups="protein_id"))
-    #     fold_6_cazy_values.append(get_feature_counts(fold_6, genes, features_cazy, cazy_features_selected, groups="protein_id"))
-    #     fold_5_cazy_values.append(get_feature_counts(fold_5, genes, features_cazy, cazy_features_selected, groups="protein_id"))
+        # get proportion of cazy domains in predicted clusters
+        all_folds_cazy_values.append(get_feature_counts(all_folds, genes, features_cazy, cazy_features_selected, groups="cluster_id"))
+        fold_6_cazy_values.append(get_feature_counts(fold_6, genes, features_cazy, cazy_features_selected, groups="cluster_id"))
+        fold_5_cazy_values.append(get_feature_counts(fold_5, genes, features_cazy, cazy_features_selected, groups="cluster_id"))
+
 
     # # add one bar for experimental
-    # experimental_bacteroidetes_puls = all_puls.filter(polars.col("phylum").eq("Bacteroidota"))
-    # experimental_suscd = get_feature_counts(experimental_bacteroidetes_puls, genes, features_pfam, suscd)
-    # experimental_cazy = get_feature_counts(experimental_bacteroidetes_puls, genes, features_cazy, cazy_features_selected)
+    experimental_bacteroidetes_puls = all_puls.filter(polars.col("phylum").eq("Bacteroidota"))
+    experimental_suscd = get_feature_counts(experimental_bacteroidetes_puls, genes, features_pfam, suscd)
+    experimental_cazy = get_feature_counts(experimental_bacteroidetes_puls, genes, features_cazy, cazy_features_selected)
 
-    # folds_susc = [all_folds_suscd_values, fold_5_suscd_values, fold_6_suscd_values]
-    # folds_cazy = [all_folds_cazy_values, fold_5_cazy_values, fold_6_cazy_values]
+    folds_susc = [all_folds_suscd_values, fold_6_suscd_values, fold_5_suscd_values]
+    folds_cazy = [all_folds_cazy_values, fold_6_cazy_values, fold_5_cazy_values]
 
     # values for testing
-    folds_susc = [[0.4364141765114663, 0.5076287349014622, 0.8129130655821047, 0.9097525473071325, 0.3785290415392915, 0.5492160278745645], [0.0429553264604811, 0.038058466629895205, 0.1327683615819209, 0.12899106002554278, 0.03585817888799355, 0.03257437261093568], [0.466839378238342, 0.4112690889942075, 0.7065843621399177, 0.7906446092413006, 0.29806959613919226, 0.46333454943451297]] 
-    folds_cazy = [[0.12881578015440187, 0.1147035348547774, 0.40081506773873776, 0.351681537405628, 0.09762204465849388, 0.10426185926725928], [0.09456595047692457, 0.4731404958677686, 0.38374178123132097, 0.39692540322580644, 0.05138368405880657, 0.057838222017326496], [0.1079622444843361, 0.11368445802962615, 0.3601140955550273, 0.3452198789169051, 0.09029398925771982, 0.10679391047489208]]
-    experimental_suscd = 0.9018987341772152
-    experimental_cazy = 0.7468354430379747
+#    folds_susc = [[0.4364141765114663, 0.5076287349014622, 0.8129130655821047, 0.9097525473071325, 0.3785290415392915, 0.5492160278745645], [0.0429553264604811, 0.038058466629895205, 0.1327683615819209, 0.12899106002554278, 0.03585817888799355, 0.03257437261093568], [0.466839378238342, 0.4112690889942075, 0.7065843621399177, 0.7906446092413006, 0.29806959613919226, 0.46333454943451297]] 
+#    folds_cazy = [[0.12881578015440187, 0.1147035348547774, 0.40081506773873776, 0.351681537405628, 0.09762204465849388, 0.10426185926725928], [0.09456595047692457, 0.4731404958677686, 0.38374178123132097, 0.39692540322580644, 0.05138368405880657, 0.057838222017326496], [0.1079622444843361, 0.11368445802962615, 0.3601140955550273, 0.3452198789169051, 0.09029398925771982, 0.10679391047489208]]
+#    experimental_suscd = 0.9018987341772152
+#    experimental_cazy = 0.7468354430379747
 
-    fold_labels = ["5-fold cross-validation", "Trained on Bacteroidetes", "Trained on non-Bacteroidetes"]
-    colors = [Cork_7[0], Cork_7[4], Cork_7[2]]
+    fold_labels = ["5-fold cross-validation", "Trained on non-Bacteroidetes"]
+    colors = [Cork_7[0], Cork_7[2]]
     x = np.arange(len(all_models))
     baseline_x = len(all_models) + 0.6
 
     width = 0.3
+    n_bars = 2
     fig, (ax1, ax2), = plt.subplots(1, 2, figsize=(14, 7), sharey=True)
 
     # SusC/SusD
     # model predictions
-    for i in range(3):
+    for i in range(n_bars):
         bars = ax1.bar(
             x + (i - 0.5) * width,
             folds_susc[i],
@@ -154,12 +159,11 @@ def plot_functional_composition():
 
     ax1.set_xticks(list(x)+[baseline_x])
     ax1.set_xticklabels([model_names_selected[m] for m in all_models] + ["Experimental"], rotation=45, ha="right")
-    ax1.set_ylim(0, 1)
     ax1.set_title("Predicted PULs with SusC/SusD homologs")
     ax1.set_ylabel("Proportion")
 
     # CAZy
-    for i in range(3):
+    for i in range(n_bars):
         bars = ax2.bar(
             x + (i - 0.5) * width,
             folds_cazy[i],
@@ -184,9 +188,11 @@ def plot_functional_composition():
     ax2.set_xticks(list(x)+[baseline_x])
     ax2.set_xticklabels([model_names_selected[m] for m in all_models] + ["Experimental"], rotation=45, ha="right")
     ax2.set_ylim(0, 1)
-    ax2.set_title("Predicted PUL genes with CAZymes")
+    ax1.set_ylim(0, 1)
 
-    fig.suptitle("Functional composition of predicted PUL genes for Bacteroidetes", fontsize=16)
+    ax2.set_title("Predicted PULs with CAZymes")
+
+    fig.suptitle("Functional composition of predicted Bacteroidetes PULs", fontsize=16)
     fig.legend(loc="upper right")
     fig.tight_layout(rect=[0, 0, 1, 0.90])
     fig.savefig(

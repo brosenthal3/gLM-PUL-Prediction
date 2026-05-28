@@ -46,10 +46,10 @@ model_names_features = {
 model_names_selected = {
     "gecco_pfam": "GECCO",
     "genecat_zeroshot_cazy_masked": "GeneCAT 0-Shot",
-    "genecat_finetuned_cazy_masked": "GeneCAT Pretrained & Finetuned",
+    "genecat_finetuned_cazy_masked": "GeneCAT Finetuned",
     "esmc_masked": "ESM-C",
     "bacformer_masked": "Bacformer",
-    "genecat_untrained": "GeneCAT Untrained & Finetuned",
+    "genecat_untrained": "GeneCAT Untrained",
     "experimental": "Experimental PULs",
 }
 

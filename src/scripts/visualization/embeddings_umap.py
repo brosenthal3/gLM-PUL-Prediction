@@ -23,6 +23,7 @@ def plot_embeddings_umap(embeddings_path="src/data/results/genecat_zeroshot_cazy
             on="sequence_id",
             how="left"
         )
+        .drop("sequence_id")
     )
     # convert to matrix
     embedding_matrix = np.stack(embeddings["embedding"].to_list())
@@ -79,9 +80,9 @@ def plot_embeddings_umap(embeddings_path="src/data/results/genecat_zeroshot_cazy
         plt.ylabel("UMAP 2")
         plt.xticks([])
         plt.yticks([])
-        plt.title(f"UMAP projection of {model_name} (colored by {rank})")
+        plt.title(f"UMAP of {model_name} embeddings (colored by {rank})")
         plt.tight_layout()
-        plt.savefig(save_path+"_"+rank)
+        plt.savefig(save_path+"_"+rank+".png", dpi=300)
         plt.close()
 
 
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     # # bacformer
     plot_embeddings_umap(
         embeddings_path="src/data/results/bacformer/fold_data/fold_0_data.parquet",
-        save_path="results/plots/umap_bacformer.png",
+        save_path="results/plots/umap_bacformer",
         model_name="Bacformer"
     )
 

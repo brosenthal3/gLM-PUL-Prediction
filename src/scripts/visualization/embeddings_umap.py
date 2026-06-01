@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
     # # bacformer
     plot_embeddings_umap(
-        embeddings_path="src/data/results/bacformer/fold_data/fold_0_data.parquet",
+        embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
         save_path="results/plots/umap_bacformer",
         model_name="Bacformer"
     )

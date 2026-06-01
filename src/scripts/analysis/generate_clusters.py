@@ -55,10 +55,47 @@ def combine_pul_genes(model_name, output_path, threshold=0.25, fold=None):
     clusters_df.write_parquet(output_path)
 
 
+def process_gecco_clusters(df, selected_sequences):
+    return (
+        df
+        .join(selected_sequences, on="sequence_id", how="semi")
+        .rename({"proteins": "genes"})
+        .with_columns(
+            polars.col("genes").str.split(";").list.len().alias("gene_count")
+        )
+        .select("sequence_id", "start", "end", "genes", "gene_count", "average_p")
+    )
+
+
+def save_clusters_gecco():
+    # src/data/results/gecco_cazy/fold_4/test.clusters.tsv
+
+    #     "sequence_id": row["sequence_id"],
+    #     "start": row["start"],
+    #     "end": row["end"],
+    #     "genes": [row["protein_id"]],
+    #     "gene_count": 1,
+    #     "average_p": row["average_p"]
+    # })
+    selected_sequences = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
+    for features in ["pfam", "cazy"]:
+        all_clusters = []
+        # save 0-4 in one df
+        for k in range(5):
+            clusters = polars.read_csv(f"src/data/results/gecco_{features}/fold_{k}/test.clusters.tsv", separator="\t")
+            all_clusters.append(process_gecco_clusters(clusters, selected_sequences))
+
+        all_clusters = polars.concat(all_clusters)
+        all_clusters.write_parquet(f"src/data/results/gecco_{features}/predicted_clusters.parquet")
+
+        # save 5 and 6
+        for k in range(5, 7):
+            clusters = polars.read_csv(f"src/data/results/gecco_{features}/fold_{k}/test.clusters.tsv", separator="\t")
+            process_gecco_clusters(clusters, selected_sequences).write_parquet((f"src/data/results/gecco_{features}/predicted_clusters_{k}.parquet"))
+
+
 if __name__ == "__main__":
     model_names = {
-        "gecco_pfam": 0.3,
-        "gecco_cazy": 0.3,
         "genecat_zeroshot_pfam_masked": 0.276,
         "genecat_zeroshot_cazy_masked": 0.237,
         "genecat_finetuned_pfam_masked": 0.5,
@@ -74,3 +111,7 @@ if __name__ == "__main__":
 
         output_path = f"src/data/results/{model_name}/predicted_clusters_5.parquet"
         combine_pul_genes(model_name, output_path, threshold=threshold, fold=5)
+
+    # for gecco save separately, bc gecco makes its own clusters
+    save_clusters_gecco()
+    

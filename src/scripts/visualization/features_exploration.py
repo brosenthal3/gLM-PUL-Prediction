@@ -268,6 +268,6 @@ def plot_gecco_weights():
     fig.savefig("results/plots/gecco_feature_weights.png", dpi=300)
 
 if __name__ == "__main__":
-    #plot_features_venn()
+    plot_features_venn()
     plot_functional_composition()
-    #plot_gecco_weights()
+    plot_gecco_weights()

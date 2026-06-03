@@ -127,7 +127,7 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
         idx = all_models.index(model_name)
         # center grouped bars: compute offset so bars for each model are centered around each xtick
         offset = (idx - (n_models - 1) / 2) * width
-        ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=model_names_dict.get(model_name), color=model_colors.get(model_name))
+        ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=model_names_dict.get(model_name), color=model_colors_selected.get(model_name))
 
     ax.set_xticks(x)
     labels[0] = "1"

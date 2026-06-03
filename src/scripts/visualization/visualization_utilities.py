@@ -24,7 +24,6 @@ def get_pul_lengths(puls_table, genes):
     )
 
 
-
 def get_bins(bin_num, start=0, stop=50):
     start = 0
     bins = np.unique(

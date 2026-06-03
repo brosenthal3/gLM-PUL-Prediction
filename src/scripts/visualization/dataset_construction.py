@@ -4,36 +4,36 @@ from matplotlib_venn import venn3, venn2
 import seaborn as sns
 from cryptic_puls_plots import join_gene_and_PUL_table
 import numpy as np
-from visualization_utilities import get_bins
+from visualization_utilities import get_bins, get_pul_lengths
 from viz_data import model_colors, Cork_7, Bold_10, Bilbao_5, Buda_4
 
 
 # KDE PUL LENGTHS PLOT #
-def get_pul_lengths(puls_table):
-    return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
+# def get_pul_lengths(puls_table):
+#     return puls_table.with_columns(abs(polars.col("end") - polars.col("start")).alias("pul_length"))
 
-def plot_length_distributions(ax, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy):
-    experimental = get_pul_lengths(experimental_puls)
-    cblaster_liberal_puls = get_pul_lengths(cblaster_results_liberal)
-    cblaster_strict_puls = get_pul_lengths(cblaster_results_strict)
-    pulpy_puls = get_pul_lengths(pulpy)
+# def plot_length_distributions(ax, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy):
+#     experimental = get_pul_lengths(experimental_puls)
+#     cblaster_liberal_puls = get_pul_lengths(cblaster_results_liberal)
+#     cblaster_strict_puls = get_pul_lengths(cblaster_results_strict)
+#     pulpy_puls = get_pul_lengths(pulpy)
 
-    # Extract series
-    exp_lengths = experimental.select("pul_length").to_series()
-    lib_lengths = cblaster_liberal_puls.select("pul_length").to_series()
-    strict_lengths = cblaster_strict_puls.select("pul_length").to_series()
-    pulpy_lengths = pulpy_puls.select("pul_length").to_series()
+#     # Extract series
+#     exp_lengths = experimental.select("pul_length").to_series()
+#     lib_lengths = cblaster_liberal_puls.select("pul_length").to_series()
+#     strict_lengths = cblaster_strict_puls.select("pul_length").to_series()
+#     pulpy_lengths = pulpy_puls.select("pul_length").to_series()
 
-    # KDE plots
-    sns.kdeplot(exp_lengths, ax=ax, label="Experimental", clip=(0, 100000))
-    sns.kdeplot(lib_lengths, ax=ax, label="Liberal Cblaster", clip=(0, 100000))
-    sns.kdeplot(strict_lengths, ax=ax, label="Strict Cblaster", clip=(0, 100000))
-    sns.kdeplot(pulpy_lengths, ax=ax, label="PULpy", clip=(0, 100000))
+#     # KDE plots
+#     sns.kdeplot(exp_lengths, ax=ax, label="Experimental", clip=(0, 100000))
+#     sns.kdeplot(lib_lengths, ax=ax, label="Liberal Cblaster", clip=(0, 100000))
+#     sns.kdeplot(strict_lengths, ax=ax, label="Strict Cblaster", clip=(0, 100000))
+#     sns.kdeplot(pulpy_lengths, ax=ax, label="PULpy", clip=(0, 100000))
 
-    ax.set_title("PUL length distributions (KDE)")
-    ax.set_xlabel("PUL length (bp)")
-    ax.set_ylabel("Density")
-    ax.legend()
+#     ax.set_title("PUL length distributions (KDE)")
+#     ax.set_xlabel("PUL length (bp)")
+#     ax.set_ylabel("Density")
+#     ax.legend()
 
 
 # TAXONOMY PLOT #
@@ -76,19 +76,15 @@ def plot_taxonomy(ax, all_puls):
 
 
 # GENE COUNT PLOT #
-def get_n_genes(genes, labeled_table):
-    print(labeled_table.with_columns((polars.col("end")-polars.col("start")).alias("PUL_length")).sort(by="PUL_length").select("cluster_id", "sequence_id", "species", "PUL_length"))
-    labeled_table = join_gene_and_PUL_table(gene_table=genes, cluster_table=labeled_table, buffer=0)
-    labeled_table = labeled_table.group_by("cluster_id").agg(polars.col("is_PUL").sum().alias("n_genes")).sort("n_genes", descending=False).filter(polars.col("cluster_id").is_not_null())
-    return labeled_table
-
 def plot_pul_gene_count(ax, genes, labeled_table):
     bins_num = 15
-    labeled_table = get_n_genes(genes, labeled_table)
+    labeled_table = get_pul_lengths(labeled_table, genes)
     bins, labels = get_bins(bins_num)
+    print(f"median PUL length: {labeled_table["pul_length"].median()}")
+    print(f"mean PUL length: {labeled_table["pul_length"].mean()}")
 
     binned = labeled_table.with_columns(
-        polars.col("n_genes")
+        polars.col("pul_length")
         .cut(breaks=bins.tolist(), include_breaks=False, labels=labels)
         .alias("gene_bin")
     )
@@ -107,6 +103,7 @@ def plot_pul_gene_count(ax, genes, labeled_table):
     ax.grid(axis="y", linestyle="--", alpha=0.7)
     ax.bar(x, y, edgecolor=Cork_7[2], width=1.0, align="center", color=Cork_7[0])
     ax.set_xticks(x)
+    labels[0] = "1"
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.margins(x=0.02)
     ax.set_xlabel("PUL length in genes")

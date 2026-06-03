@@ -169,10 +169,10 @@ if __name__ == "__main__":
         )
         
         # handle proteins that are > than max len
+
         if len(proteins) > 6000:
             bacformer_embs, esm_embs = slide_and_index(
                 data=proteins,
-                model_dim=d,
                 window_size=6000,
                 stride=4000,
                 func=apply_bacformer_func,

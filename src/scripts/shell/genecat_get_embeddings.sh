@@ -49,3 +49,22 @@ OUT_FOLDS="src/data/results/genecat_zeroshot"
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_PFAM -k 7 -o ${OUT_FOLDS}_pfam/fold_data
 python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}_cazy/fold_data
+
+
+#-----GET EMBEDDINGS FROM FINETUNED MODEL-------#
+
+VOCAB_CAZY_PFAM=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1_cazy_cayman_v0.12.vocab.txt
+MODEL_PATH=${PULPATH}/src/data/results/genecat_untrained/models_fold_0/
+MODEL_CAZY_PFAM=${MODEL_PATH}/model_cazy_fold_0_7t9fb3eu_v0.pt
+GENES=${PULPATH}/src/data/genecat_output/genome.genes.parquet
+FEATURES_CAZY_PFAM=${PULPATH}/src/data/genecat_output/dbcan.pfam.features.parquet
+OUT=${PULPATH}/src/data/embeddings/genecat_untrained_embeddings
+
+cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
+python src/scripts/analysis/save_pretrained_model.py $MODEL_CAZY_PFAM ${MODEL_PATH}/pretrained_model_part
+python -m genecat.cli extract-embeddings -g $GENES -f $FEATURES_CAZY_PFAM -m ${MODEL_PATH}/pretrained_model_part.pt --vocab $VOCAB_CAZY_PFAM --batch-size 16 -j 1 -o $OUT --outtypes df
+
+EMBS_CAZY_PFAM=${OUT}/${MODEL_PATH}/pretrained_model_part_context_embedding.embeddings.parquet
+OUT_FOLDS="src/data/results/genecat_untrained/embeddings"
+
+python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}  --embedding_col embeddings

@@ -1,5 +1,5 @@
 #!/bin/bash                                                                                                                                                                                                      
-#SBATCH -t 20:00:00
+#SBATCH -t 35:00:00
 #SBATCH -J genecat_finetune
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
@@ -35,8 +35,10 @@ CLUSTERS_TEST=${PULPATH}/src/data/splits/test_fold_${SLURM_ARRAY_TASK_ID}_with_c
 # OUTPUT
 OUT_PFAM=${PULPATH}/src/data/results/genecat_finetuned_pfam_masked
 OUT_CAZY=${PULPATH}/src/data/results/genecat_finetuned_cazy_masked
+OUTPUT_UNTRAINED=${PULPATH}/src/data/results/genecat_untrained
 mkdir -p $OUT_PFAM
 mkdir -p $OUT_CAZY
+mkdir -p $OUTPUT_UNTRAINED
 
 export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src/:/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/'
 export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
@@ -75,3 +77,22 @@ python -m genecat.cli pul-finetune\
  --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
  --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
  --middle-focus --epochs 30
+
+
+#----TRAIN UNTRAINED MODEL----#
+
+
+# MODEL
+VOCAB=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1_cazy_cayman_v0.12.vocab.txt
+MODEL_NAME=model_gene_multilabel_pfam_cazy_april_goycr91w_v0.pt
+MODEL=${BASEPATH}/models_multilabel_models/april_models/${MODEL_NAME}
+# DOMAINS
+DOMAINS_TRAIN=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/train.dbcan.pfam.parquet
+DOMAINS_TEST=${PULPATH}/src/data/genecat_output/fold_${SLURM_ARRAY_TASK_ID}/test.dbcan.pfam.parquet
+
+python -m genecat.cli pul-finetune\
+ -g ${GENES_TRAIN} -d ${DOMAINS_TRAIN} -c ${CLUSTERS_TRAIN}\
+ --vocab ${VOCAB} -m ${MODEL} -o ${OUTPUT_UNTRAINED}/fold_${SLURM_ARRAY_TASK_ID}\
+ --batch-size 128 -j 1 --offline --name cazy_fold_${SLURM_ARRAY_TASK_ID}\
+ --test-gene-table ${GENES_TEST} --test-domain-table ${DOMAINS_TEST} --test-cluster-table ${CLUSTERS_TEST}\
+ --middle-focus --epochs 30 --untrained

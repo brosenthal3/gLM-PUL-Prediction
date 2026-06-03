@@ -1,6 +1,7 @@
 #!/bin/bash                                                                                                                                                                                                                                                              
 #SBATCH -t 10:00:00
-#SBATCH -J esm_embeddings
+#SBATCH -J esm_bacformer_embeddings
+#SBATCH --partition=gpu-medium
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
 #SBATCH --nodes=1
@@ -12,6 +13,7 @@
 
 source ~/.bashrc
 mamba activate bacformer
+export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 set -euo pipefail
 IFS=$'\n\t'

@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
 
     # get embeddings per contig
-    for contig in tqdm(os.listdir("src/data/genecat_output/genes")[:5]):
+    for contig in tqdm(os.listdir("src/data/genecat_output/genes")):
         proteins = []
         protein_ids = []
         genes_file = f"src/data/genecat_output/genes/{contig}"

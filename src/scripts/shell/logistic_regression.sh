@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -t 30:00:00
+#SBATCH -t 25:00:00
 #SBATCH -J logistic_regression
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"

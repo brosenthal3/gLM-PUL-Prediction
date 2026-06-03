@@ -1,11 +1,11 @@
 #!/bin/bash                                                                                                                                                                                                                                                              
-#SBATCH -t 10:00:00
+#SBATCH -t 00:10:00
 #SBATCH -J esm_bacformer_embeddings
 #SBATCH --partition=gpu-medium
 #SBATCH --gres=gpu:1
-#SBATCH --mem=128G
+#SBATCH --mem=32G
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task 16
+#SBATCH --cpus-per-task 8
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"
 #SBATCH -o slurm_output/esm_embeddings_%j.out

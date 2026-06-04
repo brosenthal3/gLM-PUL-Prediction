@@ -175,7 +175,7 @@ if __name__ == "__main__":
                 data=proteins,
                 window_size=6000,
                 stride=4000,
-                func=apply_bacformer_func,
+                apply_bacformer=apply_bacformer_func,
             )
         else:
             bacformer_embs, esm_embs = apply_bacformer_func(proteins)

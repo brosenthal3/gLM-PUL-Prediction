@@ -104,35 +104,35 @@ if __name__ == "__main__":
     # # genecat finetuned
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
-    #     save_path="results/plots/umap_genecat_finetuned_cazy.png", 
+    #     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
     #     model_name="GeneCAT Finetuned (Pfam+CAZy)"
     # )
 
     # # bacformer
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-    #     save_path="results/plots/umap_bacformer",
+    #     save_path="results/plots/UMAP/umap_bacformer",
     #     model_name="Bacformer",
     # )
 
     # # ESM-C
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-    #     save_path="results/plots/umap_esmc.png",
+    #     save_path="results/plots/UMAP/umap_esmc.png",
     #     model_name="ESM-C"
     # )
 
     # genecat_untrained
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
-    #     save_path="results/plots/umap_genecat_untrained.png",
+    #     save_path="results/plots/UMAP/umap_genecat_untrained.png",
     #     model_name="GeneCAT Untrained & Finetuned (Pfam+CAZy)"
     # )
 
     # bacformer with taxonomy
     plot_embeddings_umap(
         embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-        save_path="results/plots/umap_bacformer",
+        save_path="results/plots/UMAP/umap_bacformer",
         model_name="Bacformer",
         visualize_taxonomy=True
     )

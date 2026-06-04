@@ -21,9 +21,24 @@ genes_cazy = set(features_cazy.join(selected_sequences, on="sequence_id", how="s
 genes_pfam = set(features_pfam.join(selected_sequences, on="sequence_id", how="semi").select("protein_id").to_series())
 only_cazy = polars.DataFrame({"protein_id":list(genes_cazy - genes_pfam)})
 
-# cazy_only_domains = features_cazy.join(only_cazy, on="protein_id", how="semi")
-# only_cazy_puls = only_cazy.join(genes_with_puls, on="protein_id", how="inner").select("protein_id").n_unique()
-# print(f"Number of proteins with only CAZy annotations that are in PULs: {only_cazy_puls}")
+
+
+def get_unique_cazy_domains():
+    cazy_domains_with_pfam_equivalent = features_cazy.join(polars.DataFrame({"protein_id": list(genes_pfam)}), on="protein_id", how="semi").select("domain")
+    cazy_only_domains = features_cazy.join(only_cazy, on="protein_id", how="semi")
+    print(
+        (
+            cazy_only_domains
+            .join(cazy_domains_with_pfam_equivalent, how="anti", on="domain")
+            # .with_columns(
+            #     polars.col("domain").str.split("_").list.first().alias("domain")
+            # )
+            .group_by("domain")
+            .agg(polars.col("domain").count().alias("count"))
+            .sort(by="count", descending=True)
+        )
+    )
+
 
 susc = ["PF00593", "PF07715"]
 susd = ["PF07980", "PF12741", "PF12771", "PF14322"]
@@ -268,6 +283,8 @@ def plot_gecco_weights():
     fig.savefig("results/plots/gecco_feature_weights.png", dpi=300)
 
 if __name__ == "__main__":
-    plot_features_venn()
-    plot_functional_composition()
-    plot_gecco_weights()
+    # plot_features_venn()
+    # plot_functional_composition()
+    # plot_gecco_weights()
+
+    get_unique_cazy_domains()

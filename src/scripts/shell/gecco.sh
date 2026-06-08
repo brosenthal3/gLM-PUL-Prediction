@@ -1,6 +1,6 @@
 #!/bin/bash                                                                                                                                                                                                      
 
-#SBATCH -t 2:00:00
+#SBATCH -t 4:00:00
 #SBATCH -J gecco_cross_validation
 #SBATCH --mail-user="benrosenthal03@gmail.com"
 #SBATCH --mail-type="ALL"

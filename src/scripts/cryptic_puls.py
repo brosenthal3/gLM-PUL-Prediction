@@ -50,5 +50,5 @@ def add_cryptic_puls_to_splits():
 
 
 if __name__ == "__main__":
+    save_cryptic_pul_genes()
     add_cryptic_puls_to_splits()
-#    save_cryptic_pul_genes()

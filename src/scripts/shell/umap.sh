@@ -12,11 +12,11 @@
 #SBATCH -e slurm_output/umap_%j.err
 
 source ~/.bashrc
-mamba activate genecat
+mamba activate viz
 
 # set bash strict mode http://redsymbol.net/articles/unofficial-bash-strict-mode/
 set -euo pipefail
 IFS=$'\n\t'
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 
-python src/scripts/visualization/umap.py
+python src/scripts/visualization/umap_embeddings.py

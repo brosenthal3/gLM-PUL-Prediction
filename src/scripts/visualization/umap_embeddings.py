@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import umap
 from viz_data import model_names
+import os
 
 def plot_embeddings_umap(
     embeddings_path="src/data/results/genecat_zeroshot_cazy/fold_data/fold_0_data.parquet", 

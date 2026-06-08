@@ -51,7 +51,7 @@ python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMB
 python src/scripts/process_embeddings_output.py --genes $GENES --embeddings $EMBS_CAZY_PFAM -k 7 -o ${OUT_FOLDS}_cazy/fold_data
 
 
-#-----GET EMBEDDINGS FROM FINETUNED MODEL-------#
+#-----GET EMBEDDINGS FROM UNTRAINED-FINETUNED MODEL-------#
 
 VOCAB_CAZY_PFAM=${BASEPATH}/models_multilabel_models/april_models/BERT_train.fold_0.unique_domains.min50.Pfam37.1_cazy_cayman_v0.12.vocab.txt
 MODEL_PATH=${PULPATH}/src/data/results/genecat_untrained/models_fold_0/

@@ -11,14 +11,24 @@ from typing import List, Optional, Tuple, Literal
 from functools import partial
 from tqdm import tqdm
 import multiprocessing as mp
+from bench.embed_bacformer import BacFormerEmbedder
 mp.set_start_method("fork", force=True)
 
 """
 pip3 install torch torchvision --force-reinstall --index-url https://download.pytorch.org/whl/cu126
+
+mamba activate bacformer
+
+export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/glm_bench'
+# if issues with 
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" 
+
+python src/scripts/esmc_bacformer_script.py
 """
 
-def write_genes_fasta():
+def write_genes_fasta(genes_dict):
     os.makedirs("src/data/genecat_output/genes", exist_ok=True)
+    faa_path = "src/data/genecat_output/genome.genes.faa"
     all_genes = SeqIO.index(faa_path, "fasta")
     
     for contig in tqdm(genes_dict.keys()):
@@ -110,22 +120,9 @@ if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model_dir = "/exports/lucid-grpzeller-work/brosenthal/bacformer/cache"
     logging.set_verbosity_error()
-    model = (
-            AutoModel.from_pretrained(
-                "macwiatrak/bacformer-large-masked-complete-genomes",
-                trust_remote_code=True,
-                cache_dir=model_dir,
-                force_download=False,
-                output_loading_info=False,
-            )
-            .to(device)
-            .eval()
-            .to(torch.bfloat16)
-        )
 
     output_path = "src/data/embeddings/esmc_bacformer_embeddings"
     os.makedirs(output_path, exist_ok=True)
-    faa_path = "src/data/genecat_output/genome.genes.faa"
     sequences = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
     genes_df = (
         polars.read_parquet("src/data/genecat_output/genome.genes.parquet")
@@ -135,56 +132,57 @@ if __name__ == "__main__":
         .agg(polars.col("protein_id"))
     )
     genes_dict = dict(zip(genes_df["sequence_id"], genes_df["protein_id"].to_list()))
+    # get fasta sequences of all genes per genome
+    if len(os.listdir("src/data/genecat_output/genes")) < len(sequences):
+        write_genes_fasta(genes_dict)
 
+    # embedder from glm-bench
+    embedder = BacFormerEmbedder(
+        model="bacformer-masked-complete-genomes",
+        cache_dir=Path(model_dir),
+        force_redownload=True,
+        local_only=False,
+    )
 
     # get embeddings per contig
-    for contig in tqdm(os.listdir("src/data/genecat_output/genes")):
-        proteins = []
-        protein_ids = []
+    for contig in tqdm(os.listdir("src/data/genecat_output/genes")[:3]):
         genes_file = f"src/data/genecat_output/genes/{contig}"
         contig_genes_index = SeqIO.index(genes_file, "fasta")
         contig_genes_list = genes_dict.get(contig.split(".")[0])
         save_path = f"{output_path}/{contig.replace('faa', 'parquet')}"
-        # if os.path.exists(save_path):
-        #     existing_embeddings = polars.read_parquet(save_path)
-        #     if not existing_embeddings["embedding_bacformer"][0].is_nan().any():
-        #         continue
-        #     else:
-        #         print(f"Found NaN values in embedding for {contig}, {existing_embeddings['embedding_bacformer'].shape}")
 
+        # check if non-NaN embeddings already and skip
+        if os.path.exists(save_path):
+            existing_embeddings = polars.read_parquet(save_path)
+            if not existing_embeddings["embedding_bacformer"][0].is_nan().any():
+                continue
+            else:
+                print(f"Found NaN values in embedding for {contig}, {existing_embeddings['embedding_bacformer'].shape}")
+
+        # make list of protein sequences and ids
+        proteins = []
+        protein_ids = []
         for gene_id in contig_genes_list:
             seq = str(contig_genes_index[gene_id])
             proteins.append(seq)
             protein_ids.append(gene_id)
-
         if len(proteins) == 0:
             continue
         print(len(proteins), " proteins to process...")
-
-        apply_bacformer_func = partial(
-            apply_bacformer,
-            model=model,
-            batch_size=64,
-            device=device,
-        )
         
-        # handle proteins that are > than max len
+        # embed using glm-bench toolkit
+        out_dict = embedder.embed_contig(
+            protein_sequences=proteins,
+            batch_size=64,
+        )
+        bacformer_embs = out_dict["bacformer_embeddings"] # <--- a 2d numpy array. shape(proteins, dims)
+        esm_embs = out_dict["esm_embeddings"] # <--- a 2d numpy array. shape(proteins, dims)
 
-        if len(proteins) > 6000:
-            bacformer_embs, esm_embs = slide_and_index(
-                data=proteins,
-                window_size=6000,
-                stride=4000,
-                apply_bacformer=apply_bacformer_func,
-            )
-        else:
-            bacformer_embs, esm_embs = apply_bacformer_func(proteins)
-
+        # some sanity checks
         if np.isnan(bacformer_embs).any():
             print("[WARNING] NaNs in bacformer!")
             print(sum(np.isnan(bacformer_embs)))
             print(bacformer_embs)
-
         if len(bacformer_embs) != len(proteins):
             print(
                 f"Found {len(bacformer_embs)} embeddings but expected {len(proteins)}"
@@ -208,24 +206,3 @@ if __name__ == "__main__":
         joined_df = esmc_df.join(bacformer_df, on="protein_id", how="inner")
         joined_df.write_parquet(save_path)
         print(joined_df)
-
-        # # embed the proteins with ESM-C to get average protein embeddings
-        # bacformer_input = protein_seqs_to_bacformer_inputs(
-        #     proteins,
-        #     device=device,
-        #     batch_size=128,  # the batch size for computing the protein embeddings
-        #     max_n_proteins=9000, # increased to 9000 due to some very long genomes
-        #     bacformer_model_type="large", # Bacformer Large 300M
-        # )
-        # embs = bacformer_input["protein_embeddings"].squeeze(0).to(torch.float32).detach().cpu().numpy()
-    
-        # # compute contextualised protein embeddings with Bacformer
-        # model = model.to(torch.float32)
-        # bacformer_embs = sliding_window_bacformer(
-        #     model,
-        #     bacformer_input,
-        #     window_size=2000,
-        #     stride=1500,
-        # )
-        # outputs["last_hidden_state"] will be of shape(batch_size, n, 960), 960 is emb dim.
-    #    bacformer_embs = outputs["last_hidden_state"].squeeze(0).to(torch.float32).detach().cpu().numpy()

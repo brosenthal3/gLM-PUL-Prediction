@@ -1,0 +1,19 @@
+name: bacformer
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.13
+  - pip
+  - numpy
+  - pandas
+  - polars
+  - scikit-learn
+  - tqdm
+  - transformers
+  - torch
+  - biopython
+
+  - pip:
+      - bacformer

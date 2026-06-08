@@ -35,4 +35,3 @@ python -m genecat.cli call-genes -i $GENOMES -o $OUT --type faa+gff
 # combine features
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/
 python src/scripts/combine_features.py
-python src/scripts/split_genes_and_features.py

@@ -45,15 +45,15 @@ def save_pul_predictions(h5ad_path, save_path):
 
 def main():
     for k in range(7):
-        # for features in ["pfam", "cazy"]:
-        #     # predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
-        #     predictions = f"src/data/results/genecat_finetuned_{features}_masked/fold_{k}.h5ad" 
-        #     save_path = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"
-        #     if not os.path.exists(predictions):
-        #         print("Could not find file at ", predictions)
-        #         continue
+        for features in ["pfam", "cazy"]:
+            # predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+            predictions = f"src/data/results/genecat_finetuned_{features}_masked/fold_{k}.h5ad" 
+            save_path = f"src/data/results/genecat_finetuned_{features}_masked/labeled_results_test_{k}.tsv"
+            if not os.path.exists(predictions):
+                print("Could not find file at ", predictions)
+                continue
 
-        #     save_pul_predictions(predictions, save_path)
+            save_pul_predictions(predictions, save_path)
 
         predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
         save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"

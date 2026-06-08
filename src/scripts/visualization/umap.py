@@ -2,6 +2,7 @@ import polars
 import numpy as np
 import matplotlib.pyplot as plt
 import umap
+from viz_data import model_names
 
 def plot_embeddings_umap(
     embeddings_path="src/data/results/genecat_zeroshot_cazy/fold_data/fold_0_data.parquet", 
@@ -14,48 +15,55 @@ def plot_embeddings_umap(
         polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=600)
         .select("sequence_id", "phylum", "class", "order")
     )
-    embeddings = (
-        polars.read_parquet(embeddings_path)
-        .select("embedding", "label", "protein_id", "sequence_id")
-        .join(
-            cryptic_puls,
-            on="protein_id",
-            how="left"
+    # check if umap results already saved
+    umap_path = f"src/data/results/{model_name}/umap.parquet"
+    if os.path.exists(umap_path):
+        reduced_embeddings = polars.read_parquet(umap_path)
+    else:
+        embeddings = (
+            polars.read_parquet(embeddings_path)
+            .select("embedding", "label", "protein_id", "sequence_id")
+            .join(
+                cryptic_puls,
+                on="protein_id",
+                how="left"
+            )
+            .sort("label")
+            .join(
+                tax_annotations,
+                on="sequence_id",
+                how="left"
+            )
+            .drop("sequence_id")
         )
-        .sort("label")
-        .join(
-            tax_annotations,
-            on="sequence_id",
-            how="left"
+        # convert to matrix
+        embedding_matrix = np.stack(embeddings["embedding"].to_list())
+        # fit umap
+        print("Running UMAP...")
+        reducer = umap.UMAP(
+            metric="cosine",
+            n_epochs=150,
+            n_neighbors=10,
+            verbose=True,
         )
-        .drop("sequence_id")
-    )
-    # convert to matrix
-    embedding_matrix = np.stack(embeddings["embedding"].to_list())
-    # fit umap
-    print("Running UMAP...")
-    reducer = umap.UMAP(
-        metric="cosine",
-        n_epochs=150,
-        n_neighbors=10,
-        verbose=True,
-        n_jobs=-1
-    )
-    embedding_2d = reducer.fit_transform(embedding_matrix.astype("float32"))
-    x = embedding_2d[:, 0]
-    y = embedding_2d[:, 1]
-    reduced_embeddings = polars.DataFrame({
-        "x": x,
-        "y": y,
-        "label": embeddings["label"],
-        "cryptic": embeddings["cryptic"],
-        "phylum": embeddings["phylum"],
-        "class": embeddings["class"]
-    })
+        embedding_2d = reducer.fit_transform(embedding_matrix.astype("float32"))
+        x = embedding_2d[:, 0]
+        y = embedding_2d[:, 1]
+        reduced_embeddings = polars.DataFrame({
+            "x": x,
+            "y": y,
+            "label": embeddings["label"],
+            "cryptic": embeddings["cryptic"],
+            "phylum": embeddings["phylum"],
+            "class": embeddings["class"],
+            "protein_id": embeddings["protein_id"]
+        })
+        reduced_embeddings.write_parquet(umap_path)
 
     print("Plotting...")
 
     colors = plt.cm.tab10.colors
+    model_name = model_names.get(model_name, model_name)
     if visualize_taxonomy:
         for rank in ["phylum", "class"]:
             for i, label in enumerate(reduced_embeddings[rank].to_list):
@@ -68,7 +76,7 @@ def plot_embeddings_umap(
             plt.yticks([])
             plt.title(f"UMAP of {model_name} embeddings (colored by {rank})")
             plt.tight_layout()
-            plt.savefig(save_path+"_"+rank+".png", dpi=300)
+            plt.savefig(save_path.split(".")[0]+"_"+rank+".png", dpi=300)
             plt.close()
     else:
         for i, label in enumerate([False, True]):
@@ -98,41 +106,41 @@ if __name__ == "__main__":
     # # genecat zeroshot
     # plot_embeddings_umap(
     #     save_path="results/plots/umap_genecat_zeroshot_cazy.png",
-    #     model_name="GeneCAT Zeroshot (Pfam+CAZy)"
+    #     model_name="genecat_zeroshot_cazy"
     # )
 
     # # genecat finetuned
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
     #     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
-    #     model_name="GeneCAT Finetuned (Pfam+CAZy)"
+    #     model_name="genecat_finetuned_cazy_masked"
     # )
 
-    # # bacformer
-    # plot_embeddings_umap(
-    #     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-    #     save_path="results/plots/UMAP/umap_bacformer",
-    #     model_name="Bacformer",
-    # )
+    # bacformer
+    plot_embeddings_umap(
+        embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+        save_path="results/plots/UMAP/umap_bacformer",
+        model_name="bacformer",
+    )
 
     # # ESM-C
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
     #     save_path="results/plots/UMAP/umap_esmc.png",
-    #     model_name="ESM-C"
+    #     model_name="esmc"
     # )
 
     # genecat_untrained
     # plot_embeddings_umap(
     #     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
     #     save_path="results/plots/UMAP/umap_genecat_untrained.png",
-    #     model_name="GeneCAT Untrained & Finetuned (Pfam+CAZy)"
+    #     model_name="genecat_untrained"
     # )
 
     # bacformer with taxonomy
     plot_embeddings_umap(
         embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
         save_path="results/plots/UMAP/umap_bacformer",
-        model_name="Bacformer",
+        model_name="bacformer",
         visualize_taxonomy=True
     )

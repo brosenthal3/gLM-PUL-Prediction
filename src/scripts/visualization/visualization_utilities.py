@@ -19,8 +19,9 @@ def get_pul_lengths(puls_table, genes):
         .with_columns(polars.concat_str([polars.col("cluster_id"), polars.col("sequence_id")]).alias("cluster_id_unique"))
         .group_by("cluster_id_unique").agg(
             polars.col("protein_id").n_unique().alias("pul_length"),
+            polars.col("sequence_id").first().alias("sequence_id"),
         )
-        .select(["cluster_id_unique", "pul_length"])
+        .select(["sequence_id", "cluster_id_unique", "pul_length"])
     )
 
 

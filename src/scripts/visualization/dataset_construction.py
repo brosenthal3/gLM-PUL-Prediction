@@ -78,12 +78,14 @@ def plot_taxonomy(ax, all_puls):
 # GENE COUNT PLOT #
 def plot_pul_gene_count(ax, genes, labeled_table):
     bins_num = 15
-    labeled_table = get_pul_lengths(labeled_table, genes)
+    labeled_table_with_length = get_pul_lengths(labeled_table, genes)
     bins, labels = get_bins(bins_num)
-    print(f"median PUL length: {labeled_table["pul_length"].median()}")
-    print(f"mean PUL length: {labeled_table["pul_length"].mean()}")
+    print(f"median PUL length: {labeled_table_with_length["pul_length"].median()}")
+    print(f"mean PUL length: {labeled_table_with_length["pul_length"].mean()}")
+    print(labeled_table_with_length.sort(by="pul_length", descending=True))
+    print(labeled_table_with_length.sort(by="pul_length", descending=True).join(labeled_table.select("sequence_id", "species").unique(), how="left", on="sequence_id"))
 
-    binned = labeled_table.with_columns(
+    binned = labeled_table_with_length.with_columns(
         polars.col("pul_length")
         .cut(breaks=bins.tolist(), include_breaks=False, labels=labels)
         .alias("gene_bin")

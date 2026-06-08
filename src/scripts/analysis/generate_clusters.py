@@ -101,13 +101,13 @@ if __name__ == "__main__":
         "genecat_finetuned_pfam_masked": 0.5,
         "genecat_finetuned_cazy_masked": 0.5,
         "esmc_masked": 0.158,
-        "bacformer_masked": 0.24,
+        "bacformer_masked": 0.25,
         "genecat_untrained": 0.55,
     }
 
     for model_name, threshold in tqdm(model_names.items(), desc="Generating clusters for models", total=len(model_names)):
-        # output_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
-        # combine_pul_genes(model_name, output_path, threshold=threshold)
+        output_path = f"src/data/results/{model_name}/predicted_clusters.parquet"
+        combine_pul_genes(model_name, output_path, threshold=threshold)
 
         output_path = f"src/data/results/{model_name}/predicted_clusters_5.parquet"
         combine_pul_genes(model_name, output_path, threshold=threshold, fold=5)

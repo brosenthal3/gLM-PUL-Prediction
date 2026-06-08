@@ -19,8 +19,10 @@ def plot_embeddings_umap(
     # check if umap results already saved
     umap_path = f"src/data/results/{model_name}/umap.parquet"
     if os.path.exists(umap_path):
+        print("Found existing embeddings")
         reduced_embeddings = polars.read_parquet(umap_path)
     else:
+        print("Processing embeddings input...")
         embeddings = (
             polars.read_parquet(embeddings_path)
             .select("embedding", "label", "protein_id", "sequence_id")
@@ -103,45 +105,46 @@ def plot_embeddings_umap(
 
 
 
-if __name__ == "__main__":
-    # # genecat zeroshot
-    # plot_embeddings_umap(
-    #     save_path="results/plots/umap_genecat_zeroshot_cazy.png",
-    #     model_name="genecat_zeroshot_cazy"
-    # )
+print("Running umap script...")
 
-    # # genecat finetuned
-    # plot_embeddings_umap(
-    #     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
-    #     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
-    #     model_name="genecat_finetuned_cazy_masked"
-    # )
+# # genecat zeroshot
+# plot_embeddings_umap(
+#     save_path="results/plots/umap_genecat_zeroshot_cazy.png",
+#     model_name="genecat_zeroshot_cazy"
+# )
 
-    # bacformer
-    plot_embeddings_umap(
-        embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-        save_path="results/plots/UMAP/umap_bacformer",
-        model_name="bacformer",
-    )
+# # genecat finetuned
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
+#     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
+#     model_name="genecat_finetuned_cazy_masked"
+# )
 
-    # # ESM-C
-    # plot_embeddings_umap(
-    #     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-    #     save_path="results/plots/UMAP/umap_esmc.png",
-    #     model_name="esmc"
-    # )
+# bacformer
+plot_embeddings_umap(
+    embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+    save_path="results/plots/UMAP/umap_bacformer",
+    model_name="bacformer",
+)
 
-    # genecat_untrained
-    # plot_embeddings_umap(
-    #     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
-    #     save_path="results/plots/UMAP/umap_genecat_untrained.png",
-    #     model_name="genecat_untrained"
-    # )
+# # ESM-C
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
+#     save_path="results/plots/UMAP/umap_esmc.png",
+#     model_name="esmc"
+# )
 
-    # bacformer with taxonomy
-    plot_embeddings_umap(
-        embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-        save_path="results/plots/UMAP/umap_bacformer",
-        model_name="bacformer",
-        visualize_taxonomy=True
-    )
+# genecat_untrained
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
+#     save_path="results/plots/UMAP/umap_genecat_untrained.png",
+#     model_name="genecat_untrained"
+# )
+
+# bacformer with taxonomy
+plot_embeddings_umap(
+    embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+    save_path="results/plots/UMAP/umap_bacformer",
+    model_name="bacformer",
+    visualize_taxonomy=True
+)

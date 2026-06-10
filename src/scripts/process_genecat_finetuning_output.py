@@ -55,6 +55,7 @@ def main():
 
             save_pul_predictions(predictions, save_path)
 
+        # save untrained finetuned model output
         predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
         save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"
         if not os.path.exists(predictions_untrained):
@@ -63,6 +64,14 @@ def main():
 
         save_pul_predictions(predictions_untrained, save_path_untrained)
         
+        # save full PG3 model output
+        predictions_full_model = f"src/data/results/genecat_full_pg3/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+        save_path_full_model = f"src/data/results/genecat_full_pg3/labeled_results_test_{k}.tsv"
+        if not os.path.exists(predictions_full_model):
+            print("Could not find file at ", predictions_full_model)
+            continue
+
+        save_pul_predictions(predictions_full_model, save_path_full_model)
 
 
 if __name__ == "__main__":

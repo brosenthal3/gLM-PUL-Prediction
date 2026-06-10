@@ -273,8 +273,6 @@ def evaluate_model(args, model_name):
             output_path=output_path,
             weight=args.weight
         )
-        for k in range(5):
-            evaluator.test_cryptic_puls(k)
 
         evaluator.test_cryptic_puls("all")
 

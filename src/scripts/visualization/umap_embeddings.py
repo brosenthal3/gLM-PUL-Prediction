@@ -1,9 +1,20 @@
+print("1", flush=True)
+
 import polars
+print("2", flush=True)
+
 import numpy as np
+print("3", flush=True)
+
 import matplotlib.pyplot as plt
+print("4", flush=True)
+
 import umap
+print("5", flush=True)
+
 from viz_data import model_names
-import os
+print("6", flush=True)
+
 
 def plot_embeddings_umap(
     embeddings_path="src/data/results/genecat_zeroshot_cazy/fold_data/fold_0_data.parquet", 
@@ -22,7 +33,7 @@ def plot_embeddings_umap(
         print("Found existing embeddings")
         reduced_embeddings = polars.read_parquet(umap_path)
     else:
-        print("Processing embeddings input...")
+        print("Processing embeddings input...", flush=True)
         embeddings = (
             polars.read_parquet(embeddings_path)
             .select("embedding", "label", "protein_id", "sequence_id")

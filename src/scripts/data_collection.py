@@ -14,10 +14,14 @@ EMAIL = 'b.rosenthal@lumc.com'
 Entrez.email = EMAIL
 
 def download_data_files(data_dir: str):
-    dbCAN_file = f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx"
+    dbCAN_file = f"{data_dir}/raw/dbCAN-PUL_Feb-2025.xlsx"
     img_genome_file_zip = f"{data_dir}/genomes/IMG_2703719109.download.zip"
     img_genome_file = f"{data_dir}/genomes/Ga0139390_150.gb"
-    puldb_scraped_file = f"{data_dir}/puldb_data.parquet"
+    puldb_scraped_file = f"{data_dir}/raw/puldb_data.parquet"
+
+    # create directories if they don't exist
+    os.makedirs(f"{data_dir}/raw", exist_ok=True)
+    os.makedirs(f"{data_dir}/genomes", exist_ok=True)
 
     if not Path(dbCAN_file).exists():
         print("dbCAN PUL cluster file not found, downloading...")
@@ -254,7 +258,7 @@ def get_dbcan_clusters(data_dir):
         print(f"dbCAN clusters file already exists at {dbcan_clusters_path}, loading from file.")
         return polars.read_csv(dbcan_clusters_path, separator='\t')
     else:
-        dbcan_clusters = clean_dbcan(f"{data_dir}/dbCAN-PUL_Feb-2025.xlsx")
+        dbcan_clusters = clean_dbcan(f"{data_dir}/raw/dbCAN-PUL_Feb-2025.xlsx")
         dbcan_clusters.write_csv(dbcan_clusters_path, separator='\t')
 
 
@@ -264,7 +268,7 @@ def get_puldb_clusters(data_dir):
         print(f"PULdb clusters file already exists at {puldb_clusters_path}, loading from file.")
         puldb_clusters = polars.read_csv(puldb_clusters_path, separator='\t')
     else:
-        puldb_clusters = clean_puldb_data(f"{data_dir}/puldb_data.parquet")
+        puldb_clusters = clean_puldb_data(f"{data_dir}/raw/puldb_data.parquet")
         puldb_clusters.write_csv(puldb_clusters_path, separator='\t')
 
     puldb_clusters = puldb_clusters.with_columns(polars.col("tax_id").cast(polars.Int64), polars.col("cluster_id").cast(polars.Utf8))
@@ -346,16 +350,16 @@ def run_genomes_fetcher(data_dir, output_path, query_type="genbank", separate=Fa
 
 
 def fix_non_genbank_genome(data_dir):
-    # STEP 1: for gb files, depr for now
-    # cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
-    # result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    # if "Ga0139390_150" in result.stdout:
-    #     print("Ga0139390_150 is already in the .gb file.")
-    # else:
-    #     print("Ga0139390_150 is not in the .gb file, adding it now.")
-    #     non_genbank_genome_path = get_non_genbank_genome(data_dir)
-    #     cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
-    #     subprocess.run(cmd, shell=True, check=True)
+    # STEP 1: for gb files
+    cmd = f"grep 'Ga0139390_150' {data_dir}/genomes/combined_genomes.gb"
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if "Ga0139390_150" in result.stdout:
+        print("Ga0139390_150 is already in the .gb file.")
+    else:
+        print("Ga0139390_150 is not in the .gb file, adding it now.")
+        non_genbank_genome_path = get_non_genbank_genome(data_dir)
+        cmd = f"cat {non_genbank_genome_path} >> {data_dir}/genomes/combined_genomes.gb"
+        subprocess.run(cmd, shell=True, check=True)
 
     # STEP 2: for fasta files
     non_genbank_genome_path = f"{data_dir}/genomes/gtdb_genomes/Ga0139390_150.fa"
@@ -400,7 +404,7 @@ def move_genomes_for_pulpy(data_dir, selected_genomes):
             subprocess.run(cmd, shell=True, check=True)
 
 
-def main(data_dir, filter_truncated):
+def main(data_dir):
     # STEP 0: download files if not already present
     download_data_files(data_dir)
 
@@ -408,8 +412,7 @@ def main(data_dir, filter_truncated):
     selected_cols = ['cluster_id', 'sequence_id', 'start', 'end', 'tax_id']
     dbcan_clusters = get_dbcan_clusters(data_dir).select(selected_cols).with_columns(polars.lit("dbcan").alias("database"))
     puldb_clusters = get_puldb_clusters(data_dir).select(selected_cols).with_columns(polars.lit("puldb").alias("database"))
-    combined_clusters = polars.concat([dbcan_clusters, puldb_clusters], how='vertical')
-    combined_clusters = merge_overlapping_puls(combined_clusters, keep_original=False)
+    combined_clusters = merge_overlapping_puls(polars.concat([dbcan_clusters, puldb_clusters], how='vertical'), keep_original=False)
 
     # get length and percentage of genome in PULs
     combined_clusters = merge_with_lengths(combined_clusters, data_dir, lengths_path=f"{data_dir}/data_collection/sequence_lengths.tsv").sort('cluster_id').sort('merged')
@@ -438,6 +441,9 @@ def main(data_dir, filter_truncated):
     unique_accessions.write_csv(f'{data_dir}/data_collection/unique_sequence_ids.tsv', separator='\t')
     print(f"There are {unique_accessions.shape[0]} unique sequence ids in the cluster table.")
 
+    # TODO: currently all genomes are downloaded 3 times, once for genbank, once for fasta, and once for selected genomes. This could be optimized to only download once and then convert to the desired formats.
+    # get genome sequences, in one large genbank file, for preprocessing steps (pyrodigal, hmms)
+    get_genomes(data_dir, unique_accessions['sequence_id'].to_list())
     # get genome sequences, in fasta format
     get_genomes(data_dir, unique_accessions['sequence_id'].to_list(), output_path="genomes/gtdb_genomes", query_type="fasta", separate=True)
     fix_non_genbank_genome(data_dir)
@@ -450,7 +456,4 @@ def main(data_dir, filter_truncated):
 
 if __name__ == "__main__":
     data_dir = "src/data"
-    filter_truncated = True
-    main(data_dir, filter_truncated)
-
-
+    main(data_dir)

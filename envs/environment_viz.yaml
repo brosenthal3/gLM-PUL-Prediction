@@ -1,0 +1,24 @@
+name: viz
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - polars
+  - scikit-learn
+  - matplotlib
+  - matplotlib-venn
+  - tqdm
+  - seaborn
+  - pyarrow
+
+  - pip:
+    - altair-upset
+    - vl-convert-python
+    - gb-io
+    - dna-features-viewer
+    - palettable
+    - umap-learn

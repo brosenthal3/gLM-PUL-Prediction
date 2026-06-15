@@ -1,15 +1,38 @@
-# Environments
-- genecat
-- bacformer
-- viz
-- gtdbtk
+# Repository overview
 
-todo
+This repository contains the code, data-processing steps, and evaluation scripts used to build and analyze models for predicting polysaccharide utilization loci (PULs) from genomic sequences.
+
+## Main structure
+- `envs/`: conda environment files (see below).
+- `src/scripts/`: preprocessing, model training, inference, and analysis scripts. Subdirectories include:
+    - `/analysis`: misc scripts for analyzing the results.
+    - `/visualization`: visualization scripts to create plots
+    - `/shell`: all bash and slurm scripts
+- `src/data/`: intermediate inputs, annotations, splits, and model outputs.
+- `src/PULpy-master/`: PULpy workflow used for additional annotations.
+- `results/`: plots and other final analysis outputs.
+
+
+## Environments
+The `/envs` directory contains `.yaml` files for 4 environments:
+- `genecat`: data collection, preprocessing, GeneCAT & GECCO training, and logistic regression.
+- `gtdbtk`: GTDB-Tk taxonomic classification only.
+- `bacformer`: embedding extraction for ESM-C and Bacformer.
+- `viz`: plotting, cluster-level evaluation, and UMAP/analysis scripts.
+
+The environments can be created with mamba as follows:
+```bash
+mamba env create -n genecat -f envs/environment_genecat.yaml
+mamba env create -n gtdbtk -f envs/environment_gtdbtk.yaml
+mamba env create -n bacformer -f envs/environment_bacformer.yaml
+mamba env create -n viz -f envs/environment_viz.yaml
+```
+Note: PULpy also requires its own environment, but it is already specified and created when running the `src/PULpy-master/run_pulpy.sh` script.  
 
 # Running preprocessing scripts:
 Order of scripts is currently as follows:
 ```bash
-# run data collection script to download all the necessary files
+# run data collection script. This downloads and cleans initial data, runs blast search on short contigs and downloads all genomes from ncbi
 python src/scripts/data_collection.py
 
 # run gtdb-tk annotations on hpc, takes ~1-2 hours
@@ -30,7 +53,7 @@ python src/scripts/train_test_split.py
 python src/scripts/split_genes_and_features.py
 
 # run PULpy
-# Note: there still might be issues running this, the pulpy script itself is old  and unmaintained. 
+# Note: there might be issues running this, the pulpy script itself is old and unmaintained.
 cd src/PULpy-master
 bash run_pulpy.sh
 cd ../../
@@ -58,7 +81,7 @@ The following files and directories are important for model training and evaluat
 
 # Model training
 ## GECCO
-Training GECCO and generating predictions on the test sets can be both done using one script that takes about 2-3 hours. Currently folds are not ran in parallel, but that can be changed to improve performance.
+Training GECCO and generating predictions on the test sets can be both done using one script that takes approximately 1 hour. Currently folds are not ran in parallel, but that can be changed to improve performance.
 ```bash
 sbatch src/scripts/shell/gecco.sh
 ```
@@ -69,13 +92,13 @@ Output = two directories: `src/data/results/gecco_pfam` and `src/data/results/ge
 - files: `labeled_results_test_k.tsv` with the predicted probabilities per gene and the cluster labels.
 
 ## Finetuning GeneCAT
-This script trains and evaluates 3 genecat models in 7 folds. By default, cryptic PULs are masked. The script needs to be manually changed to include them in training. The models are:
+This script trains and evaluates 3 genecat models on 7 folds. By default, cryptic PULs are masked. The script needs to be manually changed to include them in training. The models are:
 
 - GeneCAT pretrained with Pfam only
 - GeneCAT pretrained with Pfam+CAZy
 - GeneCAT without pretraining (untrained)
 
-Takes quite a long time, 25-35 hours and runs an array of 7 slurm jobs, one for each fold.
+Takes quite a long time, 25-35 hours and runs an array of 7 slurm jobs, one for each fold. After training the models, you need to process the output so it can be used in the vizualization scripts.
 ```bash
 sbatch src/scripts/shell/genecat_finetune.sh
 
@@ -84,7 +107,6 @@ python src/scripts/process_genecat_finetuning_output.py
 ```
 
 ## Extracting embeddings: GeneCAT, ESM-C and Bacformer
-
 For zero-shot classification, we first need to get embeddings before running logistic regression:
 
 ```bash
@@ -97,7 +119,7 @@ sbatch src/scripts/shell/esmc_bacformer_embeddings.sh
 
 Output = four directories for model results in `src/data/results/`: `genecat_zeroshot_cazy`, `genecat_zeroshot_cazy`, `esmc`, `bacformer`. Embeddings are saved in multiple places:
 - dir: `src/data/embeddings/genecat_embeddings` => zero-shot genecat embs
-- dir: `src/data/embeddings/esmc_bacformer_embeddings` => finetuned genecat embs, only used for umap
+- dir: `src/data/embeddings/esmc_bacformer_embeddings` => bacformer and esmc embs
 - files: `src/data/results/<model_name>/fold_data/fold_k_data.parquet`, where each gene is labeled and marked as 'train' or 'test'. **These files are used downstream for logistic regression**.
 
 Also the following are created by these scripts, but only for visualization/analysis purposes (UMAP):
@@ -138,7 +160,7 @@ There are a few more scripts in this directory for making other plots for the th
 <br>
 <br>
 
-# Methods
+# Specific Methods
 All data is obtained from two main sources: dbCAN-PUL, and PULDB.
 
 ### dbCAN-PUL
@@ -187,6 +209,4 @@ Using the `genecat` toolkit, we perform gene calling with Pyrodigal on all genom
 Subsequently, all genes are annotated with Pfam and dbCAN HMMs.
 
 ### Train-test split
-Train-test splits are created in the `train_test_split.py` script. StratifiedGroupedKFold on taxonomic annotations, grouped by genus. 
-
-Two additional splits are created, to test the generalizability of the models from bacteroidota to other phyla. One with only bacteroidota in the training set vice versa. 
+Train-test splits are created in the `train_test_split.py` script. StratifiedGroupedKFold on taxonomic annotations, grouped by genus. Two additional splits are created, to test the generalizability of the models from bacteroidota to other phyla. One with only bacteroidota in the training set vice versa. 

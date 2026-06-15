@@ -6,6 +6,10 @@ from utility_scripts import join_gene_and_PUL_table
 def save_pul_predictions(h5ad_path, save_path):
     adata = ad.io.read_h5ad(h5ad_path)
 
+    print(adata)
+    print(adata.uns)
+    return
+
     # get predicted probabilities and labels
     probas = polars.DataFrame(data=adata.X, schema=["average_p"])
     genecat_results = polars.DataFrame(adata.obs)
@@ -44,7 +48,7 @@ def save_pul_predictions(h5ad_path, save_path):
 
 
 def main():
-    for k in range(7):
+    for k in range(1):
         for features in ["pfam", "cazy"]:
             # predictions = f"src/data/results/genecat_finetuned_{features}_masked/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
             predictions = f"src/data/results/genecat_finetuned_{features}_masked/fold_{k}.h5ad" 
@@ -55,23 +59,23 @@ def main():
 
             save_pul_predictions(predictions, save_path)
 
-        # save untrained finetuned model output
-        predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
-        save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"
-        if not os.path.exists(predictions_untrained):
-            print("Could not find file at ", predictions_untrained)
-            continue
+        # # save untrained finetuned model output
+        # predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+        # save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"
+        # if not os.path.exists(predictions_untrained):
+        #     print("Could not find file at ", predictions_untrained)
+        #     continue
 
-        save_pul_predictions(predictions_untrained, save_path_untrained)
+        # save_pul_predictions(predictions_untrained, save_path_untrained)
         
-        # save full PG3 model output
-        predictions_full_model = f"src/data/results/genecat_full_pg3/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
-        save_path_full_model = f"src/data/results/genecat_full_pg3/labeled_results_test_{k}.tsv"
-        if not os.path.exists(predictions_full_model):
-            print("Could not find file at ", predictions_full_model)
-            continue
+        # # save full PG3 model output
+        # predictions_full_model = f"src/data/results/genecat_full_pg3/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+        # save_path_full_model = f"src/data/results/genecat_full_pg3/labeled_results_test_{k}.tsv"
+        # if not os.path.exists(predictions_full_model):
+        #     print("Could not find file at ", predictions_full_model)
+        #     continue
 
-        save_pul_predictions(predictions_full_model, save_path_full_model)
+        # save_pul_predictions(predictions_full_model, save_path_full_model)
 
 
 if __name__ == "__main__":

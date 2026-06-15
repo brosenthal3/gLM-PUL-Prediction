@@ -1,4 +1,3 @@
-from __future__ import annotations
 import polars
 import subprocess
 import os
@@ -12,13 +11,11 @@ from Bio import SeqIO
 
 
 class GECCOHandler:
-    def __init__(self, genes, features, clusters_dir, output_dir, hmms):
+    def __init__(self, genes, features, clusters_dir, output_dir):
         self.genes = self._validate_table(genes)
         self.features = self._validate_table(features)
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
-        self.hmms = Path(hmms) # directory containing HMM files
-
 
     def _validate_table(self, table_path):
         file_path = Path(table_path)
@@ -37,22 +34,12 @@ class GECCOHandler:
         if os.path.exists(model_path):
             print(f"Model path {model_path} already exists, skipping training.")
             return
-        # example: gecco -vv train --genes genes.tsv --features features.tsv --clusters clusters.tsv -o model
+
         cmd = f"gecco -vv train --genes {genes} --features {features} --clusters {train_clusters} -o {model_path} --select 0.5"
         subprocess.run(cmd, shell=True, check=True)
 
     
     def _predict(self, genomes, genes, features, model_path):
-        # print(f"Starting prediction for genome {Path(genome_path).stem}...")
-        # # check output path
-        # if os.path.exists(output_path):
-        #     print(f"Predictions for genome {Path(genome_path).stem} already exist, skipping prediction.\n")
-        #     return
-
-        # # example: gecco run --model model --hmm Pfam35.hmm.gz --genome genome.fa -o ./predictions/
-        # cmd = f"gecco run --model {model_path} --hmm {model_path}/features.h3m --genome {genome_path} -o {output_path}"
-        # subprocess.run(cmd, shell=True, check=True)
-
         fold = model_path.split('_')[-1]
         print(f"Starting prediction for fold {fold}...")
         cmd = f"gecco -vv predict --genes {genes} --features {features} --model {model_path} -o {self.output_dir}/fold_{fold} --genome {genomes}"
@@ -108,16 +95,6 @@ class GECCOHandler:
         return temp_file
     
 
-    # def _save_hmm_file(self, model_path):
-    #     # filter hmms to only include those in the model
-    #     hmm_out_file = f"{model_path}/features"
-    #     model_features = polars.read_csv(f"{model_path}/domains.tsv", separator='\t').to_series().to_list()
-    #     # open and save hmms
-    #     hmms_to_save = HMMLoader.read_hmms(hmmdb_path=self.hmms, whitelist=model_features)
-    #     hmms_to_save.write_to_h3m_file(hmm_out_file)
-
-    #     return hmm_out_file + ".selected.h3m"
-
     def save_genomes(self, genomes_df, output_path):
         if os.path.exists(output_path):
             return
@@ -168,7 +145,7 @@ class GECCOHandler:
         self._evaluate(f"{self.output_dir}/fold_{fold}", fold, train_clusters, split="train")
 
         return
-
+[]
 
     def get_training_data(self, fold):
         # get the training data for this fold, which is all clusters that are not in the test set
@@ -189,7 +166,6 @@ def main():
     parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--output_dir", type=str, default="src/data/results/gecco", help="Directory to save results")
-    parser.add_argument("--hmms", type=str, default="src/data/hmms", help="Path to directory containing HMM files used to annotate data")
     parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
     args = parser.parse_args()
@@ -199,7 +175,6 @@ def main():
         features=args.features,
         clusters_dir=args.clusters_dir,
         output_dir=args.output_dir,
-        hmms=args.hmms
     )
     if args.run_fold is not None:
         handler.run_fold(args.run_fold)

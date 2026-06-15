@@ -217,11 +217,18 @@ def plot_functional_composition():
     )
 
 
-def compute_gecco_weights(weights_df):
+def compute_gecco_weights(weights_df, normalize=False):
+    if normalize:
+        weights_df = (
+            weights_df
+            .filter(polars.col("label") == 1)
+            .with_columns(((polars.col("weight")-polars.col("weight").min()) / (polars.col("weight").max() - polars.col("weight").min())).alias("weight"))
+        )
+
     return (
         weights_df
-        .join(polars.DataFrame({"attr": suscd}), on="attr", how="semi")
         .filter(polars.col("label") == 1)
+        .join(polars.DataFrame({"attr": suscd}), on="attr", how="semi")
         .select("attr", "weight")
         .with_columns(
             polars.col("attr").is_in(susc).alias("susc"),            
@@ -231,7 +238,7 @@ def compute_gecco_weights(weights_df):
         .sort("susc", descending=True)
     )
 
-def plot_gecco_weights():
+def plot_gecco_weights(normalize=False):
     # aggregate gecco weights across all folds
     all_folds_weights = []
     for i in range(5):
@@ -246,12 +253,13 @@ def plot_gecco_weights():
     all_folds_weights = compute_gecco_weights(
         polars.concat(all_folds_weights, how="align")
         .group_by("attr")
-        .agg(polars.col("weight").mean().alias("weight"), polars.lit(1).alias("label"))
+        .agg(polars.col("weight").mean().alias("weight"), polars.lit(1).alias("label")),
+        normalize
     )
 
     # get gecco weights for folds 5 and 6
-    fold_5_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_5/model.state.tsv", separator="\t"))
-    fold_6_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_6/model.state.tsv", separator="\t"))
+    fold_5_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_5/model.state.tsv", separator="\t"), normalize)
+    fold_6_weights = compute_gecco_weights(polars.read_csv("src/data/results/gecco_pfam/model_6/model.state.tsv", separator="\t"), normalize)
 
     # plott
     fig, ax = plt.subplots(figsize=(4.5, 3.5))
@@ -278,13 +286,20 @@ def plot_gecco_weights():
     ax.set_xticklabels(feature_labels, rotation=0, ha="center")
     ax.set_title("GECCO feature weights of SusC/SusD domains")
     ax.legend(loc="upper left")
-    ax.set_ylim(0, 2.25)
-    fig.tight_layout()
-    fig.savefig("results/plots/gecco_feature_weights.png", dpi=300)
+    if normalize:
+        ax.set_ylim(0, 1)
+        fig.tight_layout()
+        fig.savefig("results/plots/gecco_feature_weights_normalized.png", dpi=300)
+    else:
+        ax.set_ylim(0, 2.25)
+        fig.tight_layout()
+        fig.savefig("results/plots/gecco_feature_weights.png", dpi=300)
+
 
 if __name__ == "__main__":
     # plot_features_venn()
     # plot_functional_composition()
-    # plot_gecco_weights()
+    plot_gecco_weights()
+    plot_gecco_weights(normalize=True)
 
-    get_unique_cazy_domains()
+    #get_unique_cazy_domains()

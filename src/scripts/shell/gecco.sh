@@ -20,12 +20,14 @@ set -euo pipefail
 IFS=$'\n\t'
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 
+SLURM_ARRAY_TASK_ID=0
+
 # RUN PFAM FEATURES GECCO
 OUT=src/data/results/gecco_pfam
 FEATURES=src/data/genecat_output/pfam.features.parquet
 python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --output_dir ${OUT} --features ${FEATURES}
 
 # RUN CAZY FEATURES GECCO
-OUT=src/data/results/gecco_cazy
-FEATURES=src/data/genecat_output/dbcan.pfam.features.parquet
-python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --output_dir ${OUT} --features ${FEATURES}
+# OUT=src/data/results/gecco_cazy
+# FEATURES=src/data/genecat_output/dbcan.pfam.features.parquet
+# python src/scripts/gecco.py --run_fold ${SLURM_ARRAY_TASK_ID} --output_dir ${OUT} --features ${FEATURES}

@@ -1,20 +1,9 @@
-print("1", flush=True)
-
+import os
 import polars
-print("2", flush=True)
-
 import numpy as np
-print("3", flush=True)
-
 import matplotlib.pyplot as plt
-print("4", flush=True)
-
 import umap
-print("5", flush=True)
-
-from viz_data import model_names
-print("6", flush=True)
-
+from viz_data import model_names, Bold_10
 
 def plot_embeddings_umap(
     embeddings_path="src/data/results/genecat_zeroshot_cazy/fold_data/fold_0_data.parquet", 
@@ -26,11 +15,12 @@ def plot_embeddings_umap(
     tax_annotations = (
         polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=600)
         .select("sequence_id", "phylum", "class", "order")
+        .unique()
     )
     # check if umap results already saved
     umap_path = f"src/data/results/{model_name}/umap.parquet"
     if os.path.exists(umap_path):
-        print("Found existing embeddings")
+        print("Found existing embeddings", flush=True)
         reduced_embeddings = polars.read_parquet(umap_path)
     else:
         print("Processing embeddings input...", flush=True)
@@ -53,7 +43,7 @@ def plot_embeddings_umap(
         # convert to matrix
         embedding_matrix = np.stack(embeddings["embedding"].to_list())
         # fit umap
-        print("Running UMAP...")
+        print("Running UMAP...", flush=True)
         reducer = umap.UMAP(
             metric="cosine",
             n_epochs=150,
@@ -76,23 +66,31 @@ def plot_embeddings_umap(
 
     print("Plotting...")
 
-    colors = plt.cm.tab10.colors
     model_name = model_names.get(model_name, model_name)
     if visualize_taxonomy:
+        colors = {i: c for i, c in enumerate(Bold_10)}
         for rank in ["phylum", "class"]:
-            for i, label in enumerate(reduced_embeddings[rank].to_list):
-                embedding_2d = reduced_embeddings.filter(polars.col("label") == label)
-                plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.5, s=1, color=colors.get(i, "#808889"))
+            for i, label in enumerate(reduced_embeddings[rank].unique().to_list()):
+                c = colors.get(i, "#808889")
+                if label is None:
+                    embedding_2d = reduced_embeddings.filter(polars.col(rank).is_null())
+                else:
+                    embedding_2d = reduced_embeddings.filter(polars.col(rank) == label)
+
+                plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.35, s=1, color=c, label=label)
 
             plt.xlabel("UMAP 1")
             plt.ylabel("UMAP 2")
             plt.xticks([])
             plt.yticks([])
             plt.title(f"UMAP of {model_name} embeddings (colored by {rank})")
+            plt.legend()
             plt.tight_layout()
-            plt.savefig(save_path.split(".")[0]+"_"+rank+".png", dpi=300)
+            plt.savefig(save_path+"_"+rank+".png", dpi=300)
             plt.close()
+
     else:
+        colors = plt.cm.tab10.colors
         for i, label in enumerate([False, True]):
             embedding_2d = reduced_embeddings.filter(polars.col("label") == label)
             plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.5, s=1, color=colors[i])
@@ -132,11 +130,11 @@ print("Running umap script...")
 # )
 
 # bacformer
-plot_embeddings_umap(
-    embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-    save_path="results/plots/UMAP/umap_bacformer",
-    model_name="bacformer",
-)
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+#     save_path="results/plots/UMAP/umap_bacformer",
+#     model_name="bacformer",
+# )
 
 # # ESM-C
 # plot_embeddings_umap(

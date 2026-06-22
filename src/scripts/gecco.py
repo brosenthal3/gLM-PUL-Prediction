@@ -9,6 +9,12 @@ from utility_scripts import join_gene_and_PUL_table
 from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
 from Bio import SeqIO
 
+"""
+Script to train and evaluate GECCO on PUL prediction. 
+Either runs individual folds (specified by -k and --run_fold) or cross validation
+
+Uses the gecco cli instead of the python api, could be adapted to that instead
+"""
 
 class GECCOHandler:
     def __init__(self, genes, features, clusters_dir, output_dir):
@@ -145,7 +151,6 @@ class GECCOHandler:
         self._evaluate(f"{self.output_dir}/fold_{fold}", fold, train_clusters, split="train")
 
         return
-[]
 
     def get_training_data(self, fold):
         # get the training data for this fold, which is all clusters that are not in the test set

@@ -45,9 +45,9 @@ def plot_embeddings_umap(
         # fit umap
         print("Running UMAP...", flush=True)
         reducer = umap.UMAP(
-            metric="cosine",
-            n_epochs=150,
-            n_neighbors=10,
+            metric="euclidean",
+            n_neighbors=12,
+            epochs=200,
             verbose=True,
         )
         embedding_2d = reducer.fit_transform(embedding_matrix.astype("float32"))
@@ -84,7 +84,7 @@ def plot_embeddings_umap(
             plt.xticks([])
             plt.yticks([])
             plt.title(f"UMAP of {model_name} embeddings (colored by {rank})")
-            plt.legend()
+            plt.legend(markerscale=1.5)
             plt.tight_layout()
             plt.savefig(save_path+"_"+rank+".png", dpi=300)
             plt.close()
@@ -116,44 +116,52 @@ def plot_embeddings_umap(
 
 print("Running umap script...")
 
-# # genecat zeroshot
-# plot_embeddings_umap(
-#     save_path="results/plots/umap_genecat_zeroshot_cazy.png",
-#     model_name="genecat_zeroshot_cazy"
-# )
+# genecat zeroshot
+plot_embeddings_umap(
+    save_path="results/plots/umap_genecat_zeroshot_cazy.png",
+    model_name="genecat_zeroshot_cazy"
+)
 
-# # genecat finetuned
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
-#     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
-#     model_name="genecat_finetuned_cazy_masked"
-# )
+# genecat finetuned
+plot_embeddings_umap(
+    embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
+    save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
+    model_name="genecat_finetuned_cazy_masked"
+)
 
 # bacformer
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-#     save_path="results/plots/UMAP/umap_bacformer",
-#     model_name="bacformer",
-# )
+plot_embeddings_umap(
+    embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+    save_path="results/plots/UMAP/umap_bacformer",
+    model_name="bacformer",
+)
 
-# # ESM-C
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-#     save_path="results/plots/UMAP/umap_esmc.png",
-#     model_name="esmc"
-# )
+# ESM-C
+plot_embeddings_umap(
+    embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
+    save_path="results/plots/UMAP/umap_esmc.png",
+    model_name="esmc"
+)
 
-# genecat_untrained
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
-#     save_path="results/plots/UMAP/umap_genecat_untrained.png",
-#     model_name="genecat_untrained"
-# )
+genecat_untrained
+plot_embeddings_umap(
+    embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
+    save_path="results/plots/UMAP/umap_genecat_untrained.png",
+    model_name="genecat_untrained"
+)
 
 # bacformer with taxonomy
 plot_embeddings_umap(
     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
     save_path="results/plots/UMAP/umap_bacformer",
     model_name="bacformer",
+    visualize_taxonomy=True
+)
+
+# esm-c with taxonomy
+plot_embeddings_umap(
+    embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
+    save_path="results/plots/UMAP/umap_esmc.png",
+    model_name="esmc",
     visualize_taxonomy=True
 )

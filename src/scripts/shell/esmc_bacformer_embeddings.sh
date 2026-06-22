@@ -13,6 +13,7 @@
 source ~/.bashrc
 mamba activate bacformer
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/glm_bench'
 
 set -euo pipefail
 IFS=$'\n\t'

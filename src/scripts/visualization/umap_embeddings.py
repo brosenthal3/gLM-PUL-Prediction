@@ -93,7 +93,7 @@ def plot_embeddings_umap(
                 else:
                     embedding_2d = reduced_embeddings.filter(polars.col(rank) == label)
 
-                plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], s=0.5, color=c, alpha=0.15, label=label)
+                plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], s=0.2, color=c, alpha=0.1, label=label)
     
                 if label is not None:
                     handles.append(plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=c, markersize=5, label=label))

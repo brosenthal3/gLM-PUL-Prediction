@@ -18,12 +18,6 @@ export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/glm_bench'
 set -euo pipefail
 IFS=$'\n\t'
 
-# module load system/python/3.12.6
-# mkdir -p $TMPDIR/esm_env
-# python -m venv $TMPDIR/esm_env --system-site-packages
-# source $TMPDIR/esm_env/bin/activate
-# pip install biopython polars numpy torch esm
-
 # extract embeddings
 cd /exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction
 python src/scripts/esmc_bacformer_script.py

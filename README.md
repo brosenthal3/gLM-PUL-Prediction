@@ -13,7 +13,7 @@ This repository contains the code, data-processing steps, and evaluation scripts
 - `results/`: plots and other final analysis outputs.
 
 
-## Environments
+## Requirements and environments
 The `/envs` directory contains `.yaml` files for 4 environments:
 - `genecat`: data collection, preprocessing, GeneCAT & GECCO training, and logistic regression.
 - `gtdbtk`: GTDB-Tk taxonomic classification only.
@@ -28,6 +28,18 @@ mamba env create -n bacformer -f envs/environment_bacformer.yaml
 mamba env create -n viz -f envs/environment_viz.yaml
 ```
 Note: PULpy also requires its own environment, but it is already specified and created when running the `src/PULpy-master/run_pulpy.sh` script.  
+
+### Other requirements:
+- BLAST+: Some scripts for data preprocessing rely on the blast+ binaries (ncbi-blast-2.17.0+). Make sure these are installed and added to `PATH`. 
+
+- GeneCAT CLI: All shell scripts that start with `genecat_` make use of the genecat cli. In the script, this is handled by the line `export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/GeneCat/src'`, but if this path changes then the script will fail.
+
+- gLM-bench: for generating embeddings for bacformer and esmc, the gLM-bench toolkit is used. In the script this is done in the following line: `export PYTHONPATH='/exports/archive/lucid-grpzeller-primary/hackett/glm_bench'`
+
+- GTDB data: For GTDB-tk, the R226 external data is currently in the following path: `export GTDBTK_DATA_PATH="/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GTDBTK_R226/gtdbtk_r226_data"`
+
+### Project directory:
+All shell scripts rely on the path of the project directory. Currently on SHARK  this is `/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction`. When running the shell scripts in another context, this has to be changed manually.
 
 # Running preprocessing scripts:
 Order of scripts is currently as follows:

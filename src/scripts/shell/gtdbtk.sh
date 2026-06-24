@@ -18,7 +18,7 @@ mamba activate gtdbtk
 set -euo pipefail
 IFS=$'\n\t'
 
-OUT_DIR="/exports/lucid-grpzeller-work/${USER}/gtdbtk_annotations/gtdbtk_output"
+OUT_DIR="/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/data/gtdb_output"
 TEMP_DIR="${OUT_DIR}/tmp/"
 MASH_DB="${OUT_DIR}/mash_db.msh"
 GENOME_DIR="/exports/lucid-grpzeller-work/brosenthal/gLM-PUL-Prediction/src/data/genomes/gtdb_genomes"

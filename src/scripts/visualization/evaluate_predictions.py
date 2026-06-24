@@ -296,7 +296,7 @@ def main(args):
 
     if model_name == "selected":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
-        barplot_pul_length(all_models)
+        #barplot_pul_length(all_models)
         compare_all_models(all_models, model_name)
         return
 

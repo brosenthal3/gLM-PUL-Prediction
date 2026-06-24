@@ -85,7 +85,8 @@ def plot_embeddings_umap(
             )
 
             handles = []
-            for i, label in enumerate(reduced_embeddings[rank].unique().to_list()):
+            labels = reduced_embeddings.select(rank, "len").unique().sort(by="len", descending=True)[rank].unique(maintain_order=True).to_list()
+            for i, label in enumerate(labels):
                 c = colors.get(i, "#808889")
                 if label is None:
                     embedding_2d = reduced_embeddings.filter(polars.col(rank).is_null())
@@ -128,7 +129,7 @@ def plot_embeddings_umap(
         plt.yticks([])
         plt.title(f"UMAP projection of {model_name} embeddings")
         plt.tight_layout()
-        plt.savefig(save_path)
+        plt.savefig(save_path, dpi=300)
         plt.close()
 
 print("Running umap script...")

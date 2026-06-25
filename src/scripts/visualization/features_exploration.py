@@ -46,14 +46,14 @@ suscd = susc+susd
 cazy_features_selected = features_cazy["domain"].unique()
 
 def plot_features_venn():
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(6, 4))
     # plot overlap
     v = venn2(
         [genes_pfam, genes_cazy], 
         set_labels=(f'Pfam\n(n={len(genes_pfam)})', f'CAZy\n(n={len(genes_cazy)})'),
         set_colors=(Cork_7[0], Cork_7[1]),
         ax=ax,
-        alpha=0.9
+        alpha=0.8
     )
     for patch in v.patches:
         patch.set_edgecolor("white")
@@ -63,13 +63,13 @@ def plot_features_venn():
         if t:
             t.set_fontsize(10)
             if t.get_text() == "1304":
-                t.set_position((t.get_position()[0]+0.065, t.get_position()[1]))
+                t.set_position((t.get_position()[0]+0.07, t.get_position()[1]))
             if "CAZy" in t.get_text():
                 t.set_position((t.get_position()[0]+0.1, t.get_position()[1]))
 
-    ax.set_title("Overlap in proteins with Pfam and/or CAZy annotations", fontsize=12, pad=2)
+    ax.set_title("Overlap in genes with Pfam and/or CAZy domains", fontsize=12, pad=2)
     fig.tight_layout()
-    fig.savefig("results/plots/feature_venn.png")
+    fig.savefig("results/plots/feature_venn.png", dpi=300)
 
 
 def get_feature_counts(labeled_results, genes, features, selected_features, groups="cluster_id"):
@@ -297,9 +297,9 @@ def plot_gecco_weights(normalize=False):
 
 
 if __name__ == "__main__":
-    # plot_features_venn()
+    plot_features_venn()
     # plot_functional_composition()
-    plot_gecco_weights()
-    plot_gecco_weights(normalize=True)
+    #plot_gecco_weights()
+    #plot_gecco_weights(normalize=True)
 
     #get_unique_cazy_domains()

@@ -54,7 +54,7 @@ def plot_venn_diagram_cblaster(save="results/plots/venn_cblaster.png"):
 
 
 def plot_length_distributions(genes, experimental_puls, cblaster_results_liberal, cblaster_results_strict, pulpy):
-    fig, ax = plt.subplots(figsize=(7, 5.5))
+    fig, ax = plt.subplots(figsize=(6, 4))
     bins, labels = get_bins(10, start=0, stop=100)
     experimental = get_pul_lengths(experimental_puls, genes)
     cblaster_liberal_puls = get_pul_lengths(cblaster_results_liberal, genes)
@@ -100,6 +100,8 @@ def plot_length_distributions(genes, experimental_puls, cblaster_results_liberal
 
     ax.set_xticks(x)
     labels[0] = "1"
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.margins(x=0.02)
     ax.set_xlabel("PUL length in genes")
@@ -196,15 +198,23 @@ def plot_pul_overlap(all_puls, pulpy, cblaster_results_liberal):
     cblaster_liberal_puls = set(merged_puls.filter(polars.col("has_cblaster") == True).select("cluster_id_unique").to_series().to_list())
     experimental_puls = set(merged_puls.filter(polars.col("has_experimental") == True).select("cluster_id_unique").to_series().to_list())
 
-    fig, ax1 = plt.subplots(figsize=(7, 4))
-    venn3(
+    fig, ax1 = plt.subplots(figsize=(6, 4))
+    v = venn3(
         [pulpy_puls, cblaster_liberal_puls, experimental_puls],
-        set_labels=(f'PULpy (total: {len(pulpy_puls)})', f'Liberal Cblaster (total: {len(cblaster_liberal_puls)})', f'Experimental + Strict Cblaster (total: {len(experimental_puls)})'),
+        set_labels=(f'PULpy (n={len(pulpy_puls)})', f'Liberal Cblaster (n={len(cblaster_liberal_puls)})', f'Experimental + Strict Cblaster (n={len(experimental_puls)})'),
         ax=ax1,
         set_colors=(Cork_7[0], Cork_7[2], Cork_7[-1]),
         alpha=0.8
     )
-#    ax1.set_title("PULs identified by PULpy, Liberal Cblaster and Experimental annotations")
+    for patch in v.patches:
+        patch.set_edgecolor("white")
+        patch.set_linewidth(0.5)
+
+    for t in v.set_labels + v.subset_labels:
+        if t:
+            t.set_fontsize(9)
+            
+    ax1.set_title("Overlap of Experimental and Cryptic PULs")
     plt.tight_layout()
     plt.savefig("results/plots/cryptic_pul_overlap_venn.png", dpi=300)
     plt.close()

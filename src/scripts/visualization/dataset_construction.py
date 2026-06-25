@@ -106,14 +106,15 @@ def plot_pul_gene_count(ax, genes, labeled_table):
     y = [counts_dict.get(label, 0) for label in labels]
     x = np.arange(len(labels))
 
+    ax.set_axisbelow(True)
     ax.grid(axis="y", linestyle="--", alpha=0.7)
-    ax.bar(x, y, edgecolor=Cork_7[2], width=1.0, align="center", color=Cork_7[0])
+    ax.bar(x, y, edgecolor="black", width=1.0, align="center", color="#739CBE")
     ax.set_xticks(x)
     labels[0] = "1"
     ax.set_xticklabels(labels, rotation=45, ha="right")
     ax.margins(x=0.02)
     ax.set_xlabel("PUL length in genes")
-    ax.set_ylabel("Count")
+    ax.set_ylabel("Number of PULs")
 
 
 # DATABASE VENN DIAGRAM #
@@ -133,8 +134,8 @@ def plot_venn_diagram_database(ax, experimental_puls):
         [dbcan_sequences, puldb_sequences, cblaster_sequences], 
         set_labels=(f'dcCAN-PUL (n={len(dbcan_sequences)})', f'PULDB (n={len(puldb_sequences)})', f'Cblaster-strict (n={len(cblaster_sequences)})'), 
         ax=ax,
-        set_colors=(Cork_7[0], Cork_7[1], Cork_7[-1]),
-        alpha=0.82
+        set_colors=(Bold_10[2], Bold_10[0], Bold_10[1]),
+        alpha=0.8
     )
     for patch in v.patches:
         patch.set_edgecolor("white")
@@ -179,7 +180,7 @@ def main():
 
     titles = {
         ax1: "Origin of literature-derived PUL annotations",
-        ax3: "PUL length distribution",
+        ax3: "Length distribution of literature-derived PULs",
         ax_tax: "Phylum-level distributions of literature-derived PULs",
         ax_tax_2: "Class-level distributions of literature-derived PULs"
     }

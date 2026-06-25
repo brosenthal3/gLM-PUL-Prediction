@@ -64,10 +64,10 @@ def generate_upset_plot(all_models, model_class):
 def barplot_features(all_models, model_names_dict=model_names_features):
     # list of evaluators for all models
     evaluators = get_evaluators(all_models)
-    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(4.5, 5))
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(6, 4))
     ax_bar.set_xlabel("Model")
-    ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
-    ax_bar.set_title("AUPRC per model")
+    ax_bar.set_ylabel("AUPRC")
+    ax_bar.set_title("AUPRC per model on literature-derived PULs")
     auprc_exp = []
 
     for i, model_evaluator in enumerate(evaluators):
@@ -86,16 +86,16 @@ def barplot_features(all_models, model_names_dict=model_names_features):
     for i in range(len(features)):
         scores = auprc_exp[i::2]  # get scores for current feature set
         x = np.arange(len(models))
-        bars = ax_bar.bar(x + (i-0.5)*0.3, scores, width=0.28, label=features[i], color=colors[i], edgecolor="black", alpha=0.9)
+        bars = ax_bar.bar(x + (i-0.5)*0.3, scores, width=0.28, label=features[i], color=colors[i], edgecolor="black", alpha=0.8)
         ax_bar.bar_label(bars, fmt="%.2f", padding=3, fontsize=8)
 
     ax_bar.set_xticks(x)
-    ax_bar.set_xticklabels(models, rotation=45, ha="right")
+    ax_bar.set_xticklabels(models)
     ax_bar.set_ylim(0, 0.8)
     ax_bar.legend(loc="upper left")
 
     fig_bar.tight_layout()
-    fig_bar.savefig("results/plots/aggregated/barplot_features.png")
+    fig_bar.savefig("results/plots/aggregated/barplot_features.png", dpi=300)
 
 
 def barplot_masked(all_models, model_names_dict=model_names_features):
@@ -167,7 +167,7 @@ def barplot_masked(all_models, model_names_dict=model_names_features):
     fig_bar.savefig("results/plots/aggregated/barplot_masked.png")
 
 
-def barplot_pul_length(all_models, model_names_dict=model_names):
+def barplot_pul_length(all_models, model_names_dict=model_names_selected):
     pul_length_distributions = {}
     # get gene count distributions for all models from predicted clusters
     for model_name in all_models:
@@ -182,7 +182,7 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
     )["pul_length"].to_list()
 
     # plot distributions as barplot
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(6, 4))
     # get bins and labels for barplot
     bins, labels = get_bins(10, start=0, stop=15)
     n_models = len(all_models)
@@ -207,6 +207,9 @@ def barplot_pul_length(all_models, model_names_dict=model_names):
         # center grouped bars: compute offset so bars for each model are centered around each xtick
         offset = (idx - (n_models - 1) / 2) * width
         ax.bar(x + offset, y, edgecolor="black", width=width, align="center", label=model_names_dict.get(model_name), color=model_colors_selected.get(model_name))
+
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", linestyle="--", alpha=0.7)
 
     ax.set_xticks(x)
     labels[0] = "1"
@@ -375,8 +378,8 @@ def main(args):
 
     if model_name == "selected":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
-        #barplot_pul_length(all_models)
-        compare_all_models(all_models, model_name, model_names_selected)
+        barplot_pul_length(all_models)
+        #compare_all_models(all_models, model_name, model_names_selected)
         return
 
     if model_name == "upset":

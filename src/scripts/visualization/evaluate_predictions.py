@@ -9,8 +9,10 @@ from matplotlib_venn import venn3
 from tqdm import tqdm
 from visualization_utilities import PredictionEvaluator, get_bins, get_pul_lengths
 import altair_upset as au
-from viz_data import model_names, model_names_masked, model_colors, model_names_features, Cork_7, Bold_10, Bilbao_5, Buda_4, model_colors_selected
+from viz_data import model_names, model_names_masked, model_colors, model_names_features, Cork_7, Bold_10, Bilbao_5, Buda_4, model_colors_selected, model_names_selected
+from matplotlib.patches import Patch
 
+# get list of evaluator class instances from a list of model names
 def get_evaluators(all_models, k=7, aggregate=False):
     return [
         PredictionEvaluator(
@@ -22,6 +24,14 @@ def get_evaluators(all_models, k=7, aggregate=False):
         )
         for model_name in all_models
     ]
+
+# sort handles/labels together by score
+def sort_legend_labels(ax, scores, loc="upper right"):
+    handles, labels = ax.get_legend_handles_labels()
+    order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+    sorted_handles = [handles[i] for i in order]
+    sorted_labels = [labels[i] for i in order]
+    ax.legend(sorted_handles, sorted_labels, loc=loc)
 
 
 def generate_upset_plot(all_models, model_class):
@@ -88,6 +98,75 @@ def barplot_features(all_models, model_names_dict=model_names_features):
     fig_bar.savefig("results/plots/aggregated/barplot_features.png")
 
 
+def barplot_masked(all_models, model_names_dict=model_names_features):
+    # list of evaluators for all models
+    evaluators = get_evaluators(all_models)
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 4))
+    ax_bar.set_xlabel("Model")
+    ax_bar.set_ylabel("AUPRC (Area Under Pecision-Recall Curve)")
+    ax_bar.set_title("AUPRC per model evaluated on experimental and cryptic PULs")
+
+    # save auprc scores
+    auprc_exp = []
+    auprc_cryptic = []
+    auprc_both = []
+    for i, model_evaluator in enumerate(evaluators):
+        current_model_name = model_names_dict.get(all_models[i])
+        model_evaluator.aggregate_all_folds()
+        auprc_e, auprc_cr, auprc_b = model_evaluator.test_cryptic_puls("all")
+        auprc_exp.append(auprc_e)
+        auprc_cryptic.append(auprc_cr)
+        auprc_both.append(auprc_b)
+
+    # plot bar plot of auprc scores
+    models = [model_names_dict.get(e.model_name) for e in evaluators]
+
+    n_groups = len(models)
+    width = 0.3
+    base_x = np.arange(n_groups)
+    group_gap = 0.4
+    # add extra gap for every pair, so the same model with/without masking remain close to each other
+    extra = (base_x // 2) * group_gap
+    x = base_x + extra
+
+    bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color=Cork_7[-1])
+    bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color=Cork_7[0])
+    bars_both = ax_bar.bar(x + width,auprc_both,width,label="Both",color="#808889")
+
+    is_masked_model = (base_x % 2 == 1)
+    for bars in (bars_exp, bars_cryptic, bars_both):
+        for bar, second in zip(bars, is_masked_model):
+            if second:
+                bar.set_hatch("///")
+                bar.set_edgecolor("black")
+                bar.set_linewidth(0.6)
+    
+    # only one model name per pair
+    pair_centers = []
+    pair_labels = []
+    for i in range(0, n_groups, 2):
+        # average the x-position of the two groups in this pair
+        center = (x[i] + x[i + 1]) / 2
+        label = models[i] 
+        pair_centers.append(center)
+        pair_labels.append(label)
+
+    ax_bar.set_xticks(pair_centers)
+    ax_bar.set_xticklabels(pair_labels)
+
+    ax_bar.bar_label(bars_exp, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.bar_label(bars_cryptic, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.bar_label(bars_both, fmt="%.2f", padding=3, fontsize=8)
+    ax_bar.set_ylim(0, 0.8)
+
+    handles, labels = ax_bar.get_legend_handles_labels()
+    handles += [Patch(facecolor="white", edgecolor="black", hatch="///", label="Masked in training")]
+    ax_bar.legend(handles=handles, labels=labels + ["Masked in training"])
+    fig_bar.tight_layout()
+
+    fig_bar.savefig("results/plots/aggregated/barplot_masked.png")
+
+
 def barplot_pul_length(all_models, model_names_dict=model_names):
     pul_length_distributions = {}
     # get gene count distributions for all models from predicted clusters
@@ -151,10 +230,10 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     evaluators = get_evaluators(all_models)
 
     # comparison of all models, 3 separate plots
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    fig_roc, ax_roc = plt.subplots(1, 1, figsize=(6, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+    fig_roc, ax_roc = plt.subplots(1, 1, figsize=(5, 5))
     fig_bac, ax_bac = plt.subplots(1, 2, figsize=(12, 6))
-    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 6))
+    fig_bar, ax_bar = plt.subplots(1, 1, figsize=(8, 5))
     if model_class == "selected":
         colors = model_colors_selected
     else:
@@ -178,13 +257,12 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     ax_bac[1].set_title("Trained on other phyla, tested on Bacteroidota")
     ax_bar.set_title("AUPRC per model evaluated on experimental and cryptic PULs")
 
-#    fig.suptitle("Precision-Recall Curves of all tested models (all folds)")
-#    fig_roc.suptitle("ROC Curves of all tested models (all folds)")
     fig_bac.suptitle("Precision-Recall Curves for Bacteroidota generalization test (folds 5 and 6)")
 
     auprc_exp = []
     auprc_cryptic = []
     auprc_both = []
+    aurocs = []
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
         current_model_name = model_names_dict.get(all_models[i])
@@ -207,26 +285,21 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
         # for true vs pred
         true_masked, _, p_pred_masked, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=True)
         model_evaluator.plot_pr(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax)
-        model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax_roc)
-
-        # for pulpy vs pred
-        # _, _, p_pred, pulpy_pred = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[0], mask_cryptic=False) # don't mask cryptic, since we only consider PULpy
-        # model_evaluator.plot_pr(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax[1])
-        # model_evaluator.roc_curve(pulpy_pred, p_pred, current_model_name, colors[all_models[i]], ax_roc[1])
+        auroc = model_evaluator.roc_curve(true_masked, p_pred_masked, current_model_name, colors[all_models[i]], ax_roc)
+        aurocs.append(auroc)
 
         # plot baselines only once at the end
         if i == len(all_models)-1:
             model_evaluator.plot_baseline(true_masked, ax)
-#            model_evaluator.plot_baseline(pulpy_pred, ax[1])
             model_evaluator.plot_baseline(true_5, ax_bac[0])
             model_evaluator.plot_baseline(true_6, ax_bac[1])
+    
+    # add legends
+    for j in range(2):
+        ax_bac[j].legend(loc="upper right")
 
-        # add legends
-        for j in range(2):
-            ax_bac[j].legend(loc="upper right")
-
-        ax.legend(loc="upper right")
-        ax_roc.legend(loc="lower right")
+    sort_legend_labels(ax, auprc_exp, loc="upper right")
+    sort_legend_labels(ax_roc, aurocs, loc="lower right")
 
     # plot bar plot of auprc scores
     models = [model_names_dict.get(e.model_name) for e in evaluators]
@@ -244,13 +317,13 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     ax_bar.legend()
 
     fig.tight_layout()
-    fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png")
+    fig.savefig(f"results/plots/aggregated/pr_curves_{model_class}.png", dpi=300)
     fig_roc.tight_layout()
-    fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png")
+    fig_roc.savefig(f"results/plots/aggregated/roc_curves_{model_class}.png", dpi=300)
     fig_bac.tight_layout()
-    fig_bac.savefig(f"results/plots/aggregated/pr_curves_bacteroidota_{model_class}.png")
+    fig_bac.savefig(f"results/plots/aggregated/pr_curves_bacteroidota_{model_class}.png", dpi=300)
     fig_bar.tight_layout()
-    fig_bar.savefig(f"results/plots/aggregated/barplot_{model_class}.png")
+    fig_bar.savefig(f"results/plots/aggregated/barplot_{model_class}.png", dpi=300)
 
     plt.close()
 
@@ -286,7 +359,9 @@ def main(args):
 
     if model_name == "masked":
         all_models = ["genecat_zeroshot_cazy", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy", "genecat_finetuned_cazy_masked", "esmc", "esmc_masked", "bacformer", "bacformer_masked"]
-        compare_all_models(all_models, model_name, model_names_masked)
+        barplot_masked(all_models, model_names_masked)
+        #compare_all_models(all_models, model_name, model_names_masked)
+
         return
 
     if model_name == "features":
@@ -297,7 +372,7 @@ def main(args):
     if model_name == "selected":
         all_models = ["gecco_pfam", "genecat_zeroshot_cazy_masked", "genecat_finetuned_cazy_masked", "genecat_untrained", "esmc_masked", "bacformer_masked"]
         #barplot_pul_length(all_models)
-        compare_all_models(all_models, model_name)
+        compare_all_models(all_models, model_name, model_names_selected)
         return
 
     if model_name == "upset":

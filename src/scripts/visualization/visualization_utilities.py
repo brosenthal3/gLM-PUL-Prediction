@@ -263,6 +263,11 @@ class PredictionEvaluator:
 
 
     def roc_curve(self, true, p_pred, label, color, ax):
+        """
+        Plots ROC curve based on true and pred. Applies plot to ax specified in arguments.
+        Returns: AUROC score
+        """
+
         if len(true) == 0 or len(p_pred) == 0:
             print(f"Warning: No data to plot for ROC curve. Skipping.")
             return
@@ -271,6 +276,7 @@ class PredictionEvaluator:
         roc_auc = auc(fpr, tpr)
         ax.plot(fpr, tpr, color=color, label=f'{label} (AUC: {round(roc_auc, 2)})')
 
+        return roc_auc
 
     # def precision_recall_curve(self, fold):
     #     fig, ax = plt.subplots(1, 2, figsize=(12, 6))

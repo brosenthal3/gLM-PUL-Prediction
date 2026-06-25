@@ -70,9 +70,13 @@ def donut_chart(ax, counts, rank, title):
         colors=Cork_7[:len(counts)]
     )
 
-def plot_taxonomy(ax, all_puls):
+def plot_taxonomy_phylum(ax, all_puls):
     phylum_counts = get_taxonomic_counts(all_puls, rank="phylum", cutoff=10)
     donut_chart(ax, phylum_counts, "Phylum", title="Taxonomic distribution of PULs on a phylum level")
+
+def plot_taxonomy_class(ax, all_puls):
+    class_counts = get_taxonomic_counts(all_puls, rank="class", cutoff=10)
+    donut_chart(ax, class_counts, "Class", title="Taxonomic distribution of PULs on a class level")
 
 
 # GENE COUNT PLOT #
@@ -166,18 +170,21 @@ def main():
     fig1, ax1 = plt.subplots(figsize=(6, 4))
     fig2, ax_tax = plt.subplots(figsize=(6, 6))
     fig3, ax3 = plt.subplots(figsize=(6, 4))
+    fig4, ax_tax_2 = plt.subplots(figsize=(6, 6))
 
     plot_venn_diagram_database(ax1, all_puls)
-    plot_taxonomy(ax_tax, all_puls)
+    plot_taxonomy_phylum(ax_tax, all_puls)
+    plot_taxonomy_class(ax_tax_2, all_puls)
     plot_pul_gene_count(ax3, genes, all_puls)
 
     titles = {
-        ax1: "Origin of literature-derived PUL annotations in dataset",
+        ax1: "Origin of literature-derived PUL annotations",
         ax3: "PUL length distribution",
-        ax_tax: "Phylum-level distributions of literature-derived PULs in dataset"
+        ax_tax: "Phylum-level distributions of literature-derived PULs",
+        ax_tax_2: "Class-level distributions of literature-derived PULs"
     }
     for ax, title in titles.items():
-        ax.set_title(title, loc='left', pad=12)
+        ax.set_title(title, pad=12)
 
     plt.rcParams.update({
         "font.size": 10,
@@ -186,11 +193,13 @@ def main():
         "figure.dpi": 300
     })
     fig1.tight_layout()
-    fig1.savefig("results/plots/dataset_venn.png")
+    fig1.savefig("results/plots/dataset_venn.png", dpi=300)
     fig2.tight_layout()
-    fig2.savefig("results/plots/dataset_tax.png")
+    fig2.savefig("results/plots/dataset_tax.png", dpi=300)
     fig3.tight_layout()
-    fig3.savefig("results/plots/dataset_pul_lengths.png")
+    fig3.savefig("results/plots/dataset_pul_lengths.png", dpi=300)
+    fig4.tight_layout()
+    fig4.savefig("results/plots/dataset_tax_class.png", dpi=300)
 
     get_info_on_data(all_puls, genes)
 

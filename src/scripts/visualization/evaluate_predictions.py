@@ -263,14 +263,18 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     auprc_cryptic = []
     auprc_both = []
     aurocs = []
+    bac_scores = [[], []]
     for i, model_evaluator in enumerate(evaluators):
         print(f"Plotting for {all_models[i]}")
         current_model_name = model_names_dict.get(all_models[i])
         # before aggregating, plot for folds 5 and 6 separately
         true_5, _, p_pred_5, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[5], mask_cryptic=True)
-        model_evaluator.plot_pr(true_5, p_pred_5, current_model_name, colors[all_models[i]], ax_bac[0])
+        bac_score_5 = model_evaluator.plot_pr(true_5, p_pred_5, current_model_name, colors[all_models[i]], ax_bac[0])
         true_6, _, p_pred_6, _ = model_evaluator.get_evaluation_data(model_evaluator.labeled_results[6], mask_cryptic=True)
-        model_evaluator.plot_pr(true_6, p_pred_6, current_model_name, colors[all_models[i]], ax_bac[1])
+        bac_score_6 = model_evaluator.plot_pr(true_6, p_pred_6, current_model_name, colors[all_models[i]], ax_bac[1])
+        # save scores for these folds
+        bac_scores[0].append(bac_score_5)
+        bac_scores[1].append(bac_score_6)
 
         # aggregate all folds
         model_evaluator.aggregate_all_folds()
@@ -296,7 +300,7 @@ def compare_all_models(all_models, model_class, model_names_dict=model_names):
     
     # add legends
     for j in range(2):
-        ax_bac[j].legend(loc="upper right")
+        sort_legend_labels(ax_bac[j], bac_scores[j], loc="upper right")
 
     sort_legend_labels(ax, auprc_exp, loc="upper right")
     sort_legend_labels(ax_roc, aurocs, loc="lower right")

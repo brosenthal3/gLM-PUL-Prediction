@@ -3,7 +3,7 @@ import polars
 import numpy as np
 import matplotlib.pyplot as plt
 import umap
-from viz_data import model_names, Bold_10
+from viz_data import model_names_selected, Bold_10, Cork_7
 
 def plot_embeddings_umap(
     embeddings_path="src/data/results/genecat_zeroshot_cazy/fold_data/fold_0_data.parquet", 
@@ -65,7 +65,7 @@ def plot_embeddings_umap(
 
     print("Plotting...")
 
-    model_name = model_names.get(model_name, model_name)
+    model_name = model_names_selected.get(model_name, model_name)
     if visualize_taxonomy:
         colors = {i: c for i, c in enumerate(Bold_10)}
         for rank in ["phylum", "class"]:
@@ -110,19 +110,24 @@ def plot_embeddings_umap(
             plt.close()
 
     else:
-        colors = plt.cm.tab10.colors
+        # colors order non-pul, exp-pul, cr-pul
+        colors = [Bold_10[2], Bold_10[-1], Bold_10[0]] #plt.cm.tab10.colors
+        alpha = 0.3
+        size = 0.8
+        # add non-puls and experimental puls
         for i, label in enumerate([False, True]):
             embedding_2d = reduced_embeddings.filter(polars.col("label") == label)
-            plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.5, s=1, color=colors[i])
-            # add cryptic PULs
-            if label == True:
-                embedding_2d = reduced_embeddings.filter(polars.col("cryptic") == label)
-                plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=0.35, s=1, color=colors[2])
+            plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=alpha, s=size, color=colors[i])
+
+        # add cryptic PULs
+        embedding_2d = reduced_embeddings.filter(polars.col("cryptic") == True)
+        plt.scatter(embedding_2d[:, 0], embedding_2d[:, 1], alpha=alpha, s=size, color=colors[2])
+        
         plt.legend(handles=[
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=5, label='PUL gene'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[2], markersize=5, label='Cryptic PUL gene'),
-            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=5, label='Non-PUL gene')
-        ])
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[0], markersize=7, label='Non-PUL gene'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[1], markersize=7, label='Experimental PUL gene'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=colors[2], markersize=7, label='Cryptic PUL gene'),
+        ], loc="upper right")
         plt.xlabel("UMAP 1")
         plt.ylabel("UMAP 2")
         plt.xticks([])
@@ -134,52 +139,52 @@ def plot_embeddings_umap(
 
 print("Running umap script...")
 
-# # genecat zeroshot
-# plot_embeddings_umap(
-#     save_path="results/plots/UMAP/umap_genecat_zeroshot_cazy.png",
-#     model_name="genecat_zeroshot_cazy"
-# )
+# genecat zeroshot
+plot_embeddings_umap(
+    save_path="results/plots/UMAP/umap_genecat_zeroshot_cazy.png",
+    model_name="genecat_zeroshot_cazy"
+)
 
-# # genecat finetuned
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
-#     save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
-#     model_name="genecat_finetuned_cazy_masked"
-# )
+# genecat finetuned
+plot_embeddings_umap(
+    embeddings_path="src/data/results/genecat_finetuned_cazy_masked/embeddings/fold_0_data.parquet", 
+    save_path="results/plots/UMAP/umap_genecat_finetuned_cazy.png", 
+    model_name="genecat_finetuned_cazy_masked"
+)
 
-# # bacformer
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
-#     save_path="results/plots/UMAP/umap_bacformer",
-#     model_name="bacformer",
-# )
-
-# # ESM-C
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-#     save_path="results/plots/UMAP/umap_esmc.png",
-#     model_name="esmc"
-# )
-
-# # genecat_untrained
-# plot_embeddings_umap(
-#     embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
-#     save_path="results/plots/UMAP/umap_genecat_untrained.png",
-#     model_name="genecat_untrained"
-# )
-
-# bacformer with taxonomy
+# bacformer
 plot_embeddings_umap(
     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
     save_path="results/plots/UMAP/umap_bacformer",
     model_name="bacformer",
-    visualize_taxonomy=True
 )
 
-# esm-c with taxonomy
+# ESM-C
 plot_embeddings_umap(
     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
-    save_path="results/plots/UMAP/umap_esmc",
-    model_name="esmc",
-    visualize_taxonomy=True
+    save_path="results/plots/UMAP/umap_esmc.png",
+    model_name="esmc"
 )
+
+# genecat_untrained
+plot_embeddings_umap(
+    embeddings_path="src/data/results/genecat_untrained/embeddings/fold_0_data.parquet",
+    save_path="results/plots/UMAP/umap_genecat_untrained.png",
+    model_name="genecat_untrained"
+)
+
+# bacformer with taxonomy
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/bacformer/fold_data/fold_1_data.parquet",
+#     save_path="results/plots/UMAP/umap_bacformer",
+#     model_name="bacformer",
+#     visualize_taxonomy=True
+# )
+
+# # esm-c with taxonomy
+# plot_embeddings_umap(
+#     embeddings_path="src/data/results/esmc/fold_data/fold_0_data.parquet",
+#     save_path="results/plots/UMAP/umap_esmc",
+#     model_name="esmc",
+#     visualize_taxonomy=True
+# )

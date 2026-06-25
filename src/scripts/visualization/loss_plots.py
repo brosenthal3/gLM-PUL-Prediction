@@ -17,7 +17,7 @@ def plot_loss(pretrained, untrained, out_path, model_name):
 
     # Figure size in inches
     cm = 1 / 2.54  # centimeters in inches
-    textwidth = 22 * cm
+    textwidth = 30 * cm
 
     figsize = (textwidth, cm*15)
     dpi = 300
@@ -36,20 +36,20 @@ def plot_loss(pretrained, untrained, out_path, model_name):
 
         # loss
         val_df = df.filter(polars.col("val_loss").is_not_null())
-        val_loss_plot = ax_left.plot(val_df["step"].to_numpy(), val_df["val_loss"].cast(polars.Float32).to_numpy(), label="Validation Loss", color=bold10[0], zorder=20)
+        val_loss_plot = ax_left.plot(val_df["step"].to_numpy(), val_df["val_loss"].cast(polars.Float32).to_numpy(), label="Validation Loss", color=bold10[5], zorder=20, linewidth=1.5)
         test_df = df.filter(polars.col("test_loss").is_not_null())
-        test_loss_plot = ax_left.scatter(test_df["step"].to_numpy(), test_df["test_loss"].cast(polars.Float32).to_numpy(), label="Test Loss", color=bold10[1], s=25, zorder=20)
-        train_loss_plot = ax_left.plot(train_df["step"].to_numpy(), train_df["train_loss"].cast(polars.Float32).to_numpy(), label="Train Loss", linestyle='-', linewidth=1, zorder=10, color=bold10[2])
+        test_loss_plot = ax_left.scatter(test_df["step"].to_numpy(), test_df["test_loss"].cast(polars.Float32).to_numpy(), label="Test Loss", color=bold10[-1], s=25, zorder=20)
+        train_loss_plot = ax_left.plot(train_df["step"].to_numpy(), train_df["train_loss"].cast(polars.Float32).to_numpy(), label="Train Loss", linestyle='-', linewidth=1, zorder=10, color=bold10[2], alpha=0.95)
 
         # auprc and auroc
         val_auprc_df = df.filter(polars.col("val_auprc").is_not_null())
-        auprc_plot = ax_right.plot(val_auprc_df["step"].to_numpy(), val_auprc_df["val_auprc"].cast(polars.Float32).to_numpy(), label="Validation AUPRC", color=bold10[3], zorder=20)
+        auprc_plot = ax_right.plot(val_auprc_df["step"].to_numpy(), val_auprc_df["val_auprc"].cast(polars.Float32).to_numpy(), label="Validation AUPRC", color=bold10[4], zorder=20)
         val_auroc_df = df.filter(polars.col("val_auroc").is_not_null())
-        auroc_plot = ax_right.plot(val_auroc_df["step"].to_numpy(), val_auroc_df["val_auroc"].cast(polars.Float32).to_numpy(), label="Validation AUROC", color=bold10[5], zorder=20)
+        auroc_plot = ax_right.plot(val_auroc_df["step"].to_numpy(), val_auroc_df["val_auroc"].cast(polars.Float32).to_numpy(), label="Validation AUROC", color=bold10[0], zorder=20)
 
         ax_left.set_ylabel("Loss")
         ax_left.set_ylim(0, ylim_loss)
-        ax_left.set_title("Loss in training - " + model_name + (" pretrained" if i==0 else " untrained"))
+        ax_left.set_title(model_name + (" pretrained" if i==0 else " untrained"))
         ax_right.set_ylabel("Performance")
         ax_left.grid(axis="y", alpha=0.4, linestyle="--")
 
@@ -59,9 +59,10 @@ def plot_loss(pretrained, untrained, out_path, model_name):
     axis[1].set_xticks(epoch_ticks["step"][:-1])
     axis[1].set_xticklabels(epoch_ticks["epoch"][:-1])
     axis[1].set_xlabel("Epoch")
+    fig.suptitle("Loss and model performance during finetuning")
     print(f"Saving plot to {out_path}...")
     plt.tight_layout()
-    plt.savefig(out_path)
+    plt.savefig(out_path, dpi=300)
 
 
 

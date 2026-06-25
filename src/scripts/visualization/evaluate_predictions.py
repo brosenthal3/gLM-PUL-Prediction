@@ -129,7 +129,7 @@ def barplot_masked(all_models, model_names_dict=model_names_features):
     extra = (base_x // 2) * group_gap
     x = base_x + extra
 
-    bars_exp= ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color=Cork_7[-1])
+    bars_exp = ax_bar.bar(x - width, auprc_exp, width, label="Experimental", color=Cork_7[-1])
     bars_cryptic = ax_bar.bar(x, auprc_cryptic, width, label="Cryptic", color=Cork_7[0])
     bars_both = ax_bar.bar(x + width,auprc_both,width,label="Both",color="#808889")
 

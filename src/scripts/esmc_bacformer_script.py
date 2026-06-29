@@ -47,7 +47,7 @@ def write_genes_fasta(genes_dict):
 
 def main():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    model_dir = "/exports/lucid-grpzeller-work/brosenthal/bacformer/cache"
+    model_dir = "/exports/lucid-grpzeller-work/brosenthal/bacformer_cache/cache" # NOTE: should change when working on different dirs
     logging.set_verbosity_error()
 
     output_path = "src/data/embeddings/esmc_bacformer_embeddings"

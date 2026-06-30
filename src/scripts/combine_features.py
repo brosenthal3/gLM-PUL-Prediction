@@ -1,5 +1,11 @@
-import polars
+"""
+Combine feature tables of dbcan and pfam
+Also contains function to combine pfam with cayman results, if we later opt to use that.
 
+Called in genecat_preprocess.sh, after generating feature tables
+"""
+
+import polars
 
 def combine_cayman():
     cazy = (
@@ -47,7 +53,6 @@ def combine_cayman():
     pfam_features = polars.read_parquet("src/data/genecat_output/genome.features.parquet")
     joined = pfam_features.vstack(cazy).sort(by=["sequence_id", "domain_start"])
     joined.write_parquet("src/data/genecat_output/genome.features.cayman.pfam.parquet")
-
 
     # cayman_schema = {
     #     'sequenceID': String, 

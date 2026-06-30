@@ -1,3 +1,7 @@
+"""
+Saves the results of finetuned genecat models to a "labeled_results" type table, that can be used later in visualizations.
+"""
+
 import polars
 import os
 import anndata as ad
@@ -59,14 +63,14 @@ def main():
 
             save_pul_predictions(predictions, save_path)
 
-        # # save untrained finetuned model output
-        # predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
-        # save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"
-        # if not os.path.exists(predictions_untrained):
-        #     print("Could not find file at ", predictions_untrained)
-        #     continue
+        # save untrained finetuned model output
+        predictions_untrained = f"src/data/results/genecat_untrained/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"
+        save_path_untrained = f"src/data/results/genecat_untrained/labeled_results_test_{k}.tsv"
+        if not os.path.exists(predictions_untrained):
+            print("Could not find file at ", predictions_untrained)
+            continue
 
-        # save_pul_predictions(predictions_untrained, save_path_untrained)
+        save_pul_predictions(predictions_untrained, save_path_untrained)
         
         # # save full PG3 model output
         # predictions_full_model = f"src/data/results/genecat_full_pg3/logs_fold_{k}/wandb/latest-run/files/pul_predictions.h5ad"

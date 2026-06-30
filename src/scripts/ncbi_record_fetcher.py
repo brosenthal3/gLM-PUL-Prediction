@@ -1,4 +1,9 @@
-""" Adapted from genecat scripts, by Raymund Hackett """
+""" 
+Script for downloading genome sequences from ncbi
+Used in data_collection.py
+
+Adapted from genecat scripts, by Raymund Hackett
+"""
 
 import argparse
 from pathlib import Path

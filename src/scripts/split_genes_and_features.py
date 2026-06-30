@@ -1,3 +1,8 @@
+"""
+Split gene and table features based on the train/test splits.
+Creates folder "fold_k" for each fold and inside saves the gene table, and pfam/dbcan feature tables.
+"""
+
 import polars
 import os
 

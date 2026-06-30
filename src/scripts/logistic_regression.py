@@ -1,3 +1,7 @@
+"""
+Run logistic regression on gene embeddings.
+"""
+
 import multiprocessing
 import os
 from pathlib import Path

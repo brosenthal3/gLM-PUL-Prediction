@@ -1,3 +1,7 @@
+"""
+Functions used across scripts, mostly in data_collection.py.
+"""
+
 import __future__
 import json
 import polars

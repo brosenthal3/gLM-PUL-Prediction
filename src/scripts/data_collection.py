@@ -1,3 +1,11 @@
+"""
+Messy data collection script. Handles:
+- downloading annotations from dbcan-pul and puldb
+- manual curation steps (see readme)
+- blastn search for longer contigs
+- fetching genomes from ncbi for all downstream tasks
+"""
+
 import os
 import subprocess
 from pathlib import Path

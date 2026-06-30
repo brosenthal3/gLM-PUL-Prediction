@@ -1,3 +1,7 @@
+"""
+Create a file with descriptions and names for all pfam domains.
+"""
+
 import requests
 import polars
 from tqdm import tqdm

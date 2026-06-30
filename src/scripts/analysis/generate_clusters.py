@@ -1,3 +1,8 @@
+"""
+Short script to generate clusters based on prediction probabilities
+Results are used for visualizing predicted cluster length and for the dna-feature-viewer plots of putative puls.
+"""
+
 import polars
 from tqdm import tqdm
 
@@ -68,15 +73,7 @@ def process_gecco_clusters(df, selected_sequences):
 
 
 def save_clusters_gecco():
-    # src/data/results/gecco_cazy/fold_4/test.clusters.tsv
-
-    #     "sequence_id": row["sequence_id"],
-    #     "start": row["start"],
-    #     "end": row["end"],
-    #     "genes": [row["protein_id"]],
-    #     "gene_count": 1,
-    #     "average_p": row["average_p"]
-    # })
+    # combine cluster predictions from all folds for gecco, since output is differently formatted than other models
     selected_sequences = polars.read_csv("src/data/data_collection/clusters_deduplicated_cblaster.tsv", separator="\t", infer_schema_length=700).select("sequence_id").unique()
     for features in ["pfam", "cazy"]:
         all_clusters = []
@@ -95,6 +92,7 @@ def save_clusters_gecco():
 
 
 if __name__ == "__main__":
+    # values based on MCC found on val set during training, otherwise estimated. 
     model_names = {
         "genecat_zeroshot_pfam_masked": 0.276,
         "genecat_zeroshot_cazy_masked": 0.237,

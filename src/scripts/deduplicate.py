@@ -1,3 +1,10 @@
+"""
+Script to deduplicate genomes, using OrthoANI table to deduplicate any sequences with ANI >= 99%
+Re-maps PUL annotations to longer genome using blast.
+
+Can be executed only after data_collection.py and orthoANI.sh
+"""
+
 import polars
 import argparse
 from Bio import Align

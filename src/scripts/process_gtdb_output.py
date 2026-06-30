@@ -1,3 +1,7 @@
+"""
+Integrate GTDB-tk output into the cluster table.
+"""
+
 import polars
 from pathlib import Path
 

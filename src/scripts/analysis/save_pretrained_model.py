@@ -1,3 +1,8 @@
+"""
+From finetuned model, save the pretrained model part
+Used to generate embeddings from finetuned models, so that they can be visualized in the umap
+"""
+
 import sys
 from pathlib import Path
 from genecat.model.model_registry import load_model

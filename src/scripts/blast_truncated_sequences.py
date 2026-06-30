@@ -1,3 +1,8 @@
+"""
+Runs a BLASTn search using the Biopython NCBIWWW interface, to identify longer hits from a list of truncated genomes.
+Called in the data_collection.py script
+"""
+
 import subprocess
 import tempfile
 import time
@@ -153,7 +158,7 @@ class BlastHandler:
 
 def main():
     # parse arguments
-    parser = argparse.ArgumentParser(description="Fetch GenBank records from a TSV containing NCBI IDs.")
+    parser = argparse.ArgumentParser(description="Run BLASTn search on a list of genomes to find longer equivalent genomes.")
     parser.add_argument(
         "-i",
         "--input",

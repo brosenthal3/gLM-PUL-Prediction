@@ -1,3 +1,8 @@
+"""
+Script to combine PULpy output with liberal cblaster output, merge with gene table and save the gene ids.
+Also creates additional train/test cluster tables that contain cryptic puls with an additional "origin" col.
+"""
+
 import polars
 from utility_scripts import join_gene_and_PUL_table
 from data_collection import merge_overlapping_puls

@@ -14,6 +14,7 @@ Script to train and evaluate GECCO on PUL prediction.
 Either runs individual folds (specified by -k and --run_fold) or cross validation
 
 Uses the gecco cli instead of the python api, could be adapted to that instead
+Called in src/scripts/shell/gecco.sh
 """
 
 class GECCOHandler:

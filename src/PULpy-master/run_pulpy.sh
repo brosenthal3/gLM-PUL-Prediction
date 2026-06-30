@@ -1,4 +1,5 @@
 #!/bin/bash
+# custom script for running PULpy from start to finish
 # This script was adapted from README.md on the PULpy repository
 
 source ~/.bashrc
@@ -6,9 +7,9 @@ mamba env create -f envs/PULpy.yaml
 mamba activate PULpy
 
 mkdir pfam_data && cd pfam_data
-wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
-wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
-wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
+wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam38.0/Pfam-A.hmm.gz
+wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam38.0/Pfam-A.hmm.dat.gz
+wget --no-check-certificate ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam38.0/active_site.dat.gz
 gunzip Pfam-A.hmm.gz Pfam-A.hmm.dat.gz active_site.dat.gz
 hmmpress Pfam-A.hmm
 cd ..

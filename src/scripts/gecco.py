@@ -17,11 +17,12 @@ Uses the gecco cli instead of the python api, could be adapted to that instead
 """
 
 class GECCOHandler:
-    def __init__(self, genes, features, clusters_dir, output_dir):
+    def __init__(self, genes, features, clusters_dir, output_dir, cryptic=False):
         self.genes = self._validate_table(genes)
         self.features = self._validate_table(features)
         self.clusters_dir = clusters_dir
         self.output_dir = output_dir
+        self.cryptic = cryptic
 
     def _validate_table(self, table_path):
         file_path = Path(table_path)
@@ -155,7 +156,11 @@ class GECCOHandler:
     def get_training_data(self, fold):
         # get the training data for this fold, which is all clusters that are not in the test set
         test_clusters = f"{self.clusters_dir}/test_fold_{fold}.tsv"
-        train_clusters = f"{self.clusters_dir}/train_fold_{fold}.tsv"
+        if self.cryptic:
+            train_clusters = f"{self.clusters_dir}/train_fold_{fold}_with_cryptic.tsv"
+        else:
+            train_clusters = f"{self.clusters_dir}/train_fold_{fold}.tsv"
+
         return train_clusters, test_clusters
 
 
@@ -171,8 +176,9 @@ def main():
     parser.add_argument("--features", type=str, default="src/data/genecat_output/genome.features.parquet", help="Path to features table")
     parser.add_argument("--clusters_dir", type=str, default="src/data/splits", help="Directory containing train/test cluster splits")
     parser.add_argument("--output_dir", type=str, default="src/data/results/gecco", help="Directory to save results")
-    parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation")
+    parser.add_argument("-k", type=int, default=7, help="Number of folds for cross-validation")
     parser.add_argument("--run_fold", type=int, help="Run a specific fold instead of cross-validation")
+    parser.add_argument("--cryptic", action="store_true", help="Treat cryptic PULs as positives")
     args = parser.parse_args()
 
     handler = GECCOHandler(
@@ -180,6 +186,7 @@ def main():
         features=args.features,
         clusters_dir=args.clusters_dir,
         output_dir=args.output_dir,
+        cryptic=args.cryptic
     )
     if args.run_fold is not None:
         handler.run_fold(args.run_fold)

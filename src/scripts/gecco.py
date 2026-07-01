@@ -6,7 +6,7 @@ import urllib.request
 import tempfile
 import argparse
 from utility_scripts import join_gene_and_PUL_table
-from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support
+from sklearn.metrics import classification_report, confusion_matrix, precision_recall_fscore_support, average_precision_score
 from Bio import SeqIO
 
 """
@@ -89,6 +89,8 @@ class GECCOHandler:
             .sort("protein_id")
             .sort("sequence_id")
         )
+        auprc = average_precision_score(labeled_table["is_PUL"], labeled_table["average_p"])
+        print("AUPRC: ", auprc)
         labeled_table.write_csv(f"{self.output_dir}/labeled_results_{split}_{fold}.tsv", separator='\t')
 
 
